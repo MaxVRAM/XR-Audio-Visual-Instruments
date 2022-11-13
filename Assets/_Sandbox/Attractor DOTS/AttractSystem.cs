@@ -42,7 +42,7 @@ public class AttractSystem : SystemBase
 
                 physVelComponent.Linear += attraction;
             }
-        ).WithDeallocateOnJobCompletion(attractorComps).WithDeallocateOnJobCompletion(attractorTransComps).ScheduleParallel();
+        ).WithDisposeOnCompletion(attractorComps).WithDisposeOnCompletion(attractorTransComps).ScheduleParallel();
     }
 
         //protected override JobHandle OnUpdate(JobHandle inputDeps)

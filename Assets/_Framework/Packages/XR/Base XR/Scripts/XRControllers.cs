@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR;
 using UnityEngine.Events;
+using Unity.XR.Oculus;
 
 namespace EXP.XR
 {
@@ -58,6 +59,12 @@ namespace EXP.XR
     public enum XRQuaternions
     {
         DeviceRotation,
+    }
+
+    public enum Handedness
+    {
+        Left,
+        Right,
     }
 
     #endregion
@@ -455,10 +462,14 @@ namespace EXP.XR
             foreach (var device in _DevicesWithPrimaryButton)
             {
                 // For each device
-                if (device.role == InputDeviceRole.RightHanded)
+                if (device.characteristics == InputDeviceCharacteristics.Right)
+                {
                     _RightControllerFeatures.UpdateFeatureSet(device);
-                else if (device.role == InputDeviceRole.LeftHanded)
+                }
+                else if (device.characteristics == InputDeviceCharacteristics.Left)
+                {
                     _LeftControllerFeatures.UpdateFeatureSet(device);
+                }
             }
         }
 
