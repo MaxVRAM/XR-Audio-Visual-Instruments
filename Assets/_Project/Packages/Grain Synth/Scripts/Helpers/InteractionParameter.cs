@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+//
+// Summary:
+//     Provides an input value to use on a Grain Emitter, based on a physical interaction from the source rigid body.
+//
 [System.Serializable]
 public class InteractionParameter : InteractionBase
 {

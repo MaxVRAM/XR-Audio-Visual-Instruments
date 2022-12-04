@@ -12,9 +12,7 @@ public class InteractionBase : MonoBehaviour
     public float _OutputValue = 0;
 
     protected float _PreviousInputValue = 0;
-
     protected bool _HoldTempValue = false;
-
     protected bool _Colliding = false;
     protected PhysicMaterial _CollidedMaterial;
 
