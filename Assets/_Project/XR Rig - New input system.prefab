@@ -4873,7 +4873,6 @@ MonoBehaviour:
   _CurrentDistance: 0.7138927
   _DistanceVolume: 0.801053
   _WithinEarshot: 1
-  _CollidingDummyEmitterGameObject: {fileID: 0}
   _DSPChainParams: []
   _EmissionProps:
     _Playing: 1

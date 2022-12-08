@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Physics;
 using UnityEngine;
 
 //
@@ -18,107 +19,82 @@ public class InteractionRelative : InteractionBase
         PolarPos,
         AzimuthPos,
         LinearSpeed,
+        LinearAccelerationAbsolute,
         LinearAcceleration,
+        LinearDeacceleration,
         TangentialSpeed,
-
-        Speed,
-        AccelerationAbsolute,
-        Acceleration,
-        Deacceleration,
-        Scale,
-        Roll,
-        RollTimesMass,
-        Slide,
-        Aux
+        TangentialAccelerationAbsolute
     }
 
     public GameObject _TargetObject;
+    public Rigidbody _TargetRigidBody;
+
     public InteractionRelativeType _SourceParameter;
 
     [Range(0f, 1f)]
     public float _Smoothing = 0.2f;
-    protected float previousDistance = 0f;
+    float _PreviousDistance = 0f;
+
+    public override void AdditionalStartFunction()
+    {
+        if (_TargetObject == null)
+            _TargetObject = this.transform.parent.gameObject;
+
+        _TargetRigidBody = _TargetObject.GetComponent<Rigidbody>();
+    }
+
 
     private void Update()
     {
-        float currentValue = _PreviousInputValue;
+        float currentValue = _PreviousValue;
 
-        if (_SourceObject != null && _RigidBody != null && _TargetObject != null)
+        if (_RigidBody != null && _TargetRigidBody != null)
         {
-            Vector3 positionDiff = _SourceObject.transform.position - _TargetObject.transform.position;
-            float radius = Mathf.Abs((positionDiff).magnitude);
+            Vector3 relativePosition = _SourceObject.transform.position - _TargetObject.transform.position;
+            Vector3 relativeVelocity = _RigidBody.velocity - _TargetRigidBody.velocity;
+            float radius = Mathf.Abs((_SourceObject.transform.position - _TargetObject.transform.position).magnitude);
 
             switch (_SourceParameter)
             {
                 case InteractionRelativeType.DistanceX:
-                    currentValue = Mathf.Abs(_SourceObject.transform.position.x - _TargetObject.transform.position.x);
+                    currentValue = Mathf.Abs(RelativePosition().x);
                     break;
                 case InteractionRelativeType.DistanceY:
-                    currentValue = Mathf.Abs(_SourceObject.transform.position.y - _TargetObject.transform.position.y);
+                    currentValue = Mathf.Abs(RelativePosition().y);
                     break;
                 case InteractionRelativeType.DistanceZ:
-                    currentValue = Mathf.Abs(_SourceObject.transform.position.z - _TargetObject.transform.position.z);
+                    currentValue = Mathf.Abs(RelativePosition().z);
                     break;
                 case InteractionRelativeType.Radius:
-                    currentValue = radius;
+                    currentValue = Mathf.Abs(RelativePosition().magnitude);
                     break;
                 case InteractionRelativeType.PolarPos:
-                    currentValue = CartToSpherical(positionDiff).x;
+                    currentValue = CartToSpherical(RelativePosition()).x;
                     break;
                 case InteractionRelativeType.AzimuthPos:
-                    currentValue = CartToSpherical(positionDiff).y;
+                    currentValue = CartToSpherical(RelativePosition()).y;
                     break;
                 case InteractionRelativeType.LinearSpeed:
-                    currentValue = Mathf.Max((_RigidBody.velocity.magnitude - previousDistance) / Time.deltaTime, 0f);
-                    _PreviousInputValue = _RigidBody.velocity.magnitude;
+                    currentValue = Mathf.Abs(RelativeVelocity().magnitude);
+                    break;
+                case InteractionRelativeType.LinearAccelerationAbsolute:
+                    currentValue = Mathf.Abs((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime);
+                    _PreviousValue = currentValue;
                     break;
                 case InteractionRelativeType.LinearAcceleration:
-                    currentValue = CartToSpherical(positionDiff).x;
+                    currentValue = Mathf.Max((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime, 0f);
+                    _PreviousValue = currentValue;
+                    break;
+                case InteractionRelativeType.LinearDeacceleration:
+                    currentValue = Mathf.Abs(Mathf.Min((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime, 0f));
+                    _PreviousValue = currentValue;
                     break;
                 case InteractionRelativeType.TangentialSpeed:
-                    currentValue = CartToSpherical(positionDiff).y;
+                    currentValue = CartToSpherical(RelativeVelocity()).magnitude;
                     break;
-
-
-
-
-
-
-                case InteractionRelativeType.Speed:
-                    currentValue = _RigidBody.velocity.magnitude;
-                    break;
-                case InteractionRelativeType.AccelerationAbsolute:
-                    currentValue = Mathf.Abs((_RigidBody.velocity.magnitude - _PreviousInputValue) / Time.deltaTime);
-                    _PreviousInputValue = _RigidBody.velocity.magnitude;
-                    break;
-                case InteractionRelativeType.Acceleration:
-                    currentValue = Mathf.Max((_RigidBody.velocity.magnitude - _PreviousInputValue) / Time.deltaTime, 0f);
-                    _PreviousInputValue = _RigidBody.velocity.magnitude;
-                    break;
-                case InteractionRelativeType.Deacceleration:
-                    currentValue = Mathf.Abs(Mathf.Min((_RigidBody.velocity.magnitude - _PreviousInputValue) / Time.deltaTime, 0f));
-                    _PreviousInputValue = _RigidBody.velocity.magnitude;
-                    break;
-                case InteractionRelativeType.Scale:
-                    currentValue = _SourceObject.transform.localScale.magnitude;
-                    break;
-                case InteractionRelativeType.Roll:
-                    if (_Colliding)
-                        currentValue = _RigidBody.angularVelocity.magnitude;
-                    else
-                        currentValue = 0;
-                    break;
-                case InteractionRelativeType.RollTimesMass:
-                    if (_Colliding)
-                        currentValue = _RigidBody.angularVelocity.magnitude * (_RigidBody.mass / 2 + 0.5f);
-                    else
-                        currentValue = 0;
-                    break;
-                case InteractionRelativeType.Slide:
-                    if (_Colliding)
-                        currentValue = _RigidBody.velocity.magnitude / _RigidBody.angularVelocity.magnitude;
-                    else
-                        currentValue = 0;
+                case InteractionRelativeType.TangentialAccelerationAbsolute:
+                    currentValue = Mathf.Abs((CartToSpherical(RelativeVelocity()).magnitude - _PreviousValue) / Time.deltaTime);
+                    _PreviousValue = currentValue;
                     break;
                 default:
                     break;
@@ -135,6 +111,16 @@ public class InteractionRelative : InteractionBase
         UpdateSmoothedOutputValue(val, _Smoothing);
     }
 
+    public Vector3 RelativePosition()
+    {
+        return _SourceObject.transform.position - _TargetObject.transform.position;
+    }
+    public Vector3 RelativeVelocity()
+    {
+        return _RigidBody.velocity - _TargetRigidBody.velocity;
+    }
+
+    // TODO Add to global static utility
     public static Vector2 CartToSpherical(Vector3 position)
     {
         float polar = Mathf.Atan2(position.y, position.x);

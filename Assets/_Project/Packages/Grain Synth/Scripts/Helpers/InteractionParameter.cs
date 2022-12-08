@@ -27,17 +27,16 @@ public class InteractionParameter : InteractionBase
     [Range(0f, 1f)]
     public float _Smoothing = 0.2f;
 
-    public override void UpdateTempEmitterInteractionSource(GameObject gameObject, Collision collision)
+    public override void UpdateAttachedEmitterInteractionSource(GameObject gameObject, Collision collision)
     {
         _SourceObject = gameObject;
         _RigidBody = _SourceObject.GetComponent<Rigidbody>();
         _Colliding = true;
     }
 
-
     private void Update()
     {
-        float currentValue = _PreviousInputValue;
+        float currentValue = _PreviousValue;
 
         if (_RigidBody != null)
         {
@@ -47,16 +46,16 @@ public class InteractionParameter : InteractionBase
                     currentValue = _RigidBody.velocity.magnitude;
                     break;
                 case InteractionParameterType.AccelerationAbsolute:
-                    currentValue = Mathf.Abs((_RigidBody.velocity.magnitude - _PreviousInputValue) / Time.deltaTime);
-                    _PreviousInputValue = _RigidBody.velocity.magnitude;
+                    currentValue = Mathf.Abs((_RigidBody.velocity.magnitude - _PreviousValue) / Time.deltaTime);
+                    _PreviousValue = _RigidBody.velocity.magnitude;
                     break;
                 case InteractionParameterType.Acceleration:
-                    currentValue = Mathf.Max((_RigidBody.velocity.magnitude - _PreviousInputValue) / Time.deltaTime, 0f);
-                    _PreviousInputValue = _RigidBody.velocity.magnitude;
+                    currentValue = Mathf.Max((_RigidBody.velocity.magnitude - _PreviousValue) / Time.deltaTime, 0f);
+                    _PreviousValue = _RigidBody.velocity.magnitude;
                     break;
                 case InteractionParameterType.Deacceleration:
-                    currentValue = Mathf.Abs(Mathf.Min((_RigidBody.velocity.magnitude - _PreviousInputValue) / Time.deltaTime, 0f));
-                    _PreviousInputValue = _RigidBody.velocity.magnitude;
+                    currentValue = Mathf.Abs(Mathf.Min((_RigidBody.velocity.magnitude - _PreviousValue) / Time.deltaTime, 0f));
+                    _PreviousValue = _RigidBody.velocity.magnitude;
                     break;
                 case InteractionParameterType.Scale:
                     currentValue = _SourceObject.transform.localScale.magnitude;

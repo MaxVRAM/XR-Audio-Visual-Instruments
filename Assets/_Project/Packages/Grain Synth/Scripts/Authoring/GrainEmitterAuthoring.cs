@@ -28,10 +28,10 @@ public class GrainEmitterAuthoring : BaseEmitterClass
         _EmitterType = EmitterType.Grain;
     }
 
-    public override void SetupTempEmitter(Collision collision, GrainSpeakerAuthoring speaker)
+    public override void SetupAttachedEmitter(Collision collision, GrainSpeakerAuthoring speaker)
     {
         _ColldingObject = collision.collider.gameObject;
-        _EmitterSetup = EmitterSetup.Temp;
+        _EmitterSetup = EmitterSetup.Attached;
         _EmissionProps._Playing = true;
         _Colliding = true;
         _CollisionTriggered = true;
@@ -40,14 +40,12 @@ public class GrainEmitterAuthoring : BaseEmitterClass
 
         gameObject.transform.localPosition = Vector3.zero;
 
-        _EmissionProps._Playhead._InteractionInput.UpdateTempEmitterInteractionSource(this.transform.parent.gameObject, collision);
-        _EmissionProps._Density._InteractionInput.UpdateTempEmitterInteractionSource(this.transform.parent.gameObject, collision);
-        _EmissionProps._GrainDuration._InteractionInput.UpdateTempEmitterInteractionSource(this.transform.parent.gameObject, collision);
-        _EmissionProps._Transpose._InteractionInput.UpdateTempEmitterInteractionSource(this.transform.parent.gameObject, collision);
-        _EmissionProps._Volume._InteractionInput.UpdateTempEmitterInteractionSource(this.transform.parent.gameObject, collision);
+        _EmissionProps._Playhead._InteractionInput.UpdateAttachedEmitterInteractionSource(this.transform.parent.gameObject, collision);
+        _EmissionProps._Density._InteractionInput.UpdateAttachedEmitterInteractionSource(this.transform.parent.gameObject, collision);
+        _EmissionProps._GrainDuration._InteractionInput.UpdateAttachedEmitterInteractionSource(this.transform.parent.gameObject, collision);
+        _EmissionProps._Transpose._InteractionInput.UpdateAttachedEmitterInteractionSource(this.transform.parent.gameObject, collision);
+        _EmissionProps._Volume._InteractionInput.UpdateAttachedEmitterInteractionSource(this.transform.parent.gameObject, collision);
     }
-
-
 
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
@@ -60,7 +58,7 @@ public class GrainEmitterAuthoring : BaseEmitterClass
             _PairedSpeaker = gameObject.GetComponent<GrainSpeakerAuthoring>();          
         }
 
-        if(_PairedSpeaker != null)
+        if (_PairedSpeaker != null)
         {
             _PairedSpeaker.AddPairedEmitter(gameObject);
             _StaticallyPaired = true;
@@ -146,7 +144,6 @@ public class GrainEmitterAuthoring : BaseEmitterClass
 
         #endregion
 
-
         dstManager.AddBuffer<DSPParametersElement>(_EmitterEntity);
         DynamicBuffer<DSPParametersElement> dspParams = dstManager.GetBuffer<DSPParametersElement>(_EmitterEntity);
         for (int i = 0; i < _DSPChainParams.Length; i++)
@@ -164,7 +161,7 @@ public class GrainEmitterAuthoring : BaseEmitterClass
         if (!_Initialized)
             return;
 
-        if ((_EmitterSetup == EmitterSetup.Temp && !_Colliding) || _EmitterSetup == EmitterSetup.Dummy)
+        if ((_EmitterSetup == EmitterSetup.Attached && !_Colliding) || _EmitterSetup == EmitterSetup.Attachable)
             _EmissionProps._Playing = false;
 
         _CurrentDistance = Mathf.Abs((_HeadPosition.position - transform.position).magnitude);

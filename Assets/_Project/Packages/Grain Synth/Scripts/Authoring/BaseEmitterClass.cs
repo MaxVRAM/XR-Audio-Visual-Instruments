@@ -13,7 +13,7 @@ using Random = UnityEngine.Random;
 public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
 {
     public enum EmitterType {Grain, Burst}
-    public enum EmitterSetup {Local, Dummy, Temp}
+    public enum EmitterSetup {Self, Attachable, Attached}
 
     [Header("Emitter Config")]
     public EmitterType _EmitterType;
@@ -45,9 +45,9 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
     public float _DistanceVolume = 0;
     public bool _WithinEarshot = true;
 
-    [SerializeField]
-    protected GameObject _CollidingDummyEmitterGameObject;
-    protected List<GameObject> _RemoteInteractions;
+    //[SerializeField]
+    //protected GameObject _CollidingDummyEmitterGameObject;
+    //protected List<GameObject> _RemoteInteractions;
 
 
     [Header("Sound Config")]
@@ -136,7 +136,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
 
     //public virtual void SetRemoteBurstEmitter(DummyBurstEmitter dummyEmitter) { }
 
-    public virtual void SetupTempEmitter(Collision collision, GrainSpeakerAuthoring speaker) { }
+    public virtual void SetupAttachedEmitter(Collision collision, GrainSpeakerAuthoring speaker) { }
 
     public virtual void Initialise() { }
 

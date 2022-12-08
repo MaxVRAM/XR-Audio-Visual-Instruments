@@ -26,7 +26,7 @@ public class InteractionVacuum : InteractionBase
 
     void Update()
     {
-        float currentValue = _PreviousInputValue;
+        float currentValue = _PreviousValue;
 
         if (_VacuumInstrument != null)
         {

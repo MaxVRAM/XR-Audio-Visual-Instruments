@@ -28,10 +28,10 @@ public class BurstEmitterAuthoring : BaseEmitterClass
         _EmitterType = EmitterType.Burst;
     }
 
-    public override void SetupTempEmitter(Collision collision, GrainSpeakerAuthoring speaker)
+    public override void SetupAttachedEmitter(Collision collision, GrainSpeakerAuthoring speaker)
     {
         _ColldingObject = collision.collider.gameObject;
-        _EmitterSetup = EmitterSetup.Temp;
+        _EmitterSetup = EmitterSetup.Attached;
         _EmissionProps._Playing = true;
         _Colliding = true;
         _CollisionTriggered = true;
@@ -41,12 +41,12 @@ public class BurstEmitterAuthoring : BaseEmitterClass
         _TimeExisted = 0;
         gameObject.transform.localPosition = Vector3.zero;
 
-        _EmissionProps._Playhead._InteractionInput.UpdateTempEmitterInteractionSource(this.transform.parent.gameObject, collision);
-        _EmissionProps._BurstDuration._InteractionInput.UpdateTempEmitterInteractionSource(this.transform.parent.gameObject, collision);
-        _EmissionProps._Density._InteractionInput.UpdateTempEmitterInteractionSource(this.transform.parent.gameObject, collision);
-        _EmissionProps._GrainDuration._InteractionInput.UpdateTempEmitterInteractionSource(this.transform.parent.gameObject, collision);
-        _EmissionProps._Transpose._InteractionInput.UpdateTempEmitterInteractionSource(this.transform.parent.gameObject, collision);
-        _EmissionProps._Volume._InteractionInput.UpdateTempEmitterInteractionSource(this.transform.parent.gameObject, collision);
+        _EmissionProps._Playhead._InteractionInput.UpdateAttachedEmitterInteractionSource(this.transform.parent.gameObject, collision);
+        _EmissionProps._BurstDuration._InteractionInput.UpdateAttachedEmitterInteractionSource(this.transform.parent.gameObject, collision);
+        _EmissionProps._Density._InteractionInput.UpdateAttachedEmitterInteractionSource(this.transform.parent.gameObject, collision);
+        _EmissionProps._GrainDuration._InteractionInput.UpdateAttachedEmitterInteractionSource(this.transform.parent.gameObject, collision);
+        _EmissionProps._Transpose._InteractionInput.UpdateAttachedEmitterInteractionSource(this.transform.parent.gameObject, collision);
+        _EmissionProps._Volume._InteractionInput.UpdateAttachedEmitterInteractionSource(this.transform.parent.gameObject, collision);
     }
 
     public override void NewCollision(Collision collision)
@@ -203,7 +203,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
         if (!_Initialized)
             return;
 
-        if ((_EmitterSetup == EmitterSetup.Temp && !_Colliding) || _EmitterSetup == EmitterSetup.Dummy)
+        if ((_EmitterSetup == EmitterSetup.Attached && !_Colliding) || _EmitterSetup == EmitterSetup.Attachable)
             _EmissionProps._Playing = false;
 
         _CurrentDistance = Mathf.Abs((_HeadPosition.position - transform.position).magnitude);
@@ -350,7 +350,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
             _EmissionProps._Playing = false;
         }
         // Clear emitter props and colliding object when burst is complete if this is a remote burst emitter
-        if (_EmitterSetup == EmitterSetup.Temp)
+        if (_EmitterSetup == EmitterSetup.Attached)
         {
             _TimeExisted += Time.deltaTime;
 

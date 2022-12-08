@@ -16,7 +16,7 @@ public class InteractionCollision : InteractionBase
 
     public bool _UseMassOfCollidingBody = false;
 
-    public override void UpdateTempEmitterInteractionSource(GameObject gameObject, Collision collision)
+    public override void UpdateAttachedEmitterInteractionSource(GameObject gameObject, Collision collision)
     {
         _SourceObject = gameObject;
         _RigidBody = _SourceObject.GetComponent<Rigidbody>();

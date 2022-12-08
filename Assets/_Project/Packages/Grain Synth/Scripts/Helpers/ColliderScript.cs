@@ -4,11 +4,14 @@ using UnityEngine;
 
 public class ColliderScript : MonoBehaviour
 {
-    public bool _HostDummyEmittersOnCollision = false;
+    /// <summary>
+    /// When true, this object will spawn "attachable" emitters from colliding objects.
+    /// </summary>
+    public bool _HostAttachableEmittersOnCollision = false;
     public GrainSpeakerAuthoring _Speaker;
-    public List<BaseEmitterClass> _LocalEmitters;
-    public List<BaseEmitterClass> _DummyEmitters;
-    public List<BaseEmitterClass> _TempGrainEmitters;
+    public List<BaseEmitterClass> _SelfEmitters;
+    public List<BaseEmitterClass> _AttachableEmitters;
+    public List<BaseEmitterClass> _AttachedEmitters;
     public InteractionBase[] _Interactions;
     public int _CollidingCount = 0;
     public List<GameObject> _CollidingObjects;
@@ -21,16 +24,14 @@ public class ColliderScript : MonoBehaviour
         if (_Speaker == null)
             _Speaker = GetComponentInChildren<GrainSpeakerAuthoring>();
 
-
-
         BaseEmitterClass[] emitters = GetComponentsInChildren<BaseEmitterClass>();
 
         foreach (var emitter in emitters)
         {
-            if (emitter._EmitterSetup == BaseEmitterClass.EmitterSetup.Local)
-                _LocalEmitters.Add(emitter);
-            else if (emitter._EmitterSetup == BaseEmitterClass.EmitterSetup.Dummy)
-                _DummyEmitters.Add(emitter);
+            if (emitter._EmitterSetup == BaseEmitterClass.EmitterSetup.Self)
+                _SelfEmitters.Add(emitter);
+            else if (emitter._EmitterSetup == BaseEmitterClass.EmitterSetup.Attachable)
+                _AttachableEmitters.Add(emitter);
         }
 
         _Interactions = GetComponentsInChildren<InteractionBase>();
@@ -44,26 +45,26 @@ public class ColliderScript : MonoBehaviour
         }
 
         ColliderScript remoteColliderScript = collision.collider.GetComponent<ColliderScript>();
-        
+
         if (remoteColliderScript != null)
         {
             if (!_CollidingObjects.Contains(remoteColliderScript.gameObject))
             {
                 _CollidingObjects.Add(remoteColliderScript.gameObject);
 
-                if (_HostDummyEmittersOnCollision)
-                    foreach (var remoteDummyEmitter in remoteColliderScript._DummyEmitters)
+                if (_HostAttachableEmittersOnCollision)
+                    foreach (var attachableEmitter in remoteColliderScript._AttachableEmitters)
                     {
-                        GameObject newTempEmitter = Instantiate(remoteDummyEmitter.gameObject, gameObject.transform);
-                        newTempEmitter.GetComponent<BaseEmitterClass>().SetupTempEmitter(collision, _Speaker);
+                        GameObject newAttachedEmitter = Instantiate(attachableEmitter.gameObject, gameObject.transform);
+                        newAttachedEmitter.GetComponent<BaseEmitterClass>().SetupAttachedEmitter(collision, _Speaker);
 
-                        if (newTempEmitter.GetComponent<GrainEmitterAuthoring>() != null)
-                            _TempGrainEmitters.Add(newTempEmitter.GetComponent<BaseEmitterClass>());
+                        if (newAttachedEmitter.GetComponent<GrainEmitterAuthoring>() != null)
+                            _AttachedEmitters.Add(newAttachedEmitter.GetComponent<BaseEmitterClass>());
                     }
             }
         }
 
-        foreach (var emitter in _LocalEmitters)
+        foreach (var emitter in _SelfEmitters)
         {
             if (emitter._EmitterType == BaseEmitterClass.EmitterType.Burst)
                 emitter.NewCollision(collision);
@@ -79,7 +80,7 @@ public class ColliderScript : MonoBehaviour
             interaction.SetColliding(true, collision.collider.material);
         }
 
-        foreach (var emitter in _LocalEmitters)
+        foreach (var emitter in _SelfEmitters)
         {
             if (emitter._EmitterType == BaseEmitterClass.EmitterType.Grain)
                 emitter.UpdateCurrentCollisionStatus(collision);
@@ -90,7 +91,7 @@ public class ColliderScript : MonoBehaviour
     {
         _CollidingCount--;
 
-        foreach (var emitter in _LocalEmitters)
+        foreach (var emitter in _SelfEmitters)
         {
             if (_CollidingCount == 0)
             {
@@ -104,12 +105,12 @@ public class ColliderScript : MonoBehaviour
             interaction.SetColliding(false, collision.collider.material);
         }
 
-        for (int i = _TempGrainEmitters.Count - 1; i >= 0; i--)
+        for (int i = _AttachedEmitters.Count - 1; i >= 0; i--)
         {
-            if (_TempGrainEmitters[i]._ColldingObject == collision.collider.gameObject)
+            if (_AttachedEmitters[i]._ColldingObject == collision.collider.gameObject)
             {
-                Destroy(_TempGrainEmitters[i].gameObject);
-                _TempGrainEmitters.RemoveAt(i);
+                Destroy(_AttachedEmitters[i].gameObject);
+                _AttachedEmitters.RemoveAt(i);
             }
         }
 

@@ -11,7 +11,7 @@ public class InteractionBase : MonoBehaviour
     public float _InputMax = 1f;
     public float _OutputValue = 0;
 
-    protected float _PreviousInputValue = 0;
+    protected float _PreviousValue = 0;
     protected bool _HoldTempValue = false;
     protected bool _Colliding = false;
     protected PhysicMaterial _CollidedMaterial;
@@ -25,9 +25,13 @@ public class InteractionBase : MonoBehaviour
             _SourceObject = this.transform.parent.gameObject;
 
         _RigidBody = _SourceObject.GetComponent<Rigidbody>();
+
+        AdditionalStartFunction();
     }
 
-    public virtual void UpdateTempEmitterInteractionSource(GameObject gameObject, Collision collision) { }
+    public virtual void AdditionalStartFunction() { }
+
+    public virtual void UpdateAttachedEmitterInteractionSource(GameObject gameObject, Collision collision) { }
 
     public float GetValue()
     {
