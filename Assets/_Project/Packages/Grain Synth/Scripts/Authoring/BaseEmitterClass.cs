@@ -7,8 +7,6 @@ using Unity.Transforms;
 using Random = UnityEngine.Random;
 
 
-
-
 [DisallowMultipleComponent]
 [RequiresEntityConversion]
 [RequireComponent(typeof(ConvertToEntity))]
