@@ -4,7 +4,6 @@ using Unity.Transforms;
 
 #region ---------- COMPONENTS
 
-
 public struct AudioClipDataComponent :IComponentData
 {
     public BlobAssetReference<FloatBlobAsset> _ClipDataBlobAsset;
@@ -22,7 +21,6 @@ public struct SpeakerManagerComponent : IComponentData
     public float _EmitterToListenerActivationRange;
     public float _EmitterToSpeakerAttachRadius;
 }
-
 
 public struct GrainProcessor : IComponentData
 {
@@ -109,12 +107,12 @@ public struct ModulateParameterComponent : IComponentData
     public float _InteractionInput;
 }
 
-public struct EmitterComponent : IComponentData
+public struct ContinuousEmitterComponent : IComponentData
 {
-    public bool _AttachedToSpeaker;
+    public bool _LinkedToSpeaker;
     public int _SpeakerIndex;
-    public bool _StaticallyPaired;
-    public bool _InRange;
+    public bool _StaticallyLinked;
+    public bool _ListenerInRange;
     public int _EmitterIndex;
     public bool _Playing;   
     public int _AudioClipIndex;
@@ -127,13 +125,10 @@ public struct EmitterComponent : IComponentData
     public ModulateParameterComponent _Volume;
 
     public float _DistanceAmplitude;
-
     public int _LastGrainEmissionDSPIndex;
     public int _LastGrainDuration;
     public float _PlayheadPosNormalized;
-
     public int _SampleRate;
-
     public int _DebugCount;
 }
 
@@ -141,7 +136,7 @@ public struct BurstEmitterComponent : IComponentData
 {
     public bool _AttachedToSpeaker;
     public int _SpeakerIndex;
-    public bool _StaticallyPaired;
+    public bool _StaticallyLinked;
     public bool _InRange;
     public int _EmitterIndex;
     public bool _Playing;
@@ -156,12 +151,9 @@ public struct BurstEmitterComponent : IComponentData
     public ModulateParameterComponent _Volume;
 
     public float _DistanceAmplitude;
-
     public int _LastGrainEmissionDSPIndex;
     public int _RandomOffsetInSamples;
-
     public int _SampleRate;
-
     public int _DebugCount;
 }
 
@@ -242,10 +234,4 @@ public struct FloatBlobAsset
 
 #endregion
 
-
-
-public struct TestComp : IComponentData
-{
-    public float testVar;
-}
 

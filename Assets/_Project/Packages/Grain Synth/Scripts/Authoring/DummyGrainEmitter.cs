@@ -4,5 +4,5 @@ using UnityEngine;
 
 public class DummyGrainEmitter : MonoBehaviour
 {
-    public EmissionProps _EmissionProps;
+    public ContinuousParameters _EmissionProps;
 }

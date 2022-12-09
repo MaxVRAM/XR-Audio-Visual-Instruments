@@ -4,5 +4,5 @@ using UnityEngine;
 
 public class DummyBurstEmitter : MonoBehaviour
 {
-    public BurstEmissionProps _EmissionProps;
+    public BurstParameters _EmissionProps;
 }

@@ -35,7 +35,7 @@ public class InteractionRelative : InteractionBase
     public float _Smoothing = 0.2f;
     float _PreviousDistance = 0f;
 
-    public override void AdditionalStartFunction()
+    public override void Initialise()
     {
         if (_TargetObject == null)
             _TargetObject = this.transform.parent.gameObject;
@@ -50,10 +50,6 @@ public class InteractionRelative : InteractionBase
 
         if (_RigidBody != null && _TargetRigidBody != null)
         {
-            Vector3 relativePosition = _SourceObject.transform.position - _TargetObject.transform.position;
-            Vector3 relativeVelocity = _RigidBody.velocity - _TargetRigidBody.velocity;
-            float radius = Mathf.Abs((_SourceObject.transform.position - _TargetObject.transform.position).magnitude);
-
             switch (_SourceParameter)
             {
                 case InteractionRelativeType.DistanceX:

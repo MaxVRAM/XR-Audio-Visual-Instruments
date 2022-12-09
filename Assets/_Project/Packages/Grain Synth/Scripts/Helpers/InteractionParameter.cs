@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-//
-// Summary:
+/// <summary>
 //     Provides an input value to use on a Grain Emitter, based on a physical interaction from the source rigid body.
-//
+/// <summary>
 [System.Serializable]
 public class InteractionParameter : InteractionBase
 {
@@ -27,9 +26,9 @@ public class InteractionParameter : InteractionBase
     [Range(0f, 1f)]
     public float _Smoothing = 0.2f;
 
-    public override void UpdateAttachedEmitterInteractionSource(GameObject gameObject, Collision collision)
+    public override void UpdateInteractionSource(GameObject sourceObject, Collision collision)
     {
-        _SourceObject = gameObject;
+        _SourceObject = sourceObject;
         _RigidBody = _SourceObject.GetComponent<Rigidbody>();
         _Colliding = true;
     }
@@ -83,8 +82,6 @@ public class InteractionParameter : InteractionBase
             }
         }
         else currentValue = 0;
-
-
         UpdateSmoothedOutputValue(currentValue, _Smoothing);
     }
 

@@ -37,7 +37,7 @@ namespace Tekh2
         }
         #endregion
 
-        public GrainEmitterAuthoring _Emitter;
+        public ContinuousEmitterAuthoring _Emitter;
 
         public PlaybackType _PlaybackType = PlaybackType.OneShot;
 

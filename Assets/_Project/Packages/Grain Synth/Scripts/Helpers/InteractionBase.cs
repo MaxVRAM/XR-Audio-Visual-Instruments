@@ -6,11 +6,11 @@ public class InteractionBase : MonoBehaviour
 {
     public GameObject _SourceObject;
     public Rigidbody _RigidBody;
+    protected GameObject _RemoteObject;
 
     public float _InputMin = 0f;
     public float _InputMax = 1f;
     public float _OutputValue = 0;
-
     protected float _PreviousValue = 0;
     protected bool _HoldTempValue = false;
     protected bool _Colliding = false;
@@ -26,12 +26,14 @@ public class InteractionBase : MonoBehaviour
 
         _RigidBody = _SourceObject.GetComponent<Rigidbody>();
 
-        AdditionalStartFunction();
+        Initialise();
     }
 
-    public virtual void AdditionalStartFunction() { }
+    public virtual void Initialise() { }
 
-    public virtual void UpdateAttachedEmitterInteractionSource(GameObject gameObject, Collision collision) { }
+    public virtual void UpdateInteractionSource(GameObject sourceObject) { }
+    public virtual void UpdateInteractionSource(GameObject sourceObject, GameObject targetObject) { }
+    public virtual void UpdateInteractionSource(GameObject sourceObject, Collision collision) { }
 
     public float GetValue()
     {

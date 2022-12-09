@@ -3,11 +3,14 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.Collections;
 using Unity.Jobs;
+using System;
 
 // https://docs.unity3d.com/Packages/com.unity.entities@0.13/api/
 
+/// <summary>
+//     Processes dynamic emitter-speaker link components amd updates entity in-range statuses.
+/// <summary>
 [UpdateAfter(typeof(DOTS_QuadrantSystem))]
-//------  Check which emitters and speakers are within the range of the listener
 public class RangeCheckSystem : SystemBase
 {
     protected override void OnUpdate()
@@ -19,77 +22,66 @@ public class RangeCheckSystem : SystemBase
             All = new ComponentType[] { typeof(GrainSpeakerComponent), typeof(PooledObjectComponent), typeof(Translation) }
         };
 
+
+
+        //----    UPDATE ENTITY RANGE STATUSES
         EntityQuery speakerQuery = GetEntityQuery(speakerQueryDesc);
         NativeArray<PooledObjectComponent> pooledSpeakers = speakerQuery.ToComponentDataArray<PooledObjectComponent>(Allocator.TempJob);
         NativeArray<Translation> speakerTranslations = speakerQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
 
-        //Debug.Log("pooledSpeakers count: " + pooledSpeakers.Length);
-
-        //----    EMITTERS RANGE CHECK
-        JobHandle emitterRangeCheck = Entities.WithName("emitterRangeCheck").ForEach((ref EmitterComponent emitter, in Translation trans) =>
+        //----    EMITTERS
+        JobHandle emitterRangeCheck = Entities.WithName("emitterRangeCheck").ForEach((ref ContinuousEmitterComponent emitter, in Translation trans) =>
         {
-            if (!emitter._StaticallyPaired)
+            if (!emitter._StaticallyLinked)
             {
                 float distToListener = math.distance(trans.Value, speakerManager._ListenerPos);
                 bool inRangeCurrent = distToListener < speakerManager._EmitterToListenerActivationRange;
 
-         
-                //--  MOVING OUT OF RANGE, DEACTIVE EMITTER
-                if (emitter._InRange && !inRangeCurrent)
-                {
-                    emitter = DetachEmitter(emitter);
-                }
-                //--  MOVING INTO RANGE
-                else if (!emitter._InRange && inRangeCurrent)
-                {
-                    emitter._InRange = true;
-                }
+                // Update activation status of emitters that have moved in/out of range from the listener.
+                if (emitter._ListenerInRange && !inRangeCurrent)
+                    emitter = UnLink(emitter);
+                else if (!emitter._ListenerInRange && inRangeCurrent)
+                    emitter._ListenerInRange = true;
 
-
-                //---  OUT OF RANGE TO SPEAKER OR SPEAKER HAS BEEN DEACTIVATED - DETACH EMITTER
-                if (emitter._AttachedToSpeaker)
+                // Unlink emitters from their speaker if they have moved from eachother
+                if (emitter._LinkedToSpeaker)
                 {
                     float emitterToSpeakerDist = math.distance(trans.Value, speakerTranslations[emitter._SpeakerIndex].Value);
                     if (pooledSpeakers[emitter._SpeakerIndex]._State == PooledObjectState.Pooled || emitterToSpeakerDist > speakerManager._EmitterToSpeakerAttachRadius)
-                    {
-                        emitter = DetachEmitter(emitter);
-                    }
+                        emitter = UnLink(emitter);
                 }
             }
         }).WithDisposeOnCompletion(pooledSpeakers)
         .WithDisposeOnCompletion(speakerTranslations)
         .ScheduleParallel(this.Dependency);
 
-
-
-        //----    SPEAKERS OUT OF RANGE CHECK
+        //----    SPEAKERS
         JobHandle speakerRangeCheck = Entities.WithName("speakerRangeCheck").ForEach((ref PooledObjectComponent poolObj, in GrainSpeakerComponent speaker, in Translation trans ) =>
         {
             float dist = math.distance(trans.Value, speakerManager._ListenerPos);
             bool inRangeCurrent = dist < speakerManager._EmitterToListenerActivationRange;
-
-            //--  IF MOVING OUT OF RANGE
+            // Deactivate out-of-range speakers
             if (poolObj._State == PooledObjectState.Active && !inRangeCurrent)
-            {
                 poolObj._State = PooledObjectState.Pooled;
-            }
         }).ScheduleParallel(this.Dependency);
 
 
 
-        //----     FIND ACTIVE SPEAKERS IN RANGE
+
+        //----      FIND NEAREST SPEAKER FOR UNLINKED EMITTERS
         JobHandle rangeCheckDeps = JobHandle.CombineDependencies(emitterRangeCheck, speakerRangeCheck);
         NativeArray<Entity> speakerEnts = GetEntityQuery(typeof(GrainSpeakerComponent), typeof(Translation)).ToEntityArray(Allocator.TempJob);
         DSPTimerComponent dspTimer = GetSingleton<DSPTimerComponent>();       
 
-        JobHandle activeSpeakersInRange = Entities.WithName("activeSpeakersInRange").ForEach((ref EmitterComponent emitter, in Translation emitterTrans) =>
+        JobHandle activeSpeakersInRange = Entities.WithName("activeSpeakersInRange").ForEach((ref ContinuousEmitterComponent emitter, in Translation emitterTrans) =>
         {
-            //--- IF EMITTER IS IN RANGE AND NOT ATTACHED TO A SPEAKER THEN LOOK FOR CLOSEST
-            if (emitter._InRange && !emitter._AttachedToSpeaker)
+            // Find emitters not currently linked to a speaker
+            if (emitter._ListenerInRange && !emitter._LinkedToSpeaker)
             {
                 float closestDist = float.MaxValue;
                 int closestSpeakerIndex = int.MaxValue;
 
+                // Find closest speaker to the emitter
                 for (int i = 0; i < speakerEnts.Length; i++)
                 {
                     if (GetComponent<PooledObjectComponent>(speakerEnts[i])._State == PooledObjectState.Active)
@@ -102,11 +94,10 @@ public class RangeCheckSystem : SystemBase
                         }
                     }
                 }
-
-                // If speaker in range is found then attach emitter to speaker
+                // Attach the emitter to the nearest valid speaker
                 if (closestSpeakerIndex != int.MaxValue)
                 {
-                    emitter._AttachedToSpeaker = true;
+                    emitter._LinkedToSpeaker = true;
                     emitter._SpeakerIndex = closestSpeakerIndex;
                     emitter._LastGrainEmissionDSPIndex = dspTimer._CurrentDSPSample;
                 } 
@@ -116,55 +107,49 @@ public class RangeCheckSystem : SystemBase
 
 
 
-        //----     IF THERE ARE EMITTERS WITHOUT A SPEAKER, SPAWN A POOLED SPEAKER ON AN EMITTER IN RANGE    
-        EntityQuery emitterQuery = GetEntityQuery(typeof(EmitterComponent));
-        NativeArray<Entity> emitterEnts = emitterQuery.ToEntityArray(Allocator.TempJob);
-        NativeArray<EmitterComponent> emitters = GetEntityQuery(typeof(EmitterComponent)).ToComponentDataArray<EmitterComponent>(Allocator.TempJob);
 
-        
+        //----     SPAWN A POOLED SPEAKER ON THE EMITTER IF NO NEARBY SPEAKERS WERE FOUND
+        EntityQuery emitterQuery = GetEntityQuery(typeof(ContinuousEmitterComponent));
+        NativeArray<Entity> emitterEnts = emitterQuery.ToEntityArray(Allocator.TempJob);
+        NativeArray<ContinuousEmitterComponent> emitters = GetEntityQuery(typeof(ContinuousEmitterComponent)).ToComponentDataArray<ContinuousEmitterComponent>(Allocator.TempJob);
         NativeArray<Entity> speakerEntities = speakerQuery.ToEntityArray(Allocator.TempJob);
         NativeArray<PooledObjectComponent> pooledSpeakerStates = speakerQuery.ToComponentDataArray<PooledObjectComponent>(Allocator.TempJob);        
 
         JobHandle speakerActivation = Job.WithName("speakerActivation").WithoutBurst().WithCode(() =>
         {
             bool spawned = false;
-
-            // Look through each speaker to see if it's pooled
+            // Find a pooled speaker
             for (int s = 0; s < pooledSpeakerStates.Length; s++)
             {
                 if (pooledSpeakerStates[s]._State == PooledObjectState.Pooled && !spawned)
                 {
-                    // Look through all emitters to find one in range but not attached to a speaker
+                    // Find an unlinked emitter to link with pooled speaker
                     for (int e = 0; e < emitters.Length; e++)
                     {
-                        if (emitters[e]._InRange && !emitters[e]._AttachedToSpeaker && !spawned)
+                        if (emitters[e]._ListenerInRange && !emitters[e]._LinkedToSpeaker && !spawned)
                         {
                             spawned = true;
 
                             int speakerIndex = GetComponent<GrainSpeakerComponent>(speakerEntities[s])._SpeakerIndex;
                             float3 speakerPos = GetComponent<Translation>(emitterEnts[e]).Value;
 
-                            // Set emitter component
-                            EmitterComponent emitter = GetComponent<EmitterComponent>(emitterEnts[e]);
-                            emitter._AttachedToSpeaker = true;
+                            // Update emitter component with speaker link
+                            ContinuousEmitterComponent emitter = GetComponent<ContinuousEmitterComponent>(emitterEnts[e]);
+                            emitter._LinkedToSpeaker = true;
                             emitter._SpeakerIndex = GetComponent<GrainSpeakerComponent>(speakerEntities[s])._SpeakerIndex;
                             emitter._LastGrainEmissionDSPIndex = dspTimer._CurrentDSPSample;
-                            SetComponent<EmitterComponent>(emitterEnts[e], emitter);
+                            SetComponent(emitterEnts[e], emitter);
 
-
-                            // Set speaker translation
+                            // Update speaker position
                             Translation speakerTrans = GetComponent<Translation>(speakerEntities[s]);
                             speakerTrans.Value = GetComponent<Translation>(emitterEnts[e]).Value;
-                            SetComponent<Translation>(speakerEntities[s], speakerTrans);
+                            SetComponent(speakerEntities[s], speakerTrans);
 
-
-                            // Set speaker pooled component
+                            // Update speaker pooled status to active
                             PooledObjectComponent pooledObj = GetComponent<PooledObjectComponent>(speakerEntities[s]);
                             pooledObj._State = PooledObjectState.Active;
-                            SetComponent<PooledObjectComponent>(speakerEntities[s], pooledObj);
+                            SetComponent(speakerEntities[s], pooledObj);
 
-                            //Debug.Log("Speaker placed - Index: " + speakerIndex + " @ " + speakerPos);
-                           
                             return;
                         }
                     }
@@ -174,14 +159,13 @@ public class RangeCheckSystem : SystemBase
         .WithDisposeOnCompletion(emitterEnts).WithDisposeOnCompletion(emitters)
         .Schedule(activeSpeakersInRange);
 
-
         this.Dependency = speakerActivation;
     }
 
-    public static EmitterComponent DetachEmitter(EmitterComponent emitter)
+    public static ContinuousEmitterComponent UnLink(ContinuousEmitterComponent emitter)
     { 
-        emitter._AttachedToSpeaker = false;
-        emitter._InRange = false;
+        emitter._LinkedToSpeaker = false;
+        emitter._ListenerInRange = false;
         emitter._SpeakerIndex = int.MaxValue;
 
         return emitter;

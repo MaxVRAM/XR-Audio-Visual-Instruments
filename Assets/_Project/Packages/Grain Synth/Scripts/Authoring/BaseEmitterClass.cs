@@ -12,49 +12,54 @@ using Random = UnityEngine.Random;
 [RequireComponent(typeof(ConvertToEntity))]
 public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
 {
-    public enum EmitterType {Grain, Burst}
-    public enum EmitterSetup {Self, Attachable, Attached}
+    public enum EmitterType {Continuous, Burst}
 
-    [Header("Emitter Config")]
-    public EmitterType _EmitterType;
-    public EmitterSetup _EmitterSetup;
-    protected bool _Initialized = false;
-    protected bool _StaticallyPaired = false;
-    public bool _AttachedToSpeaker = false;
-    public int _AttachedSpeakerIndex;
-    public GrainSpeakerAuthoring _PairedSpeaker;
+    protected bool _Initialised = false;
     protected Entity _EmitterEntity;
     protected EntityManager _EntityManager;
-    protected float[] _PerlinSeedArray;
     protected Transform _HeadPosition;
+    protected float[] _PerlinSeedArray;
+    protected float _VolumeMultiply = 1;
+    protected float _SamplesPerMS = 0;
+
+    [Header("Emitter Configuration")]
+    public int _ClipIndex = 0;
+    public EmitterType _EmitterType;
+    public bool _ContactEmitter = false;
 
     [Header("Playback Config")]
     [Range(0.1f, 50f)]
     public float _MaxAudibleDistance = 10f;
-    public bool _MultiplyVolumeByColliderRigidity = false;
-    protected float _VolumeMultiply = 1;
     public bool _PingPongAtEndOfClip = true;
+    public bool _ColliderRigidityVolumeScale = false;
 
-    [Header("Runtime Activity")]
-    protected bool _InRangeTemp = false;
-    protected bool _CollisionTriggered = false;
-    public bool _Colliding = false;
-    public GameObject _ColldingObject;
+    [Header("Speaker Configuration")]
+    public GrainSpeakerAuthoring _LinkedSpeaker;
+    public int _LinkedSpeakerIndex;
+    public bool _LinkedToSpeaker = false;
+    protected bool _StaticallyLinked = false;
 
+
+    [Header("Runtime Dynamics")]
+    public bool _IsPlaying = true;
+    public bool _IsColliding = false;
+    public GameObject _CollidingObject;
+    protected bool _InSpeakerRange = false;
+    public bool _IsWithinEarshot = true;
     public float _CurrentDistance = 0;
     public float _DistanceVolume = 0;
-    public bool _WithinEarshot = true;
+    public float _TimeExisted = 0;
 
     //[SerializeField]
     //protected GameObject _CollidingDummyEmitterGameObject;
     //protected List<GameObject> _RemoteInteractions;
 
-
-    [Header("Sound Config")]
     public DSPBase[] _DSPChainParams;
+
 
     void Start()
     {
+        _SamplesPerMS = AudioSettings.outputSampleRate * 0.001f;
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _HeadPosition = FindObjectOfType<Camera>().transform;
 
@@ -64,12 +69,12 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
             float offset = Random.Range(0, 1000);
             _PerlinSeedArray[i] = Mathf.PerlinNoise(offset, offset * 0.5f);
         }
+        Initialise();
     }
 
     public void Awake()
     {
         GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
-        Initialise();
     }
 
     public void DestroyEntity()
@@ -83,15 +88,72 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
         DestroyEntity();
     }
 
-    // Only for burst emitter types
+    private void Update()
+    {
+        if (!_Initialised)
+            return;
+
+        _TimeExisted += Time.deltaTime;
+        _SamplesPerMS = AudioSettings.outputSampleRate * 0.001f;
+
+        #region DETERMINE PLAYBACK STATUS AND ADD COMPONENTS TO EMITTER ENTITY
+        if ((_ContactEmitter && !_IsColliding))
+        {
+            _IsPlaying = false;
+        }
+
+        _CurrentDistance = Mathf.Abs((_HeadPosition.position - transform.position).magnitude);
+
+        if (_CurrentDistance < _MaxAudibleDistance)
+        {
+            _IsWithinEarshot = true;
+            _EntityManager.AddComponent<WithinEarshot>(_EmitterEntity);
+        }
+        else
+        {
+            _IsWithinEarshot = false;
+            _EntityManager.RemoveComponent<WithinEarshot>(_EmitterEntity);
+        }
+
+        if (_IsPlaying)
+            _EntityManager.AddComponent<IsPlayingTag>(_EmitterEntity);
+        else
+            _EntityManager.RemoveComponent<IsPlayingTag>(_EmitterEntity);
+
+        _DistanceVolume = AudioUtils.EmitterFromListenerVolumeAdjust(_HeadPosition.position, transform.position, _MaxAudibleDistance);
+        #endregion
+
+        UpdateProperties();
+        UpdateDSPEffectsChain();
+
+        // Burst emitters only need a single pass to generate grain data for its duration.
+        if (_EmitterType == EmitterType.Burst) 
+        {
+            _IsPlaying = false;
+        }
+        //Translation trans = _EntityManager.GetComponentData<Translation>(_EmitterEntity);
+        _EntityManager.GetComponentData<Translation>(_EmitterEntity);
+        _EntityManager.SetComponentData(_EmitterEntity, new Translation { Value = transform.position });
+    }
+
+    public virtual void Initialise() { }
+
+    protected virtual void UpdateProperties() { }
+
+    public virtual void SetupAttachedEmitter(Collision collision, GrainSpeakerAuthoring speaker) { }
+    public virtual void SetupAttachedEmitter(GameObject go, GrainSpeakerAuthoring speaker) { }
+
+    public GrainSpeakerAuthoring DynamicallyLinkedSpeaker { get { return GrainSynth.Instance._GrainSpeakers[_LinkedSpeakerIndex]; } }
+
+    // Only for burst emitters
     public virtual void NewCollision(Collision collision) { }
 
-    // Only for grain emitter types
+    // Only for continuous emitters
     public void UpdateCurrentCollisionStatus(Collision collision)
     {
         if (collision == null)
         {
-            _Colliding = false;
+            _IsColliding = false;
             _VolumeMultiply = 1;
 
             // Clear emitter if it's set to remote
@@ -108,9 +170,8 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
         }
         else
         {
-            _Colliding = true;
-
-            if (!_MultiplyVolumeByColliderRigidity)
+            _IsColliding = true;
+            if (!_ColliderRigidityVolumeScale)
                 _VolumeMultiply = 1;
             else if (collision.collider.GetComponent<SurfaceParameters>() != null)
                 _VolumeMultiply = collision.collider.GetComponent<SurfaceParameters>()._Rigidity;
@@ -136,13 +197,8 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
 
     //public virtual void SetRemoteBurstEmitter(DummyBurstEmitter dummyEmitter) { }
 
-    public virtual void SetupAttachedEmitter(Collision collision, GrainSpeakerAuthoring speaker) { }
 
-    public virtual void Initialise() { }
-
-    public GrainSpeakerAuthoring DynamicallyAttachedSpeaker { get { return GrainSynth.Instance._GrainSpeakers[_AttachedSpeakerIndex]; } }
-
-    protected void UpdateDSPBuffer(bool clear = true)
+    protected void UpdateDSPEffectsChain(bool clear = true)
     {
         //--- TODO not sure if clearing and adding again is the best way to do this
         DynamicBuffer<DSPParametersElement> dspBuffer = _EntityManager.GetBuffer<DSPParametersElement>(_EmitterEntity);
@@ -162,7 +218,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
 
     protected void OnDrawGizmos()
     {
-        Gizmos.color = _InRangeTemp ? Color.yellow : Color.blue;
+        Gizmos.color = _InSpeakerRange ? Color.yellow : Color.blue;
         Gizmos.DrawSphere(transform.position, .1f);
     }
 

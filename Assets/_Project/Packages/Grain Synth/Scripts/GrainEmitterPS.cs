@@ -8,7 +8,7 @@ public class GrainEmitterPS : MonoBehaviour
     ParticleSystem.EmissionModule _Emission;
     ParticleSystem.MainModule _Main;
 
-    public GrainEmitterAuthoring _GrainEmitter;
+    public ContinuousEmitterAuthoring _GrainEmitter;
 
     // Start is called before the first frame update
     void Start()
@@ -21,7 +21,7 @@ public class GrainEmitterPS : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (_GrainEmitter._AttachedToSpeaker)
+        if (_GrainEmitter._LinkedToSpeaker)
         {
             //_Main.startLifetime = _GrainEmitter._EmissionProps.Duration * .001f;
             //_Emission.rateOverTime = 1000f / _GrainEmitter._EmissionProps.Cadence;

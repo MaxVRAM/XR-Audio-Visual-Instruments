@@ -72,9 +72,9 @@ public class GrainSynthSystem : SystemBase
 
         JobHandle emitGrains = Entities.WithNativeDisableParallelForRestriction(randomArray).ForEach
         (
-            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref EmitterComponent emitter, ref WithinEarshot earshot, ref IsPlayingTag playing) =>
+            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref ContinuousEmitterComponent emitter, ref WithinEarshot earshot, ref IsPlayingTag playing) =>
             {
-                if (emitter._AttachedToSpeaker)
+                if (emitter._LinkedToSpeaker)
                 {
                     // Max grains to stop it getting stuck in a while loop
                     int maxGrains = 50;

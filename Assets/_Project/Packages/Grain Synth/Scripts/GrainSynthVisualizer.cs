@@ -9,7 +9,7 @@ public class GrainSynthVisualizer : MonoBehaviour
 {
     #region ------------------------------------- VARIABLES 
     float _SampleRate;
-    public GrainEmitterAuthoring _Emitter;
+    public ContinuousEmitterAuthoring _Emitter;
     public GrainSpeakerAuthoring _GrainSpeaker;
     Vector3 _LookAtPos;
     int _ClipSampleCount;
