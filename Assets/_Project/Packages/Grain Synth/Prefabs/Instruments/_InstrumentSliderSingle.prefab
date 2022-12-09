@@ -46,9 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _ClipIndex: 41
   _EmitterType: 0
-  _Attachable: 0
-  _Attached: 0
-  _EmitterSetup: 0
+  _ContactEmitter: 0
   _MaxAudibleDistance: 6
   _PingPongAtEndOfClip: 1
   _ColliderRigidityVolumeScale: 0
@@ -57,7 +55,7 @@ MonoBehaviour:
   _LinkedToSpeaker: 0
   _IsPlaying: 1
   _IsColliding: 0
-  _ColldingObject: {fileID: 0}
+  _CollidingObject: {fileID: 0}
   _IsWithinEarshot: 1
   _CurrentDistance: 0
   _DistanceVolume: 0
@@ -218,9 +216,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _ClipIndex: 0
   _EmitterType: 1
-  _Attachable: 0
-  _Attached: 0
-  _EmitterSetup: 0
+  _ContactEmitter: 1
   _MaxAudibleDistance: 10
   _PingPongAtEndOfClip: 0
   _ColliderRigidityVolumeScale: 0
@@ -229,7 +225,7 @@ MonoBehaviour:
   _LinkedToSpeaker: 0
   _IsPlaying: 1
   _IsColliding: 0
-  _ColldingObject: {fileID: 0}
+  _CollidingObject: {fileID: 0}
   _IsWithinEarshot: 1
   _CurrentDistance: 2.0768652
   _DistanceVolume: 0.6107256
@@ -457,9 +453,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _ClipIndex: 49
   _EmitterType: 0
-  _Attachable: 0
-  _Attached: 0
-  _EmitterSetup: 0
+  _ContactEmitter: 1
   _MaxAudibleDistance: 10
   _PingPongAtEndOfClip: 1
   _ColliderRigidityVolumeScale: 0
@@ -468,7 +462,7 @@ MonoBehaviour:
   _LinkedToSpeaker: 0
   _IsPlaying: 1
   _IsColliding: 0
-  _ColldingObject: {fileID: 0}
+  _CollidingObject: {fileID: 0}
   _IsWithinEarshot: 1
   _CurrentDistance: 2.5814574
   _DistanceVolume: 0.44836962
@@ -642,13 +636,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2306625124509221287}
+  - component: {fileID: 2306625124509221285}
   - component: {fileID: 2306625124509222495}
   - component: {fileID: 2306625124509222494}
   - component: {fileID: 2306625124509221281}
   - component: {fileID: 2306625124509221280}
   - component: {fileID: 2306625124509221283}
   - component: {fileID: 2306625124509221282}
-  - component: {fileID: 2306625124509221285}
   - component: {fileID: 2306625124509221284}
   m_Layer: 8
   m_Name: _InstrumentSliderSingle
@@ -680,6 +674,25 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2306625124509221285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2306625124509221286}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fede2376eb93c5408d3f8b75ff00ba4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _Speaker: {fileID: 0}
+  _SelfEmitters: []
+  _ContactEmitters: []
+  _Interactions: []
+  _HostContactEmitters: 0
+  _HostedEmitters: []
+  _CollidingObjects: []
 --- !u!33 &2306625124509222495
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -852,27 +865,6 @@ MonoBehaviour:
   _BoundingObject: {fileID: 0}
   _Radius: 30
   _HeightLimit: 20
---- !u!114 &2306625124509221285
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2306625124509221286}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2fede2376eb93c5408d3f8b75ff00ba4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _HostAttachableEmittersOnCollision: 0
-  _Speaker: {fileID: 0}
-  _SelfEmitters: []
-  _AttachableEmitters: []
-  _AttachedEmitters: []
-  _Interactions: []
-  _AttachedCount: 0
-  _CollidingObjects: []
-  _ThisGameObject: {fileID: 0}
 --- !u!114 &2306625124509221284
 MonoBehaviour:
   m_ObjectHideFlags: 0

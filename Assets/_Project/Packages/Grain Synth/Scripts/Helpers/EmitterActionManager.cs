@@ -13,7 +13,6 @@ public class EmitterActionManager : MonoBehaviour
     public List<BaseEmitterClass> _ContactEmitters;
     public InteractionBase[] _Interactions;
     public bool _HostContactEmitters = false;
-    public int _AttachedCount = 0;
     public List<BaseEmitterClass> _HostedEmitters;
     public List<GameObject> _CollidingObjects;
     protected GameObject _ThisGameObject;
@@ -38,8 +37,6 @@ public class EmitterActionManager : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        _AttachedCount++;
-
         foreach (InteractionBase interaction in _Interactions)
         {
             interaction.SetCollisionData(collision);
@@ -87,9 +84,7 @@ public class EmitterActionManager : MonoBehaviour
 
     private void OnCollisionExit(Collision collision)
     {
-        _AttachedCount--;
-
-        if (_AttachedCount == 0)
+        if (_CollidingObjects.Count == 0)
             foreach (BaseEmitterClass emitter in _SelfEmitters)
             {
                 if (emitter._EmitterType == BaseEmitterClass.EmitterType.Continuous)

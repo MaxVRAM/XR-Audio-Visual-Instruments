@@ -17,14 +17,12 @@ public class EmitterSpawner : MonoBehaviour
     public bool _RandomPrefab = false;
     [Range(1, 200)]
     public int _TargetNumber = 1;
-    [Range(0f, 20f)]
-    public float _SpawnFrequency = 5f;
-    protected float _PreviousSpawnTime;
+    [Range(0f, 2f)]
+    public float _SpawnFrequency = 1f;
+    public float _NextSpawnCountdown = 0;
     [Range(0f, 3f)]
     public float _SpawnRadius = 0.5f;
-    public int _MaxSpawnPerFrame = 1;
-    public int _MaxRemovePerFrame = -1;
-    protected List<GameObject> _EmitterObjects = new List<GameObject>();
+    public List<GameObject> _EmitterObjects = new List<GameObject>();
     protected GameObject _ThisGameObject;
     protected string _Name;
 
@@ -47,44 +45,61 @@ public class EmitterSpawner : MonoBehaviour
         if (_EmitterPrefabs.Count == 0 && _SelectedPrefab != null)
             _EmitterPrefabs.Add(_SelectedPrefab);
 
+        if (_EmitterPrefabs.Count > 1 && _SelectedPrefab == null)
+            _SelectedPrefab = _EmitterPrefabs[0];
+
         if (_EmitterPrefabs.Count == 0)
             Debug.LogWarning("Emitter Spawner [" + _Name + "] not assigned any prefabs!");
     }
 
     void Update()
     {
-        if (_EmitterPrefabs.Count == 0 || (_EmittersUseSharedSpeaker && _SharedSpeaker == null))
-            return;
+        _NextSpawnCountdown -= Time.deltaTime;
 
-        if (_SelectedPrefab == null)
-            _SelectedPrefab = _EmitterPrefabs[0];
-        SpawnSliders();
-        RemoveSliders();
+        if (_SelectedPrefab != null && _SharedSpeaker != null)
+        {
+            SpawnSliders();
+            RemoveSliders();
+        }
     }
 
     private void SpawnSliders()
     {
-        if (_EmitterObjects.Count < _TargetNumber && Time.time > _PreviousSpawnTime + _SpawnFrequency / 1000)
+        if (_EmitterObjects.Count < _TargetNumber && _NextSpawnCountdown <= 0)
          {
-            GameObject go;
-            if (_RandomPrefab)
-                go = _EmitterPrefabs[Mathf.RoundToInt(Random.Range(0, _EmitterPrefabs.Count))];
-            else go = _SelectedPrefab;
+            GameObject objectToSpawn;
 
-            GameObject newSlider = Instantiate(go, Random.insideUnitCircle * _SpawnRadius, Random.rotation, transform);
-            newSlider.name = newSlider.name + " (" + (_EmitterObjects.Count) + ")";
-            _EmitterObjects.Add(newSlider);
-            _PreviousSpawnTime = Time.time;
+            if (_RandomPrefab)
+                objectToSpawn = _EmitterPrefabs[Mathf.RoundToInt(Random.Range(0, _EmitterPrefabs.Count))];
+            else objectToSpawn = _SelectedPrefab;
+
+            GameObject newObject = Instantiate(objectToSpawn, gameObject.transform);
+            newObject.name = newObject.name + " (" + (_EmitterObjects.Count) + ")";
+
+            EmitterActionManager actionManager = newObject.GetComponent<EmitterActionManager>();
+            if (actionManager != null)
+                actionManager._Speaker = _SharedSpeaker;
+
+            BaseEmitterClass[] emitters = newObject.GetComponentsInChildren<BaseEmitterClass>();
+            if (_EmittersUseSharedSpeaker)
+                foreach (BaseEmitterClass emitter in emitters)
+                    if (!emitter._ContactEmitter)
+                        emitter.GetComponent<BaseEmitterClass>().SetupAttachedEmitter(newObject, _SharedSpeaker);
+
+            _EmitterObjects.Add(newObject);
+            _NextSpawnCountdown = _SpawnFrequency;
+            Debug.Log("Created new slider " + newObject.name);
         }
     }
 
     private void RemoveSliders()
     {
-        if (_EmitterObjects.Count > _TargetNumber && Time.time > _PreviousSpawnTime + _SpawnFrequency / 1000)
+        if (_EmitterObjects.Count > _TargetNumber && _NextSpawnCountdown <= _SpawnFrequency)
         {
             Destroy(_EmitterObjects[_EmitterObjects.Count - 1]);
             _EmitterObjects.RemoveAt(_EmitterObjects.Count - 1);
-            _PreviousSpawnTime = Time.time;
+            _NextSpawnCountdown = _SpawnFrequency;
+            Debug.Log("Removing slider " + name);
         }
     }
 }

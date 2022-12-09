@@ -33,9 +33,11 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
         _IsPlaying = true;
         _StaticallyLinked = true;
         _LinkedSpeaker = speaker;
-        _CollidingObject = go;
         if (_ContactEmitter)
+        {
             _IsColliding = true;
+            _CollidingObject = go;
+        }
 
         gameObject.transform.localPosition = Vector3.zero;
 
