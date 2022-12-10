@@ -19,33 +19,37 @@ public class ContinuousParameters
 public class ContinuousEmitterAuthoring : BaseEmitterClass
 {
     public ContinuousParameters _Parameters;
-    
+
     public override void Initialise()
     {
         _EmitterType = EmitterType.Continuous;
-        if (_ContactEmitter)
-            _IsPlaying = false;
+        //_Parameters._Playhead.CheckInteractionInput();
+        //_Parameters._Density.CheckInteractionInput();
+        //_Parameters._GrainDuration.CheckInteractionInput();
+        //_Parameters._Transpose.CheckInteractionInput();
+        //_Parameters._Volume.CheckInteractionInput();
     }
 
-    public override void SetupAttachedEmitter(GameObject go, GrainSpeakerAuthoring speaker)
+    public override void SetupContactEmitter(Collision collision, GrainSpeakerAuthoring speaker)
     {
-        _TimeExisted = 0;
-        _IsPlaying = true;
-        _StaticallyLinked = true;
-        _LinkedSpeaker = speaker;
-        if (_ContactEmitter)
-        {
-            _IsColliding = true;
-            _CollidingObject = go;
-        }
+        ResetEmitter(collision.collider.gameObject, speaker);
 
-        gameObject.transform.localPosition = Vector3.zero;
+        _Parameters._Playhead.UpdateInteractionInput(_PrimaryObject);
+        _Parameters._Density.UpdateInteractionInput(_PrimaryObject);
+        _Parameters._GrainDuration.UpdateInteractionInput(_PrimaryObject);
+        _Parameters._Transpose.UpdateInteractionInput(_PrimaryObject);
+        _Parameters._Volume.UpdateInteractionInput(_PrimaryObject);
+    }
+    public override void SetupAttachedEmitter(GameObject primaryObject, GameObject secondaryObject, GrainSpeakerAuthoring speaker)
+    {   
+        _PrimaryObject = primaryObject;
+        ResetEmitter(secondaryObject, speaker);
 
-        _Parameters._Playhead._InteractionInput.UpdateInteractionSource(this.transform.parent.gameObject);
-        _Parameters._Density._InteractionInput.UpdateInteractionSource(this.transform.parent.gameObject);
-        _Parameters._GrainDuration._InteractionInput.UpdateInteractionSource(this.transform.parent.gameObject);
-        _Parameters._Transpose._InteractionInput.UpdateInteractionSource(this.transform.parent.gameObject);
-        _Parameters._Volume._InteractionInput.UpdateInteractionSource(this.transform.parent.gameObject);
+        _Parameters._Playhead.UpdateInteractionInput(_PrimaryObject, _SecondaryObject);
+        _Parameters._Density.UpdateInteractionInput(_PrimaryObject, _SecondaryObject);
+        _Parameters._GrainDuration.UpdateInteractionInput(_PrimaryObject, _SecondaryObject);
+        _Parameters._Transpose.UpdateInteractionInput(_PrimaryObject, _SecondaryObject);
+        _Parameters._Volume.UpdateInteractionInput(_PrimaryObject, _SecondaryObject);
     }
 
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
@@ -65,6 +69,10 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
             _LinkedSpeaker.AddPairedEmitter(gameObject);
             attachedSpeakerIndex =_LinkedSpeaker.GetRegisterAndGetIndex();
             dstManager.AddComponentData(_EmitterEntity, new StaticallyPairedTag { });
+        }
+        else
+        {
+            Debug.Log("WARNING: " + name + " could not speaker link.");
         }
 
         _LinkedSpeakerIndex = attachedSpeakerIndex;
@@ -140,7 +148,7 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
 
         #if UNITY_EDITOR
                 dstManager.SetName(entity, "Grain Emitter:   " + transform.parent.name + " " + gameObject.name);
-#endif
+        #endif
 
         #endregion
 
@@ -177,7 +185,7 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
             }
             else
             {
-                print(gameObject.name + " - Speaker index out of range ERROR. " + emitterData._SpeakerIndex + " / " + GrainSynth.Instance._GrainSpeakers.Count);
+                //print(gameObject.name + " - Speaker index out of range ERROR. " + emitterData._SpeakerIndex + " / " + GrainSynth.Instance._GrainSpeakers.Count);
                 emitterData._DistanceAmplitude = 0;
             }
 

@@ -12,13 +12,15 @@ public class InteractionCollision : InteractionBase
         CollisionNormal,
     }
 
-    public InteractionCollisionType _SourceParameter;
-    public bool _UseMassOfCollidingBody = false;
+    public InteractionCollisionType _InputProperty;
+    public bool _UseMassOfCollider = false;
 
-    public override void UpdateInteractionSource(GameObject sourceObject, Collision collision)
+    public override void UpdateInteractionSource(GameObject primaryObject, Collision collision)
     {
-        _SourceObject = sourceObject;
-        _RigidBody = _SourceObject.GetComponent<Rigidbody>();
+        _PrimaryObject = primaryObject;
+        _PrimaryRigidBody = _PrimaryObject.GetComponent<Rigidbody>();
+        _SecondaryObject = collision.collider.gameObject;
+        _SecondaryRigidBody = _SecondaryObject.GetComponent<Rigidbody>();
         _Colliding = true;
 
         SetCollisionData(collision);
@@ -26,23 +28,22 @@ public class InteractionCollision : InteractionBase
 
     public override void SetCollisionData(Collision collision)
     {
-        switch (_SourceParameter)
+        switch (_InputProperty)
         {
             case InteractionCollisionType.CollisionForce:
                 _OutputValue = collision.relativeVelocity.magnitude;
                 break;
             case InteractionCollisionType.CollisionForceTimesMass:
-                if (_RigidBody != null)
+                if (_PrimaryRigidBody != null)
                 {
-                    if (_UseMassOfCollidingBody)
+                    if (_UseMassOfCollider)
                     {
-                        Rigidbody remoteRB = collision.collider.GetComponent<Rigidbody>();
-                        if (remoteRB != null)
-                            _OutputValue = collision.relativeVelocity.magnitude * (1 - remoteRB.mass / 2);
+                        if (_SecondaryRigidBody != null)
+                            _OutputValue = collision.relativeVelocity.magnitude * (1 - _SecondaryRigidBody.mass / 2);
                     }
                     else
                     {
-                        _OutputValue = collision.relativeVelocity.magnitude * _RigidBody.mass;
+                        _OutputValue = collision.relativeVelocity.magnitude * _PrimaryRigidBody.mass;
                     }
 
                 }

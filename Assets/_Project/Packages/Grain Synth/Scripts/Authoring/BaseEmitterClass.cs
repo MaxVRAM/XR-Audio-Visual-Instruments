@@ -42,8 +42,9 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
 
     [Header("Runtime Dynamics")]
     public bool _IsPlaying = true;
-    public bool _IsColliding = false;
-    public GameObject _CollidingObject;
+    public bool _IsTriggered = false;
+    public GameObject _PrimaryObject;
+    public GameObject _SecondaryObject;
     protected bool _InSpeakerRange = false;
     public bool _IsWithinEarshot = true;
     public float _CurrentDistance = 0;
@@ -69,6 +70,10 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
             float offset = Random.Range(0, 1000);
             _PerlinSeedArray[i] = Mathf.PerlinNoise(offset, offset * 0.5f);
         }
+
+        if (_PrimaryObject == null)
+            _PrimaryObject = this.transform.parent.gameObject;
+
         Initialise();
     }
 
@@ -97,7 +102,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
         _SamplesPerMS = AudioSettings.outputSampleRate * 0.001f;
 
         #region DETERMINE PLAYBACK STATUS AND ADD COMPONENTS TO EMITTER ENTITY
-        if ((_ContactEmitter && !_IsColliding))
+        if ((_ContactEmitter && !_IsTriggered))
         {
             _IsPlaying = false;
         }
@@ -131,17 +136,27 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
         {
             _IsPlaying = false;
         }
-        //Translation trans = _EntityManager.GetComponentData<Translation>(_EmitterEntity);
-        _EntityManager.GetComponentData<Translation>(_EmitterEntity);
+        Translation trans = _EntityManager.GetComponentData<Translation>(_EmitterEntity);
         _EntityManager.SetComponentData(_EmitterEntity, new Translation { Value = transform.position });
     }
 
-    public virtual void Initialise() { }
+    public void ResetEmitter(GameObject secondaryObject, GrainSpeakerAuthoring speaker)
+    {
+        _TimeExisted = 0;
+        _IsPlaying = true;
+        _IsTriggered = true;
+        _StaticallyLinked = true;
+        _LinkedSpeaker = speaker;
+        _SecondaryObject = secondaryObject;
+        gameObject.transform.localPosition = Vector3.zero;
+        Initialise();
+    }
 
+    public virtual void Initialise() { }
     protected virtual void UpdateProperties() { }
 
-    public virtual void SetupAttachedEmitter(Collision collision, GrainSpeakerAuthoring speaker) { }
-    public virtual void SetupAttachedEmitter(GameObject go, GrainSpeakerAuthoring speaker) { }
+    public virtual void SetupContactEmitter(Collision collision, GrainSpeakerAuthoring speaker) { }
+    public virtual void SetupAttachedEmitter(GameObject primaryObject, GameObject secondaryObject, GrainSpeakerAuthoring speaker) { }
 
     public GrainSpeakerAuthoring DynamicallyLinkedSpeaker { get { return GrainSynth.Instance._GrainSpeakers[_LinkedSpeakerIndex]; } }
 
@@ -153,50 +168,18 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
     {
         if (collision == null)
         {
-            _IsColliding = false;
+            _IsTriggered = false;
             _VolumeMultiply = 1;
-
-            // Clear emitter if it's set to remote
-            //if (_EmitterSetup == EmitterSetup.Temp)
-            //{
-            //    if (_CollidingDummyEmitterGameObject != null)
-            //    {
-            //        Destroy(_CollidingDummyEmitterGameObject);
-            //        _CollidingDummyEmitterGameObject = null;
-            //    }
-                    
-            //    SetRemoteGrainEmitter(null, null);
-            //}
         }
         else
         {
-            _IsColliding = true;
+            _IsTriggered = true;
             if (!_ColliderRigidityVolumeScale)
                 _VolumeMultiply = 1;
             else if (collision.collider.GetComponent<SurfaceParameters>() != null)
                 _VolumeMultiply = collision.collider.GetComponent<SurfaceParameters>()._Rigidity;
-
-            //if (_EmitterSetup == EmitterSetup.Temp && _CollidingDummyEmitterGameObject != collision.collider.gameObject)
-            //{
-            //    _CollidingDummyEmitterGameObject = collision.collider.gameObject;
-
-            //    if (collision.collider.GetComponentInChildren<DummyGrainEmitter>() != null)
-            //    {
-            //        SetRemoteGrainEmitter(collision.collider.GetComponentInChildren<DummyGrainEmitter>(), collision.collider.GetComponentsInChildren<InteractionBase>());
-            //    }
-            //    else
-            //    {
-            //        _Colliding = false;
-            //    }
-                    
-            //}
         }
     }
-
-    //public virtual void SetRemoteGrainEmitter(DummyGrainEmitter dummyEmitter, InteractionBase[] remoteInteractions) { }
-
-    //public virtual void SetRemoteBurstEmitter(DummyBurstEmitter dummyEmitter) { }
-
 
     protected void UpdateDSPEffectsChain(bool clear = true)
     {

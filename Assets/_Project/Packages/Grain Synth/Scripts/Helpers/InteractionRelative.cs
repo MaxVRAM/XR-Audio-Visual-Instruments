@@ -26,31 +26,18 @@ public class InteractionRelative : InteractionBase
         TangentialAccelerationAbsolute
     }
 
-    public GameObject _TargetObject;
-    public Rigidbody _TargetRigidBody;
-
-    public InteractionRelativeType _SourceParameter;
+    public InteractionRelativeType _InputProperty;
 
     [Range(0f, 1f)]
     public float _Smoothing = 0.2f;
-    float _PreviousDistance = 0f;
-
-    public override void Initialise()
-    {
-        if (_TargetObject == null)
-            _TargetObject = this.transform.parent.gameObject;
-
-        _TargetRigidBody = _TargetObject.GetComponent<Rigidbody>();
-    }
-
 
     private void Update()
     {
         float currentValue = _PreviousValue;
 
-        if (_RigidBody != null && _TargetRigidBody != null)
+        if (_PrimaryRigidBody != null && _SecondaryRigidBody != null)
         {
-            switch (_SourceParameter)
+            switch (_InputProperty)
             {
                 case InteractionRelativeType.DistanceX:
                     currentValue = Mathf.Abs(RelativePosition().x);
@@ -97,8 +84,6 @@ public class InteractionRelative : InteractionBase
             }
         }
         else currentValue = 0;
-
-
         UpdateSmoothedOutputValue(currentValue, _Smoothing);
     }
 
@@ -109,11 +94,11 @@ public class InteractionRelative : InteractionBase
 
     public Vector3 RelativePosition()
     {
-        return _SourceObject.transform.position - _TargetObject.transform.position;
+        return _PrimaryObject.transform.position - _SecondaryObject.transform.position;
     }
     public Vector3 RelativeVelocity()
     {
-        return _RigidBody.velocity - _TargetRigidBody.velocity;
+        return _PrimaryRigidBody.velocity - _SecondaryRigidBody.velocity;
     }
 
     // TODO Add to global static utility

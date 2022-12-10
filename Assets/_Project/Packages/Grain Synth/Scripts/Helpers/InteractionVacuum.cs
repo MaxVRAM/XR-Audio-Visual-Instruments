@@ -21,7 +21,7 @@ public class InteractionVacuum : InteractionBase
 
     private void Start()
     {
-        _VacuumInstrument = _SourceObject.GetComponent<Instrument_Vacuum>();
+        _VacuumInstrument = _PrimaryObject.GetComponent<Instrument_Vacuum>();
     }
 
     void Update()

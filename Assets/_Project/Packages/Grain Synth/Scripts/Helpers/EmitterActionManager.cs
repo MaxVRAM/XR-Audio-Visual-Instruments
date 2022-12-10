@@ -1,6 +1,8 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class EmitterActionManager : MonoBehaviour
@@ -27,12 +29,17 @@ public class EmitterActionManager : MonoBehaviour
         BaseEmitterClass[] emitters = GetComponentsInChildren<BaseEmitterClass>();
 
         foreach (BaseEmitterClass emitter in emitters)
-        {
-            if (emitter._ContactEmitter)
-                _ContactEmitters.Add(emitter);
-            else _SelfEmitters.Add(emitter);
-        }
+            AddNewEmitter(emitter);
+
         _Interactions = GetComponentsInChildren<InteractionBase>();
+    }
+
+    public void AddNewEmitter(BaseEmitterClass emitter)
+    {
+        if (emitter._ContactEmitter && !_ContactEmitters.Contains(emitter))
+            _ContactEmitters.Add(emitter);
+        else if (!_SelfEmitters.Contains(emitter))
+            _SelfEmitters.Add(emitter);
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -58,7 +65,7 @@ public class EmitterActionManager : MonoBehaviour
                 foreach (BaseEmitterClass contactEmitter in remoteActionManager._ContactEmitters)
                 {
                     GameObject newEmitter = Instantiate(contactEmitter.gameObject, gameObject.transform);
-                    newEmitter.GetComponent<BaseEmitterClass>().SetupAttachedEmitter(collision, _Speaker);
+                    newEmitter.GetComponent<BaseEmitterClass>().SetupContactEmitter(collision, _Speaker);
                     if (newEmitter.GetComponent<ContinuousEmitterAuthoring>() != null)
                         _HostedEmitters.Add(newEmitter.GetComponent<BaseEmitterClass>());
                 }
@@ -98,7 +105,7 @@ public class EmitterActionManager : MonoBehaviour
 
         for (int i = _HostedEmitters.Count - 1; i >= 0; i--)
         {
-            if (_HostedEmitters[i]._CollidingObject == collision.collider.gameObject)
+            if (_HostedEmitters[i]._SecondaryObject == collision.collider.gameObject)
             {
                 Destroy(_HostedEmitters[i].gameObject);
                 _HostedEmitters.RemoveAt(i);

@@ -12,7 +12,7 @@ public class EmitterSpawner : MonoBehaviour
 {
     public GrainSpeakerAuthoring _SharedSpeaker;
     public bool _EmittersUseSharedSpeaker = true;
-    public List<GameObject> _EmitterPrefabs;
+    public List<GameObject> _SliderPrefabs;
     public GameObject _SelectedPrefab;
     public bool _RandomPrefab = false;
     [Range(1, 200)]
@@ -22,7 +22,7 @@ public class EmitterSpawner : MonoBehaviour
     public float _NextSpawnCountdown = 0;
     [Range(0f, 3f)]
     public float _SpawnRadius = 0.5f;
-    public List<GameObject> _EmitterObjects = new List<GameObject>();
+    public List<GameObject> _Sliders = new List<GameObject>();
     protected GameObject _ThisGameObject;
     protected string _Name;
 
@@ -42,13 +42,13 @@ public class EmitterSpawner : MonoBehaviour
         if (_EmittersUseSharedSpeaker && _SharedSpeaker == null)
             Debug.LogWarning("Emitter Spawner [" + _Name + "] has no speaker to provide spawned objects!");
 
-        if (_EmitterPrefabs.Count == 0 && _SelectedPrefab != null)
-            _EmitterPrefabs.Add(_SelectedPrefab);
+        if (_SliderPrefabs.Count == 0 && _SelectedPrefab != null)
+            _SliderPrefabs.Add(_SelectedPrefab);
 
-        if (_EmitterPrefabs.Count > 1 && _SelectedPrefab == null)
-            _SelectedPrefab = _EmitterPrefabs[0];
+        if (_SliderPrefabs.Count > 1 && _SelectedPrefab == null)
+            _SelectedPrefab = _SliderPrefabs[0];
 
-        if (_EmitterPrefabs.Count == 0)
+        if (_SliderPrefabs.Count == 0)
             Debug.LogWarning("Emitter Spawner [" + _Name + "] not assigned any prefabs!");
     }
 
@@ -65,41 +65,45 @@ public class EmitterSpawner : MonoBehaviour
 
     private void SpawnSliders()
     {
-        if (_EmitterObjects.Count < _TargetNumber && _NextSpawnCountdown <= 0)
+        if (_Sliders.Count < _TargetNumber && _NextSpawnCountdown <= 0)
          {
             GameObject objectToSpawn;
 
             if (_RandomPrefab)
-                objectToSpawn = _EmitterPrefabs[Mathf.RoundToInt(Random.Range(0, _EmitterPrefabs.Count))];
+                objectToSpawn = _SliderPrefabs[Mathf.RoundToInt(Random.Range(0, _SliderPrefabs.Count))];
             else objectToSpawn = _SelectedPrefab;
 
-            GameObject newObject = Instantiate(objectToSpawn, gameObject.transform);
-            newObject.name = newObject.name + " (" + (_EmitterObjects.Count) + ")";
+            if (objectToSpawn.GetComponent<EmitterActionManager>() != null)
+            {
+                GameObject newObject = Instantiate(objectToSpawn, gameObject.transform);
+                EmitterActionManager newObjectActionManager = newObject.GetComponent<EmitterActionManager>();
+                BaseEmitterClass[] newObjectEmitters = newObject.GetComponentsInChildren<BaseEmitterClass>();
 
-            EmitterActionManager actionManager = newObject.GetComponent<EmitterActionManager>();
-            if (actionManager != null)
-                actionManager._Speaker = _SharedSpeaker;
+                newObject.name = newObject.name + " (" + (_Sliders.Count) + ")";
+                newObjectActionManager._Speaker = _SharedSpeaker;
 
-            BaseEmitterClass[] emitters = newObject.GetComponentsInChildren<BaseEmitterClass>();
-            if (_EmittersUseSharedSpeaker)
-                foreach (BaseEmitterClass emitter in emitters)
-                    if (!emitter._ContactEmitter)
-                        emitter.GetComponent<BaseEmitterClass>().SetupAttachedEmitter(newObject, _SharedSpeaker);
+                foreach (BaseEmitterClass emitter in newObjectEmitters)
+                {
+                    newObjectActionManager.AddNewEmitter(emitter);
+                    if (_EmittersUseSharedSpeaker && !emitter._ContactEmitter)
+                        emitter.GetComponent<BaseEmitterClass>().SetupAttachedEmitter(newObject, _ThisGameObject, _SharedSpeaker);
+                }
 
-            _EmitterObjects.Add(newObject);
-            _NextSpawnCountdown = _SpawnFrequency;
-            Debug.Log("Created new slider " + newObject.name);
+                _Sliders.Add(newObject);
+                _NextSpawnCountdown = _SpawnFrequency;
+                Debug.Log("Created new slider: " + newObject.name);
+            }
         }
     }
 
     private void RemoveSliders()
     {
-        if (_EmitterObjects.Count > _TargetNumber && _NextSpawnCountdown <= _SpawnFrequency)
+        if (_Sliders.Count > _TargetNumber && _NextSpawnCountdown <= _SpawnFrequency)
         {
-            Destroy(_EmitterObjects[_EmitterObjects.Count - 1]);
-            _EmitterObjects.RemoveAt(_EmitterObjects.Count - 1);
+            Destroy(_Sliders[_Sliders.Count - 1]);
+            _Sliders.RemoveAt(_Sliders.Count - 1);
             _NextSpawnCountdown = _SpawnFrequency;
-            Debug.Log("Removing slider " + name);
+            Debug.Log("Removing slider: " + name);
         }
     }
 }

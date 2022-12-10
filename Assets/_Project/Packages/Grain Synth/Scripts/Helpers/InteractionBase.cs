@@ -4,12 +4,14 @@ using UnityEngine;
 
 public class InteractionBase : MonoBehaviour
 {
-    public GameObject _SourceObject;
-    public Rigidbody _RigidBody;
-    protected GameObject _RemoteObject;
+    public GameObject _PrimaryObject;
+    public Rigidbody _PrimaryRigidBody;
+    protected GameObject _SecondaryObject;
+    public Rigidbody _SecondaryRigidBody;
 
+    [SerializeField]
     public float _InputMin = 0f;
-    public float _InputMax = 1f;
+    public float _InputMax = 0f;
     public float _OutputValue = 0;
     protected float _PreviousValue = 0;
     protected bool _HoldTempValue = false;
@@ -18,31 +20,31 @@ public class InteractionBase : MonoBehaviour
 
     void Start()
     {
-        if (_SourceObject == null)
-            _SourceObject = gameObject;
+        if (_PrimaryObject == null)
+            _PrimaryObject = gameObject;
 
-        if (_SourceObject.GetComponent<Rigidbody>() == null)
-            _SourceObject = this.transform.parent.gameObject;
+        if (_PrimaryObject.GetComponent<Rigidbody>() == null)
+            _PrimaryObject = this.transform.parent.gameObject;
 
-        _RigidBody = _SourceObject.GetComponent<Rigidbody>();
-
-        Initialise();
+        if (_PrimaryObject != null)
+            _PrimaryRigidBody = _PrimaryObject.GetComponent<Rigidbody>();
+        
+        if (_SecondaryObject != null)
+            _SecondaryRigidBody = _SecondaryObject.GetComponent<Rigidbody>();
     }
 
-    public virtual void Initialise() { }
-
-    public virtual void UpdateInteractionSource(GameObject sourceObject) { }
-    public virtual void UpdateInteractionSource(GameObject sourceObject, GameObject targetObject) { }
-    public virtual void UpdateInteractionSource(GameObject sourceObject, Collision collision) { }
+    public virtual void UpdateInteractionSource(GameObject primaryObject) { }
+    public virtual void UpdateInteractionSource(GameObject primaryObject, GameObject secondaryObject) { }
+    public virtual void UpdateInteractionSource(GameObject primaryObject, Collision collision) { }
 
     public float GetValue()
     {
         return _OutputValue;
     }
 
-    public void UpdateSmoothedOutputValue(float inputValue, float smoothing)
+    public void UpdateSmoothedOutputValue(float value, float smoothing)
     {
-        float newValue = Map(inputValue, _InputMin, _InputMax, 0, 1);
+        float newValue = Map(value, _InputMin, _InputMax, 0, 1);
 
         float actualSmoothing = (1 - smoothing) * 10f;
         _OutputValue = Mathf.Lerp(_OutputValue, newValue, actualSmoothing * Time.deltaTime);

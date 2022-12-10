@@ -24,23 +24,16 @@ public class BurstEmitterAuthoring : BaseEmitterClass
         _EmitterType = EmitterType.Burst;
     }
 
-    public override void SetupAttachedEmitter(Collision collision, GrainSpeakerAuthoring speaker)
+    public override void SetupContactEmitter(Collision collision, GrainSpeakerAuthoring speaker)
     {
-        _TimeExisted = 0;
-        _IsPlaying = true;
-        _IsColliding = true;
-        _StaticallyLinked = true;
-        _LinkedSpeaker = speaker;
-        _CollidingObject = collision.collider.gameObject;
+        ResetEmitter(collision.collider.gameObject, speaker);
 
-        gameObject.transform.localPosition = Vector3.zero;
-
-        _Parameters._Playhead._InteractionInput.UpdateInteractionSource(this.transform.parent.gameObject, collision);
-        _Parameters._BurstDuration._InteractionInput.UpdateInteractionSource(this.transform.parent.gameObject, collision);
-        _Parameters._Density._InteractionInput.UpdateInteractionSource(this.transform.parent.gameObject, collision);
-        _Parameters._GrainDuration._InteractionInput.UpdateInteractionSource(this.transform.parent.gameObject, collision);
-        _Parameters._Transpose._InteractionInput.UpdateInteractionSource(this.transform.parent.gameObject, collision);
-        _Parameters._Volume._InteractionInput.UpdateInteractionSource(this.transform.parent.gameObject, collision);
+        _Parameters._Playhead.UpdateInteractionInput(_PrimaryObject, collision);
+        _Parameters._BurstDuration.UpdateInteractionInput(_PrimaryObject, collision);
+        _Parameters._Density.UpdateInteractionInput(_PrimaryObject, collision);
+        _Parameters._GrainDuration.UpdateInteractionInput(_PrimaryObject, collision);
+        _Parameters._Transpose.UpdateInteractionInput(_PrimaryObject, collision);
+        _Parameters._Volume.UpdateInteractionInput(_PrimaryObject, collision);
     }
 
     public override void NewCollision(Collision collision)

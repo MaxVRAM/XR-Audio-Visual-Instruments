@@ -54,8 +54,9 @@ MonoBehaviour:
   _LinkedSpeakerIndex: 0
   _LinkedToSpeaker: 0
   _IsPlaying: 1
-  _IsColliding: 0
-  _CollidingObject: {fileID: 0}
+  _IsTriggered: 0
+  _PrimaryObject: {fileID: 0}
+  _SecondaryObject: {fileID: 0}
   _IsWithinEarshot: 1
   _CurrentDistance: 0
   _DistanceVolume: 0
@@ -99,7 +100,7 @@ MonoBehaviour:
       _Min: -3
       _Max: 3
     _Volume:
-      _InteractionInput: {fileID: 0}
+      _InteractionInput: {fileID: 2306625123320307641}
       _Noise: 0
       _PerlinNoise: 0
       _Idle: 1
@@ -163,12 +164,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ac38bc9eb0958540bae7a9593d81a97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _SourceObject: {fileID: 2306625124509221286}
-  _RigidBody: {fileID: 0}
+  _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
   _InputMin: 0
-  _InputMax: 10
+  _InputMax: 0
   _OutputValue: 0
-  _SourceParameter: 3
+  _InputProperty: 0
   _Smoothing: 0.393
 --- !u!1 &2306625123130947479
 GameObject:
@@ -224,8 +226,9 @@ MonoBehaviour:
   _LinkedSpeakerIndex: 0
   _LinkedToSpeaker: 0
   _IsPlaying: 1
-  _IsColliding: 0
-  _CollidingObject: {fileID: 0}
+  _IsTriggered: 0
+  _PrimaryObject: {fileID: 0}
+  _SecondaryObject: {fileID: 0}
   _IsWithinEarshot: 1
   _CurrentDistance: 2.0768652
   _DistanceVolume: 0.6107256
@@ -350,12 +353,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ac38bc9eb0958540bae7a9593d81a97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _SourceObject: {fileID: 2306625124509221286}
-  _RigidBody: {fileID: 0}
+  _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
   _InputMin: 0
-  _InputMax: 10
+  _InputMax: 0
   _OutputValue: 0
-  _SourceParameter: 0
+  _InputProperty: 0
   _Smoothing: 0.387
 --- !u!1 &2306625123323876120
 GameObject:
@@ -400,13 +404,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64847be3d40a91744bbbef99655446cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _SourceObject: {fileID: 2306625124509221286}
-  _RigidBody: {fileID: 0}
+  _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
   _InputMin: 0
-  _InputMax: 12
+  _InputMax: 0
   _OutputValue: 0
-  _SourceParameter: 0
-  _UseMassOfCollidingBody: 0
+  _InputProperty: 0
+  _UseMassOfCollider: 0
 --- !u!1 &2306625123428463761
 GameObject:
   m_ObjectHideFlags: 0
@@ -461,8 +466,9 @@ MonoBehaviour:
   _LinkedSpeakerIndex: 0
   _LinkedToSpeaker: 0
   _IsPlaying: 1
-  _IsColliding: 0
-  _CollidingObject: {fileID: 0}
+  _IsTriggered: 0
+  _PrimaryObject: {fileID: 0}
+  _SecondaryObject: {fileID: 0}
   _IsWithinEarshot: 1
   _CurrentDistance: 2.5814574
   _DistanceVolume: 0.44836962
@@ -570,12 +576,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ac38bc9eb0958540bae7a9593d81a97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _SourceObject: {fileID: 2306625124509221286}
-  _RigidBody: {fileID: 0}
+  _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
   _InputMin: 0
-  _InputMax: 10
+  _InputMax: 0
   _OutputValue: 0
-  _SourceParameter: 2
+  _InputProperty: 0
   _Smoothing: 0.474
 --- !u!1 &2306625124145120894
 GameObject:
@@ -620,12 +627,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ac38bc9eb0958540bae7a9593d81a97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _SourceObject: {fileID: 2306625124509221286}
-  _RigidBody: {fileID: 0}
-  _InputMin: 0.15
-  _InputMax: 0.5
+  _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
+  _InputMin: 0
+  _InputMax: 0
   _OutputValue: 0
-  _SourceParameter: 4
+  _InputProperty: 0
   _Smoothing: 0.2
 --- !u!1 &2306625124509221286
 GameObject:
@@ -925,10 +933,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ac38bc9eb0958540bae7a9593d81a97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _SourceObject: {fileID: 0}
-  _RigidBody: {fileID: 0}
+  _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
   _InputMin: 0
-  _InputMax: 10
+  _InputMax: 0
   _OutputValue: 0
-  _SourceParameter: 5
+  _InputProperty: 0
   _Smoothing: 0.5

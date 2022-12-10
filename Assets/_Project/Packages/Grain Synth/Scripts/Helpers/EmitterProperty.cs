@@ -6,8 +6,8 @@ public class EmitterProperty
 {
     public InteractionBase _InteractionInput;
 
-    [Range(0f, 1.0f)]
     [SerializeField]
+    [Range(0f, 1.0f)]
     public float _Noise = 0f;
 
     public float GetInteractionValue()
@@ -15,10 +15,20 @@ public class EmitterProperty
         return _InteractionInput != null ? _InteractionInput.GetValue() : 0;
     }
 
-    public void CheckInteractionInput()
+    public void UpdateInteractionInput(GameObject primaryObject)
     {
-        if (_InteractionInput == null)
-            _InteractionInput = new BlankInteraction();
+        if (_InteractionInput != null)
+            _InteractionInput.UpdateInteractionSource(primaryObject);
+    }
+    public void UpdateInteractionInput(GameObject primaryObject, GameObject secondaryObject)
+    {
+        if (_InteractionInput != null)
+            _InteractionInput.UpdateInteractionSource(primaryObject, secondaryObject);
+    }
+    public void UpdateInteractionInput(GameObject _PrimaryObject, Collision collision)
+    {
+        if (_InteractionInput != null)
+            _InteractionInput.UpdateInteractionSource(_PrimaryObject, collision);
     }
 }
 

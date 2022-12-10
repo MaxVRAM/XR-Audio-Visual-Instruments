@@ -4870,8 +4870,9 @@ MonoBehaviour:
   _LinkedSpeakerIndex: 0
   _LinkedToSpeaker: 0
   _IsPlaying: 1
-  _IsColliding: 0
-  _CollidingObject: {fileID: 0}
+  _IsTriggered: 0
+  _PrimaryObject: {fileID: 0}
+  _SecondaryObject: {fileID: 0}
   _IsWithinEarshot: 1
   _CurrentDistance: 0.7138927
   _DistanceVolume: 0.801053
@@ -5010,10 +5011,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f520b973067bcc94eb1a680f00bba67a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _SourceObject: {fileID: 7595123677376348200}
-  _RigidBody: {fileID: 0}
+  _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
   _InputMin: 0
-  _InputMax: 0.8
+  _InputMax: 0
   _OutputValue: 0
   _SourceParameter: 3
   _Smoothing: 0.4
@@ -16547,12 +16549,6 @@ PrefabInstance:
 --- !u!4 &7595123676031722318 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7595123677026665101, guid: 95963fee03b2dec45aef18c47eb734b2,
-    type: 3}
-  m_PrefabInstance: {fileID: 1163059651}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &7595123677376348200 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7595123676224152043, guid: 95963fee03b2dec45aef18c47eb734b2,
     type: 3}
   m_PrefabInstance: {fileID: 1163059651}
   m_PrefabAsset: {fileID: 0}
