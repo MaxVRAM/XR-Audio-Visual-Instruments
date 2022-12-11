@@ -46,7 +46,9 @@ public class RangeCheckSystem : SystemBase
                 {
                     float emitterToSpeakerDist = math.distance(trans.Value, speakerTranslations[emitter._SpeakerIndex].Value);
                     if (pooledSpeakers[emitter._SpeakerIndex]._State == PooledObjectState.Pooled || emitterToSpeakerDist > speakerManager._EmitterSpeakerAttachRadius)
+                    {
                         emitter = UnLink(emitter);
+                    }
                 }
             }
         }).WithDisposeOnCompletion(pooledSpeakers)
@@ -54,14 +56,40 @@ public class RangeCheckSystem : SystemBase
         .ScheduleParallel(this.Dependency);
 
         //----    SPEAKERS
+        EntityQuery emitterLinkedQuery = GetEntityQuery(typeof(ContinuousEmitterComponent));
+        NativeArray<ContinuousEmitterComponent> emitterLinks = GetEntityQuery(typeof(ContinuousEmitterComponent)).ToComponentDataArray<ContinuousEmitterComponent>(Allocator.TempJob);
+
         JobHandle speakerRangeCheck = Entities.WithName("speakerRangeCheck").ForEach((ref PooledObjectComponent poolObj, in GrainSpeakerComponent speaker, in Translation trans ) =>
         {
             float dist = math.distance(trans.Value, speakerManager._ListenerPos);
             bool inRangeCurrent = dist < speakerManager._EmitterListenerMaxDistance;
-            // Deactivate out-of-range speakers
+            // Pool out-of-range speakers
             if (poolObj._State == PooledObjectState.Active && !inRangeCurrent)
                 poolObj._State = PooledObjectState.Pooled;
-        }).ScheduleParallel(this.Dependency);
+
+            // Pool speakers without linked emitters
+            if (poolObj._State == PooledObjectState.Active)
+            {
+                int emitterIndex = -1;
+                int attachedEmitters = 0;
+                // Check if any emitters are attached to this speaker
+                for (int e = 0; e < emitterLinks.Length; e++)
+                {
+                    if (emitterLinks[e]._SpeakerIndex == speaker._SpeakerIndex)
+                    {
+                        attachedEmitters++;
+                        break;
+                    }
+                }
+                // If no emitters are attatched, change speaker pooled status to "pooled"
+                if (attachedEmitters == 0)
+                    poolObj._State = PooledObjectState.Pooled;
+                else if (attachedEmitters == 1)
+                {
+                }
+            }
+        }).WithDisposeOnCompletion(emitterLinks)
+        .ScheduleParallel(this.Dependency);
 
 
         //----      FIND NEAREST SPEAKER FOR UNLINKED EMITTERS
@@ -96,7 +124,7 @@ public class RangeCheckSystem : SystemBase
                     emitter._LinkedToSpeaker = true;
                     emitter._SpeakerIndex = closestSpeakerIndex;
                     emitter._LastGrainEmissionDSPIndex = dspTimer._CurrentDSPSample;
-                } 
+                }
             }
         }).WithDisposeOnCompletion(speakerEnts)
         .ScheduleParallel(rangeCheckDeps);

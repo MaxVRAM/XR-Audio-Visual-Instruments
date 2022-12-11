@@ -1,8 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
-using Unity.Entities;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 using Random = UnityEngine.Random;
 
 /// <summary>
@@ -10,10 +7,11 @@ using Random = UnityEngine.Random;
 /// <summary>
 public class EmitterSpawner : MonoBehaviour
 {
-    public GrainSpeakerAuthoring _SharedSpeaker;
+    public GameObject _TetherObject;
     public bool _EmittersUseSharedSpeaker = true;
-    public List<GameObject> _SliderPrefabs;
+    public GrainSpeakerAuthoring _SharedSpeaker;
     public GameObject _SelectedPrefab;
+    public List<GameObject> _SliderPrefabs;
     public bool _RandomPrefab = false;
     [Range(1, 200)]
     public int _TargetNumber = 1;
@@ -23,21 +21,16 @@ public class EmitterSpawner : MonoBehaviour
     [Range(0f, 3f)]
     public float _SpawnRadius = 0.5f;
     public List<GameObject> _Sliders = new List<GameObject>();
-    protected GameObject _ThisGameObject;
     protected string _Name;
 
     void Start()
     {
-        _ThisGameObject = gameObject;
         _Name = transform.parent.name + " > " + this.name;
 
         if (_SharedSpeaker == null)
-        {
             _SharedSpeaker = GetComponent<GrainSpeakerAuthoring>();
-
             if (_SharedSpeaker == null)
                 _SharedSpeaker = GetComponentInChildren<GrainSpeakerAuthoring>();
-        }
 
         if (_EmittersUseSharedSpeaker && _SharedSpeaker == null)
             Debug.LogWarning("Emitter Spawner [" + _Name + "] has no speaker to provide spawned objects!");
@@ -56,7 +49,7 @@ public class EmitterSpawner : MonoBehaviour
     {
         _NextSpawnCountdown -= Time.deltaTime;
 
-        if (_SelectedPrefab != null && _SharedSpeaker != null)
+        if (_TetherObject != null && _SelectedPrefab != null)
         {
             SpawnSliders();
             RemoveSliders();
@@ -75,9 +68,10 @@ public class EmitterSpawner : MonoBehaviour
 
             if (objectToSpawn.GetComponent<EmitterActionManager>() != null)
             {
-                GameObject newObject = Instantiate(objectToSpawn, gameObject.transform);
+                GameObject newObject = Instantiate(objectToSpawn, _TetherObject.transform.position,
+                    Quaternion.identity, gameObject.transform);
                 EmitterActionManager newObjectActionManager = newObject.GetComponent<EmitterActionManager>();
-                newObjectActionManager.ResetEmitterInteractions(newObject, _ThisGameObject, null);
+                newObjectActionManager.ResetEmitterInteractions(newObject, _TetherObject, null);
                 newObjectActionManager.UpdateEmitterSpeaker(_EmittersUseSharedSpeaker ? _SharedSpeaker : null);
                 newObject.name = newObject.name + " (" + (_Sliders.Count) + ")";
 

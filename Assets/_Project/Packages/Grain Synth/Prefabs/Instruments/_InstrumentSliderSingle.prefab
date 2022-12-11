@@ -180,7 +180,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
   _SecondaryObject: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
   _InputMin: 0
   _InputMax: 1
   _OutputValue: 0
@@ -386,7 +388,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
   _SecondaryObject: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
   _InputMin: 0
   _InputMax: 1.5
   _OutputValue: 0
@@ -436,7 +440,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
   _SecondaryObject: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
   _InputMin: 0
   _InputMax: 1
   _OutputValue: 0
@@ -622,7 +628,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
   _SecondaryObject: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
   _InputMin: 0
   _InputMax: 1
   _OutputValue: 0
@@ -672,7 +680,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
   _SecondaryObject: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
   _InputMin: 0
   _InputMax: 1
   _OutputValue: 0
@@ -802,7 +812,7 @@ SphereCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2306625124509221286}
-  m_Material: {fileID: 13400000, guid: ab8202ce8c8f77f48b986b2945a3d781, type: 2}
+  m_Material: {fileID: 13400000, guid: dd639f9fb03a85942b0b2e10d06a27f5, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -979,7 +989,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
   _SecondaryObject: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
   _InputMin: 0
   _InputMax: 1
   _OutputValue: 0
@@ -1029,7 +1041,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _PrimaryObject: {fileID: 0}
+  _PrimaryRigidBody: {fileID: 0}
   _SecondaryObject: {fileID: 0}
+  _SecondaryRigidBody: {fileID: 0}
   _InputMin: -1
   _InputMax: 1
   _OutputValue: 0
@@ -1046,6 +1060,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: _Speaker
+      objectReference: {fileID: 0}
+    - target: {fileID: 3299989189000112111, guid: 54aee16cd579ac14d9fd36c1fc9c66b0,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7436749809923828955, guid: 54aee16cd579ac14d9fd36c1fc9c66b0,
         type: 3}
