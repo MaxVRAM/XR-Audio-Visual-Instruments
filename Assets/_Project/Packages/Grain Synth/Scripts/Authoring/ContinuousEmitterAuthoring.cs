@@ -20,62 +20,32 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
 {
     public ContinuousParameters _Parameters;
 
-    public override void Initialise()
+    public override void InitialiseTypeAndInteractions()
     {
         _EmitterType = EmitterType.Continuous;
-        //_Parameters._Playhead.CheckInteractionInput();
-        //_Parameters._Density.CheckInteractionInput();
-        //_Parameters._GrainDuration.CheckInteractionInput();
-        //_Parameters._Transpose.CheckInteractionInput();
-        //_Parameters._Volume.CheckInteractionInput();
-    }
-
-    public override void SetupContactEmitter(Collision collision, GrainSpeakerAuthoring speaker)
-    {
-        ResetEmitter(collision.collider.gameObject, speaker);
-
-        _Parameters._Playhead.UpdateInteractionInput(_PrimaryObject);
-        _Parameters._Density.UpdateInteractionInput(_PrimaryObject);
-        _Parameters._GrainDuration.UpdateInteractionInput(_PrimaryObject);
-        _Parameters._Transpose.UpdateInteractionInput(_PrimaryObject);
-        _Parameters._Volume.UpdateInteractionInput(_PrimaryObject);
-    }
-    public override void SetupAttachedEmitter(GameObject primaryObject, GameObject secondaryObject, GrainSpeakerAuthoring speaker)
-    {   
-        _PrimaryObject = primaryObject;
-        ResetEmitter(secondaryObject, speaker);
-
-        _Parameters._Playhead.UpdateInteractionInput(_PrimaryObject, _SecondaryObject);
-        _Parameters._Density.UpdateInteractionInput(_PrimaryObject, _SecondaryObject);
-        _Parameters._GrainDuration.UpdateInteractionInput(_PrimaryObject, _SecondaryObject);
-        _Parameters._Transpose.UpdateInteractionInput(_PrimaryObject, _SecondaryObject);
-        _Parameters._Volume.UpdateInteractionInput(_PrimaryObject, _SecondaryObject);
+        _Parameters._Playhead._Interaction.UpdateSource(_PrimaryObject, _SecondaryObject, _LatestCollision);
+        _Parameters._Density._Interaction.UpdateSource(_PrimaryObject, _SecondaryObject, _LatestCollision);
+        _Parameters._GrainDuration._Interaction.UpdateSource(_PrimaryObject, _SecondaryObject, _LatestCollision);
+        _Parameters._Transpose._Interaction.UpdateSource(_PrimaryObject, _SecondaryObject, _LatestCollision);
+        _Parameters._Volume._Interaction.UpdateSource(_PrimaryObject, _SecondaryObject, _LatestCollision);
     }
 
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         _EmitterEntity = entity;
-        int attachedSpeakerIndex = int.MaxValue;
+        int linkedSpeakerIndex = int.MaxValue;
 
-        // Statically link this emitter to speaker component if one is attached to this object
         if (_LinkedSpeaker == null && gameObject.GetComponent<GrainSpeakerAuthoring>() != null)
-        {
-            _LinkedSpeaker = gameObject.GetComponent<GrainSpeakerAuthoring>();          
-        }
+            _LinkedSpeaker = gameObject.GetComponent<GrainSpeakerAuthoring>();
 
         if (_LinkedSpeaker != null)
         {
-            _StaticallyLinked = true;
-            _LinkedSpeaker.AddPairedEmitter(gameObject);
-            attachedSpeakerIndex =_LinkedSpeaker.GetRegisterAndGetIndex();
-            dstManager.AddComponentData(_EmitterEntity, new StaticallyPairedTag { });
+            _StaticSpeakerLink = true;
+            _LinkedSpeaker.AddEmitterLink(gameObject);
+            linkedSpeakerIndex = _LinkedSpeaker.GetRegisterAndGetIndex();
+            dstManager.AddComponentData(_EmitterEntity, new StaticLinkTag { });
         }
-        else
-        {
-            Debug.Log("WARNING: " + name + " could not speaker link.");
-        }
-
-        _LinkedSpeakerIndex = attachedSpeakerIndex;
+        _LinkedSpeakerIndex = linkedSpeakerIndex;
 
         int index = GrainSynth.Instance.RegisterEmitter(entity);
 
@@ -83,8 +53,8 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
         dstManager.AddComponentData(_EmitterEntity, new ContinuousEmitterComponent
         {
             _Playing = _IsPlaying,
-            _LinkedToSpeaker = _StaticallyLinked,
-            _StaticallyLinked = _StaticallyLinked,
+            _LinkedToSpeaker = _StaticSpeakerLink,
+            _StaticallyLinked = _StaticSpeakerLink,
             _PingPong = _PingPongAtEndOfClip,
             _LastGrainEmissionDSPIndex = GrainSynth.Instance._CurrentDSPSample,
 
@@ -93,8 +63,8 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _StartValue = _Parameters._Playhead._Idle,
                 _InteractionAmount = _Parameters._Playhead._InteractionAmount,
                 _Shape = _Parameters._Playhead._InteractionShape,
-                _Noise = _Parameters._Playhead._Noise,
-                _PerlinNoise = _Parameters._Playhead._PerlinNoise,
+                _Noise = _Parameters._Playhead._Noise._Amount,
+                _PerlinNoise = _Parameters._Playhead._Noise._Perlin,
                 _Min = _Parameters._Playhead._Min,
                 _Max = _Parameters._Playhead._Max
             },
@@ -103,8 +73,8 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _StartValue = _Parameters._Density._Idle,
                 _InteractionAmount = _Parameters._Density._InteractionAmount,
                 _Shape = _Parameters._Density._InteractionShape,
-                _Noise = _Parameters._Density._Noise,
-                _PerlinNoise = _Parameters._Density._PerlinNoise,
+                _Noise = _Parameters._Density._Noise._Amount,
+                _PerlinNoise = _Parameters._Density._Noise._Perlin,
                 _Min = _Parameters._Density._Min,
                 _Max = _Parameters._Density._Max
             },
@@ -113,8 +83,8 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _StartValue = _Parameters._GrainDuration._Idle * _SamplesPerMS,
                 _InteractionAmount = _Parameters._GrainDuration._InteractionAmount * _SamplesPerMS,
                 _Shape = _Parameters._GrainDuration._InteractionShape,
-                _Noise = _Parameters._GrainDuration._Noise,
-                _PerlinNoise = _Parameters._GrainDuration._PerlinNoise,
+                _Noise = _Parameters._GrainDuration._Noise._Amount,
+                _PerlinNoise = _Parameters._GrainDuration._Noise._Perlin,
                 _Min = _Parameters._GrainDuration._Min * _SamplesPerMS,
                 _Max = _Parameters._GrainDuration._Max * _SamplesPerMS
             },
@@ -123,8 +93,8 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _StartValue = _Parameters._Transpose._Idle,
                 _InteractionAmount = _Parameters._Transpose._InteractionAmount,
                 _Shape = _Parameters._Transpose._InteractionShape,
-                _Noise = _Parameters._Transpose._Noise,
-                _PerlinNoise = _Parameters._Transpose._PerlinNoise,
+                _Noise = _Parameters._Transpose._Noise._Amount,
+                _PerlinNoise = _Parameters._Transpose._Noise._Perlin,
                 _Min = _Parameters._Transpose._Min,
                 _Max = _Parameters._Transpose._Max
             },
@@ -133,15 +103,15 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _StartValue = _Parameters._Volume._Idle,
                 _InteractionAmount = _Parameters._Volume._InteractionAmount,
                 _Shape = _Parameters._Volume._InteractionShape,
-                _Noise = _Parameters._Volume._Noise,
-                _PerlinNoise = _Parameters._Volume._PerlinNoise,
+                _Noise = _Parameters._Volume._Noise._Amount,
+                _PerlinNoise = _Parameters._Volume._Noise._Perlin,
                 _Min = _Parameters._Volume._Min,
                 _Max = _Parameters._Volume._Max
             },
 
             _DistanceAmplitude = 1,
             _AudioClipIndex = _ClipIndex,
-            _SpeakerIndex = attachedSpeakerIndex,
+            _SpeakerIndex = linkedSpeakerIndex,
             _EmitterIndex = index,
             _SampleRate = AudioSettings.outputSampleRate
         });
@@ -169,93 +139,88 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
     {
         if (_IsWithinEarshot & _IsPlaying)
         {
-            ContinuousEmitterComponent emitterData = _EntityManager.GetComponentData<ContinuousEmitterComponent>(_EmitterEntity);
+            ContinuousEmitterComponent continuousData = _EntityManager.GetComponentData<ContinuousEmitterComponent>(_EmitterEntity);
 
             #region UPDATE EMITTER COMPONENT DATA
-            emitterData._Playing = _IsPlaying;
-            emitterData._SpeakerIndex = _StaticallyLinked ? _LinkedSpeaker._SpeakerIndex : emitterData._SpeakerIndex;
-            emitterData._AudioClipIndex = _ClipIndex;
-            emitterData._PingPong = _PingPongAtEndOfClip;
+            continuousData._Playing = _IsPlaying;
+            continuousData._SpeakerIndex = _StaticSpeakerLink ? _LinkedSpeaker._SpeakerIndex : continuousData._SpeakerIndex;
+            continuousData._AudioClipIndex = _ClipIndex;
+            continuousData._PingPong = _PingPongAtEndOfClip;
 
-            if (emitterData._SpeakerIndex >= GrainSynth.Instance._GrainSpeakers.Count)
-            {
-                emitterData._DistanceAmplitude = AudioUtils.EmitterFromSpeakerVolumeAdjust(_HeadPosition.position,
-                    GrainSynth.Instance._GrainSpeakers[emitterData._SpeakerIndex].gameObject.transform.position,
+            if (continuousData._SpeakerIndex < GrainSynth.Instance._GrainSpeakers.Count)
+                continuousData._DistanceAmplitude = AudioUtils.EmitterFromSpeakerVolumeAdjust(_HeadPosition.position,
+                    GrainSynth.Instance._GrainSpeakers[continuousData._SpeakerIndex].gameObject.transform.position,
                     transform.position) * _DistanceVolume;
-            }
             else
-            {
-                //print(gameObject.name + " - Speaker index out of range ERROR. " + emitterData._SpeakerIndex + " / " + GrainSynth.Instance._GrainSpeakers.Count);
-                emitterData._DistanceAmplitude = 0;
-            }
+                continuousData._DistanceAmplitude = 0;
 
-            emitterData._Playhead = new ModulateParameterComponent
+            continuousData._Playhead = new ModulateParameterComponent
             {
                 _StartValue = _Parameters._Playhead._Idle,
                 _InteractionAmount = _Parameters._Playhead._InteractionAmount,
                 _Shape = _Parameters._Playhead._InteractionShape,
-                _Noise = _Parameters._Playhead._Noise,
-                _PerlinNoise = _Parameters._Playhead._PerlinNoise,
+                _Noise = _Parameters._Playhead._Noise._Amount,
+                _PerlinNoise = _Parameters._Playhead._Noise._Perlin,
                 _PerlinValue = GeneratePerlinForParameter(0),
                 _Min = _Parameters._Playhead._Min,
                 _Max = _Parameters._Playhead._Max,
-                _InteractionInput = _Parameters._Playhead.GetInteractionValue()
+                _InteractionInput = _Parameters._Playhead._Interaction.GetValue()
             };
-            emitterData._Density = new ModulateParameterComponent
+            continuousData._Density = new ModulateParameterComponent
             {
                 _StartValue = _Parameters._Density._Idle,
                 _InteractionAmount = _Parameters._Density._InteractionAmount,
                 _Shape = _Parameters._Density._InteractionShape,
-                _Noise = _Parameters._Density._Noise,
-                _PerlinNoise = _Parameters._Density._PerlinNoise,
+                _Noise = _Parameters._Density._Noise._Amount,
+                _PerlinNoise = _Parameters._Density._Noise._Perlin,
                 _PerlinValue = GeneratePerlinForParameter(1),
                 _Min = _Parameters._Density._Min,
                 _Max = _Parameters._Density._Max,
-                _InteractionInput = _Parameters._Density.GetInteractionValue()
+                _InteractionInput = _Parameters._Density._Interaction.GetValue()
             };
-            emitterData._Duration = new ModulateParameterComponent
+            continuousData._Duration = new ModulateParameterComponent
             {
                 _StartValue = _Parameters._GrainDuration._Idle * _SamplesPerMS,
                 _InteractionAmount = _Parameters._GrainDuration._InteractionAmount * _SamplesPerMS,
                 _Shape = _Parameters._GrainDuration._InteractionShape,
-                _Noise = _Parameters._GrainDuration._Noise,
-                _PerlinNoise = _Parameters._GrainDuration._PerlinNoise,
+                _Noise = _Parameters._GrainDuration._Noise._Amount,
+                _PerlinNoise = _Parameters._GrainDuration._Noise._Perlin,
                 _PerlinValue = GeneratePerlinForParameter(2),
                 _Min = _Parameters._GrainDuration._Min * _SamplesPerMS,
                 _Max = _Parameters._GrainDuration._Max * _SamplesPerMS,
-                _InteractionInput = _Parameters._GrainDuration.GetInteractionValue()
+                _InteractionInput = _Parameters._GrainDuration._Interaction.GetValue()
             };
-            emitterData._Transpose = new ModulateParameterComponent
+            continuousData._Transpose = new ModulateParameterComponent
             {
                 _StartValue = _Parameters._Transpose._Idle,
                 _InteractionAmount = _Parameters._Transpose._InteractionAmount,
                 _Shape = _Parameters._Transpose._InteractionShape,
-                _Noise = _Parameters._Transpose._Noise,
-                _PerlinNoise = _Parameters._Transpose._PerlinNoise,
+                _Noise = _Parameters._Transpose._Noise._Amount,
+                _PerlinNoise = _Parameters._Transpose._Noise._Perlin,
                 _PerlinValue = GeneratePerlinForParameter(3),
                 _Min = _Parameters._Transpose._Min,
                 _Max = _Parameters._Transpose._Max,
-                _InteractionInput = _Parameters._Transpose.GetInteractionValue()
+                _InteractionInput = _Parameters._Transpose._Interaction.GetValue()
             };
-            emitterData._Volume = new ModulateParameterComponent
+            continuousData._Volume = new ModulateParameterComponent
             {
                 _StartValue = _Parameters._Volume._Idle,
                 _InteractionAmount = _Parameters._Volume._InteractionAmount,
                 _Shape = _Parameters._Volume._InteractionShape,
-                _Noise = _Parameters._Volume._Noise,
-                _PerlinNoise = _Parameters._Volume._PerlinNoise,
+                _Noise = _Parameters._Volume._Noise._Amount,
+                _PerlinNoise = _Parameters._Volume._Noise._Perlin,
                 _PerlinValue = GeneratePerlinForParameter(4),
                 _Min = _Parameters._Volume._Min,
                 _Max = _Parameters._Volume._Max,
-                _InteractionInput = _Parameters._Volume.GetInteractionValue() * _VolumeMultiply
+                _InteractionInput = _Parameters._Volume._Interaction.GetValue() * _VolumeMultiply
             };
 
-            _EntityManager.SetComponentData(_EmitterEntity, emitterData);
+            _EntityManager.SetComponentData(_EmitterEntity, continuousData);
             #endregion
 
-            _LinkedSpeakerIndex = emitterData._SpeakerIndex;
-            _LinkedToSpeaker = emitterData._LinkedToSpeaker;
-            _InSpeakerRange = emitterData._ListenerInRange;
+            _LinkedSpeakerIndex = continuousData._SpeakerIndex;
+            _LinkedToSpeaker = continuousData._LinkedToSpeaker;
+            _InSpeakerRange = continuousData._ListenerInRange;
         }
     }
 }

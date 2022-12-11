@@ -18,8 +18,8 @@ public struct WindowingDataComponent : IComponentData
 public struct SpeakerManagerComponent : IComponentData
 {
     public float3 _ListenerPos;
-    public float _EmitterToListenerActivationRange;
-    public float _EmitterToSpeakerAttachRadius;
+    public float _EmitterListenerMaxDistance;
+    public float _EmitterSpeakerAttachRadius;
 }
 
 public struct GrainProcessor : IComponentData
@@ -56,7 +56,7 @@ public enum PooledObjectState
     Active
 }
 
-public struct StaticallyPairedTag : IComponentData
+public struct StaticLinkTag : IComponentData
 {
 }
 

@@ -105,10 +105,7 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         //---   ADD POOLING COMP IF NOT STATICALLY PAIRED TO EMITTER
         if (!StaticallyPairedToEmitter)
-        {
             dstManager.AddComponentData(entity, new PooledObjectComponent { _State = PooledObjectState.Pooled });
-            //print("- Adding pooled component for non statically paired speaker");
-        }
 
         //---   CREATE GRAIN PLAYBACK DATA ARRAY - CURRENT MAXIMUM LENGTH SET TO ONE SECOND OF SAMPLES (_SAMPLERATE)      
         _GrainPlaybackDataArray = new GrainPlaybackData[_GrainPlaybackDataToPool];
@@ -134,7 +131,7 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _Initialized = true;
     }
 
-    public void AddPairedEmitter(GameObject emitterGO)
+    public void AddEmitterLink(GameObject emitterGO)
     {
         _StaticallyPairedEmitters.Add(emitterGO);
     }
@@ -396,7 +393,7 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             else
                 Gizmos.color = Color.yellow;
 
-            Gizmos.DrawWireSphere(transform.position, _GrainSynth._EmitterToSpeakerAttachRadius);
+            Gizmos.DrawWireSphere(transform.position, _GrainSynth._EmitterSpeakerAttachRadius);
         }
     }
 }

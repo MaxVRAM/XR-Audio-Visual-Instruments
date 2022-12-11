@@ -16,12 +16,13 @@ using Random = UnityEngine.Random;
 using System.ComponentModel;
 using Unity.Jobs.LowLevel.Unsafe;
 
-
+/// <summary>
+//     Populate random value buffer with unique values for each thread.
+/// <summary>
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 class RandomSystem : ComponentSystem
 {
     public NativeArray<Unity.Mathematics.Random> RandomArray { get; private set; }
-
     protected override void OnCreate()
     {
         var randomArray = new Unity.Mathematics.Random[JobsUtility.MaxJobThreadCount];
@@ -32,7 +33,6 @@ class RandomSystem : ComponentSystem
 
         RandomArray = new NativeArray<Unity.Mathematics.Random>(randomArray, Allocator.Persistent);
     }
-
     protected override void OnDestroy()
         => RandomArray.Dispose();
 
@@ -57,7 +57,6 @@ public class GrainSynthSystem : SystemBase
 
         // Acquire an ECB and convert it to a concurrent one to be able to use it from a parallel job.
         EntityCommandBuffer.ParallelWriter entityCommandBuffer = _CommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
-
         
         // ----------------------------------- EMITTER UPDATE
         // Get all audio clip data componenets
@@ -162,7 +161,6 @@ public class GrainSynthSystem : SystemBase
                             }
                         }
 
-
                         // Remember this grain's timing values for next iteration
                         emitter._LastGrainEmissionDSPIndex = sampleIndexNextGrainStart;
                         emitter._LastGrainDuration = duration;
@@ -201,7 +199,6 @@ public class GrainSynthSystem : SystemBase
                 if (burst._AttachedToSpeaker)
                 {
                     int grainsCreated = 0;
-
 
                     // TODO - CHECK IF THIS NEEDS TO HAVE GRAIN QUEUE DURATION ADDED, POSSIBLE CAUSE OF UNESSESSARY LATENCY ON BURST TRIGGER
                     int currentDSPTime = dspTimer._CurrentDSPSample + dspTimer._GrainQueueDuration;

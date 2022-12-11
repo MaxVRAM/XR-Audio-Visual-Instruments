@@ -15,7 +15,7 @@ public class EmitterActionManager : MonoBehaviour
     public List<BaseEmitterClass> _ContactEmitters;
     public InteractionBase[] _Interactions;
     public bool _HostContactEmitters = false;
-    public List<BaseEmitterClass> _HostedEmitters;
+    public List<BaseEmitterClass> _HostedContactEmitters;
     public List<GameObject> _CollidingObjects;
     protected GameObject _ThisGameObject;
 
@@ -42,32 +42,49 @@ public class EmitterActionManager : MonoBehaviour
             _SelfEmitters.Add(emitter);
     }
 
+    public void ResetEmitterInteractions(GameObject primaryObject, GameObject secondaryObject, Collision collision)
+    {
+        foreach (BaseEmitterClass emitter in _SelfEmitters)
+            emitter.ResetEmitter(primaryObject, secondaryObject, collision);
+    }
+
+    public void UpdateEmitterSpeaker(GrainSpeakerAuthoring speaker)
+    {
+        if (speaker != null)
+        {
+            _Speaker = speaker;
+            foreach (BaseEmitterClass emitter in _SelfEmitters)
+                emitter.UpdateLinkedSpeaker(speaker);
+        }
+        else if (_Speaker != null)
+            foreach (BaseEmitterClass emitter in _SelfEmitters)
+                emitter.UpdateLinkedSpeaker(_Speaker);
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
         foreach (InteractionBase interaction in _Interactions)
-        {
-            interaction.SetCollisionData(collision);
-        }
+            interaction.ProcessCollision(collision);
 
         foreach (BaseEmitterClass emitter in _SelfEmitters)
-        {
             if (emitter._EmitterType == BaseEmitterClass.EmitterType.Burst)
-                emitter.NewCollision(collision);
-        }
+                emitter.UpdateCollision(collision);
 
         EmitterActionManager remoteActionManager = collision.collider.GetComponent<EmitterActionManager>();
         if (remoteActionManager != null && !_CollidingObjects.Contains(remoteActionManager.gameObject))
         {
-            _CollidingObjects.Add(remoteActionManager.gameObject);
-
+            _CollidingObjects.Add(collision.collider.gameObject);
             // Instantiate any contact emitters that are registered with the colliding object
             if (_HostContactEmitters)
-                foreach (BaseEmitterClass contactEmitter in remoteActionManager._ContactEmitters)
+                foreach (BaseEmitterClass emitter in remoteActionManager._ContactEmitters)
                 {
-                    GameObject newEmitter = Instantiate(contactEmitter.gameObject, gameObject.transform);
-                    newEmitter.GetComponent<BaseEmitterClass>().SetupContactEmitter(collision, _Speaker);
-                    if (newEmitter.GetComponent<ContinuousEmitterAuthoring>() != null)
-                        _HostedEmitters.Add(newEmitter.GetComponent<BaseEmitterClass>());
+                    GameObject newEmitterObject = Instantiate(emitter.gameObject, gameObject.transform);
+                    BaseEmitterClass newEmitter = newEmitterObject.GetComponent<BaseEmitterClass>();
+                    newEmitter.ResetEmitter(null, null, collision);
+                    newEmitter.UpdateLinkedSpeaker(_Speaker);
+                    // We only need to keep track of continuous contact, not burst emitters.
+                    if (newEmitter._EmitterType == BaseEmitterClass.EmitterType.Continuous)
+                        _HostedContactEmitters.Add(newEmitterObject.GetComponent<BaseEmitterClass>());
                 }
         }
     }
@@ -75,42 +92,31 @@ public class EmitterActionManager : MonoBehaviour
     private void OnCollisionStay(Collision collision)
     {
         foreach (InteractionBase interaction in _Interactions)
-        {
-            interaction.SetColliding(true, collision.collider.material);
-        }
+            interaction.UpdateCollideStatus(true, collision.collider.material);
 
-        foreach (BaseEmitterClass emitter in _SelfEmitters)
-        {
-            if (emitter._EmitterType == BaseEmitterClass.EmitterType.Continuous &&
-                emitter._ContactEmitter)
-            {
-                emitter.UpdateCurrentCollisionStatus(collision);
-            }
-        }   
+        foreach (BaseEmitterClass emitter in _ContactEmitters)
+            if (emitter._EmitterType == BaseEmitterClass.EmitterType.Continuous)
+                emitter.UpdateCollision(collision);
     }
 
     private void OnCollisionExit(Collision collision)
     {
-        if (_CollidingObjects.Count == 0)
-            foreach (BaseEmitterClass emitter in _SelfEmitters)
-            {
-                if (emitter._EmitterType == BaseEmitterClass.EmitterType.Continuous)
-                    emitter.UpdateCurrentCollisionStatus(null);
-            }
-
         foreach (InteractionBase interaction in _Interactions)
-        {
-            interaction.SetColliding(false, collision.collider.material);
-        }
+            interaction.UpdateCollideStatus(false, collision.collider.material);
 
-        for (int i = _HostedEmitters.Count - 1; i >= 0; i--)
+        if (_CollidingObjects.Count == 0)
+            foreach (BaseEmitterClass emitter in _ContactEmitters)
+                emitter.UpdateCollision(null);
+
+        for (int i = _HostedContactEmitters.Count - 1; i >= 0; i--)
         {
-            if (_HostedEmitters[i]._SecondaryObject == collision.collider.gameObject)
+            if (_HostedContactEmitters[i]._SecondaryObject == collision.collider.gameObject)
             {
-                Destroy(_HostedEmitters[i].gameObject);
-                _HostedEmitters.RemoveAt(i);
+                Destroy(_HostedContactEmitters[i].gameObject);
+                _HostedContactEmitters.RemoveAt(i);
             }
         }
+
         _CollidingObjects.Remove(collision.collider.gameObject);
     }
 }

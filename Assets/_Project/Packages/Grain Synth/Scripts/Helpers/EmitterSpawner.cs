@@ -77,21 +77,12 @@ public class EmitterSpawner : MonoBehaviour
             {
                 GameObject newObject = Instantiate(objectToSpawn, gameObject.transform);
                 EmitterActionManager newObjectActionManager = newObject.GetComponent<EmitterActionManager>();
-                BaseEmitterClass[] newObjectEmitters = newObject.GetComponentsInChildren<BaseEmitterClass>();
-
+                newObjectActionManager.ResetEmitterInteractions(newObject, _ThisGameObject, null);
+                newObjectActionManager.UpdateEmitterSpeaker(_EmittersUseSharedSpeaker ? _SharedSpeaker : null);
                 newObject.name = newObject.name + " (" + (_Sliders.Count) + ")";
-                newObjectActionManager._Speaker = _SharedSpeaker;
-
-                foreach (BaseEmitterClass emitter in newObjectEmitters)
-                {
-                    newObjectActionManager.AddNewEmitter(emitter);
-                    if (_EmittersUseSharedSpeaker && !emitter._ContactEmitter)
-                        emitter.GetComponent<BaseEmitterClass>().SetupAttachedEmitter(newObject, _ThisGameObject, _SharedSpeaker);
-                }
 
                 _Sliders.Add(newObject);
                 _NextSpawnCountdown = _SpawnFrequency;
-                Debug.Log("Created new slider: " + newObject.name);
             }
         }
     }
@@ -103,7 +94,6 @@ public class EmitterSpawner : MonoBehaviour
             Destroy(_Sliders[_Sliders.Count - 1]);
             _Sliders.RemoveAt(_Sliders.Count - 1);
             _NextSpawnCountdown = _SpawnFrequency;
-            Debug.Log("Removing slider: " + name);
         }
     }
 }

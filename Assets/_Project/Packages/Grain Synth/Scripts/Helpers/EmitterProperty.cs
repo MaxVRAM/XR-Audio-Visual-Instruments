@@ -2,58 +2,63 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EmitterProperty
-{
-    public InteractionBase _InteractionInput;
 
-    [SerializeField]
+[System.Serializable]
+public class ContinuousNoiseInput
+{
     [Range(0f, 1.0f)]
-    public float _Noise = 0f;
-
-    public float GetInteractionValue()
-    {
-        return _InteractionInput != null ? _InteractionInput.GetValue() : 0;
-    }
-
-    public void UpdateInteractionInput(GameObject primaryObject)
-    {
-        if (_InteractionInput != null)
-            _InteractionInput.UpdateInteractionSource(primaryObject);
-    }
-    public void UpdateInteractionInput(GameObject primaryObject, GameObject secondaryObject)
-    {
-        if (_InteractionInput != null)
-            _InteractionInput.UpdateInteractionSource(primaryObject, secondaryObject);
-    }
-    public void UpdateInteractionInput(GameObject _PrimaryObject, Collision collision)
-    {
-        if (_InteractionInput != null)
-            _InteractionInput.UpdateInteractionSource(_PrimaryObject, collision);
-    }
-}
-
-public class ContinuousProperty : EmitterProperty
-{
-    public bool _PerlinNoise = false;
-}
-
-public class BurstProperty : EmitterProperty
-{
-    public bool _LockNoise = false;
+    public float _Amount = 0f;
+    public bool _Perlin = false;
 }
 
 [System.Serializable]
-public class ContinuousDensity : ContinuousProperty
+public class BurstNoiseInput
+{
+    [Range(0f, 1.0f)]
+    public float _Amount = 0f;
+    public bool _FreezeOnTrigger = false;
+}
+
+[System.Serializable]
+public class InteractionInput
+{
+    public InteractionBase _Input;
+
+    public void UpdateSource(GameObject primaryObject, GameObject secondaryObject, Collision collision)
+    {
+        if (_Input != null)
+            _Input.UpdateInteractionSources(primaryObject, secondaryObject, collision);
+            
+    }
+
+    public float _Value = 0f;
+    public float GetValue()
+    {
+        _Value = _Input != null ? _Input.GetValue() : _Value;
+        return _Value;
+    }
+}
+
+public class EmitterProperty
+{
+}
+
+[System.Serializable]
+public class ContinuousDensity : EmitterProperty
 {
     [Range(0.1f, 10f)]
     [SerializeField]
     public float _Idle = 2f;
+    [SerializeField]
+    public InteractionInput _Interaction;
     [Range(-9.9f, 9.9f)]
     [SerializeField]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
     [SerializeField]
     public float _InteractionShape = 1f;
+    [SerializeField]
+    public ContinuousNoiseInput _Noise;
     [HideInInspector]
     public float _Min = 0.1f;
     [HideInInspector]
@@ -61,17 +66,21 @@ public class ContinuousDensity : ContinuousProperty
 }
 
 [System.Serializable]
-public class ContinuousDuration : ContinuousProperty
+public class ContinuousDuration : EmitterProperty
 {
     [Range(2f, 500f)]
     [SerializeField]
     public float _Idle = 50f;
+    [SerializeField]
+    public InteractionInput _Interaction;
     [Range(-502f, 502f)]
     [SerializeField]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
     [SerializeField]
     public float _InteractionShape = 1f;
+    [SerializeField]
+    public ContinuousNoiseInput _Noise;
     [HideInInspector]
     public float _Min = 2f;
     [HideInInspector]
@@ -79,17 +88,19 @@ public class ContinuousDuration : ContinuousProperty
 }
 
 [System.Serializable]
-public class ContinuousPlayhead : ContinuousProperty
+public class ContinuousPlayhead : EmitterProperty
 {
     [Range(0f, 1f)]
     [SerializeField]
     public float _Idle = 0f;
+    public InteractionInput _Interaction;
     [Range(-1f, 1f)]
     [SerializeField]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
     [SerializeField]
     public float _InteractionShape = 1f;
+    public ContinuousNoiseInput _Noise;
     [HideInInspector]
     public float _Min = 0f;
     [HideInInspector]
@@ -97,17 +108,19 @@ public class ContinuousPlayhead : ContinuousProperty
 }
 
 [System.Serializable]
-public class ContinuousTranspose : ContinuousProperty
+public class ContinuousTranspose : EmitterProperty
 {
     [Range(-3f, 3f)]
     [SerializeField]
     public float _Idle = 1;
+    public InteractionInput _Interaction;
     [Range(-6f, 6f)]
     [SerializeField]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
     [SerializeField]
     public float _InteractionShape = 1f;
+    public ContinuousNoiseInput _Noise;
     [HideInInspector]
     public float _Min = -3f;
     [HideInInspector]
@@ -115,17 +128,19 @@ public class ContinuousTranspose : ContinuousProperty
 }
 
 [System.Serializable]
-public class ContinuousVolume : ContinuousProperty
+public class ContinuousVolume : EmitterProperty
 {
     [Range(0f, 2f)]
     [SerializeField]
     public float _Idle = 1f;
+    public InteractionInput _Interaction;
     [Range(-2f, 2f)]
     [SerializeField]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
     [SerializeField]
     public float _InteractionShape = 1f;
+    public ContinuousNoiseInput _Noise;
     [HideInInspector]
     public float _Min = 0f;
     [HideInInspector]
@@ -135,7 +150,7 @@ public class ContinuousVolume : ContinuousProperty
 
 
 [System.Serializable]
-public class BurstDensity : BurstProperty
+public class BurstDensity : EmitterProperty
 {
     [Range(0.1f, 10f)]
     [SerializeField]
@@ -143,12 +158,14 @@ public class BurstDensity : BurstProperty
     [Range(0.1f, 10f)]
     [SerializeField]
     public float _End = 2f;
+    public InteractionInput _Interaction;
     [Range(-9.9f, 9.9f)]
     [SerializeField]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
     [SerializeField]
     public float _InteractionShape = 1f;
+    public BurstNoiseInput _Noise;
     [HideInInspector]
     public float _Min = 0.1f;
     [HideInInspector]
@@ -156,17 +173,19 @@ public class BurstDensity : BurstProperty
 }
 
 [System.Serializable]
-public class BurstDuration : BurstProperty
+public class BurstDuration : EmitterProperty
 {
     [Range(10f, 1000f)]
     [SerializeField]
     public float _Default = 100f;
+    public InteractionInput _Interaction;
     [Range(-990f, 990f)]
     [SerializeField]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
     [SerializeField]
     public float _InteractionShape = 1f;
+    public BurstNoiseInput _Noise;
     [HideInInspector]
     public float _Min = 10f;
     [HideInInspector]
@@ -174,7 +193,7 @@ public class BurstDuration : BurstProperty
 }
 
 [System.Serializable]
-public class BurstGrainDuration : BurstProperty
+public class BurstGrainDuration : EmitterProperty
 {
     [Range(5f, 500f)]
     [SerializeField]
@@ -182,12 +201,14 @@ public class BurstGrainDuration : BurstProperty
     [Range(5f, 500f)]
     [SerializeField]
     public float _End = 20f;
+    public InteractionInput _Interaction;
     [Range(-495f, 495f)]
     [SerializeField]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
     [SerializeField]
     public float _InteractionShape = 1f;
+    public BurstNoiseInput _Noise;
     [HideInInspector]
     public float _Min = 5f;
     [HideInInspector]
@@ -195,7 +216,7 @@ public class BurstGrainDuration : BurstProperty
 }
 
 [System.Serializable]
-public class BurstPlayhead : BurstProperty
+public class BurstPlayhead : EmitterProperty
 {
     [Range(0f, 1f)]
     [SerializeField]
@@ -205,12 +226,14 @@ public class BurstPlayhead : BurstProperty
     [Range(0f, 1f)]
     [SerializeField]
     public float _End = 1f;
+    public InteractionInput _Interaction;
     [Range(-1f, 1f)]
     [SerializeField]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
     [SerializeField]
     public float _InteractionShape = 1f;
+    public BurstNoiseInput _Noise;
     [HideInInspector]
     public float _Min = 0f;
     [HideInInspector]
@@ -218,7 +241,7 @@ public class BurstPlayhead : BurstProperty
 }
 
 [System.Serializable]
-public class BurstTranspose : BurstProperty
+public class BurstTranspose : EmitterProperty
 {
     [Range(-3f, 3f)]
     [SerializeField]
@@ -228,12 +251,14 @@ public class BurstTranspose : BurstProperty
     public float _End = 0f;
     [SerializeField]
     public bool _LockEndValue = true;
+    public InteractionInput _Interaction;
     [Range(-3f, 3f)]
     [SerializeField]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
     [SerializeField]
     public float _InteractionShape = 1f;
+    public BurstNoiseInput _Noise;
     [HideInInspector]
     public float _Min = -3f;
     [HideInInspector]
@@ -241,7 +266,7 @@ public class BurstTranspose : BurstProperty
 }
 
 [System.Serializable]
-public class BurstVolume : BurstProperty
+public class BurstVolume : EmitterProperty
 {
     [Range(0f, 1f)]
     [SerializeField]
@@ -251,12 +276,14 @@ public class BurstVolume : BurstProperty
     public float _End = 0f;
     [SerializeField]
     public bool _LockEndValue = true;
+    public InteractionInput _Interaction;
     [Range(-2f, 2f)]
     [SerializeField]
     public float _InteractionAmount = 1f;
     [Range(0.5f, 5.0f)]
     [SerializeField]
     public float _InteractionShape = 1f;
+    public BurstNoiseInput _Noise;
     [HideInInspector]
     public float _Min = 0f;
     [HideInInspector]

@@ -36,8 +36,8 @@ public class GrainSynth :  MonoBehaviour
 
 
     [Header("Emitters")]
-    public float _EmitterToListenerActivationRange = 3;
-    public float _EmitterToSpeakerAttachRadius = 1;
+    public float _EmitterListenerActivationRange = 3;
+    public float _EmitterSpeakerAttachRadius = 1;
     [SerializeField]
     int _GrainProcessorCount = 0;
 
@@ -66,10 +66,7 @@ public class GrainSynth :  MonoBehaviour
     public int RegisterAudioClip(AudioClip clip)
     {
         int index = 0;
-        if(_AudioClipList.Contains(clip))
-        {
-            index = _AudioClipList.IndexOf(clip);
-        }
+        if(_AudioClipList.Contains(clip)) index = _AudioClipList.IndexOf(clip);
         else
         {
             _AudioClipList.Add(clip);
@@ -81,37 +78,28 @@ public class GrainSynth :  MonoBehaviour
 
     public void Start()
     {
-        // Find all emitters or emitters in list
-        // Add all audio clips too array and assign clip indecies to the emitters
-
-        
-
-
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _SampleRate = AudioSettings.outputSampleRate;
 
         for (int i = 0; i < _MaxDyanmicSpeakers; i++)
-        {
             CreateSpeaker(transform.position);
-        }
 
         _DSPTimerEntity = _EntityManager.CreateEntity();
         _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentDSPSample = _CurrentDSPSample, _GrainQueueDuration = (int)(AudioSettings.outputSampleRate * _GrainQueueInMS) });
 
         _GrainQuery = _EntityManager.CreateEntityQuery(typeof(GrainProcessor));
 
-
-        // ------------------------------------------------ CREATE SPEAKER MANAGER
+        // ---- CREATE SPEAKER MANAGER
         _Listener = FindObjectOfType<AudioListener>();
         _SpeakerManagerEntity = _EntityManager.CreateEntity();
         _EntityManager.AddComponentData(_SpeakerManagerEntity, new SpeakerManagerComponent
         {
             _ListenerPos = _Listener.transform.position,
-            _EmitterToListenerActivationRange = _EmitterToListenerActivationRange,
-            _EmitterToSpeakerAttachRadius = _EmitterToSpeakerAttachRadius
+            _EmitterListenerMaxDistance = _EmitterListenerActivationRange,
+            _EmitterSpeakerAttachRadius = _EmitterSpeakerAttachRadius
         });
 
-        // -------------------------------------------------   CREATE AUDIO SOURCE BLOB ASSETS AND ASSIGN TO AudioClipDataComponent ENTITIES
+        // ----   CREATE AUDIO SOURCE BLOB ASSETS AND ASSIGN TO AudioClipDataComponent ENTITIES
         for (int i = 0; i < _AudioClips.Length; i++)
         {
             Entity audioClipDataEntity = _EntityManager.CreateEntity();
@@ -124,7 +112,7 @@ public class GrainSynth :  MonoBehaviour
 
             using (BlobBuilder blobBuilder = new BlobBuilder(Allocator.Temp))
             {
-                // ---------------------------------- CREATE BLOB
+                // ---- CREATE BLOB
                 ref FloatBlobAsset audioclipBlobAsset = ref blobBuilder.ConstructRoot<FloatBlobAsset>();
                 BlobBuilderArray<float> audioclipArray = blobBuilder.Allocate(ref audioclipBlobAsset.array, (clipData.Length / clipChannels));
 
@@ -139,7 +127,7 @@ public class GrainSynth :  MonoBehaviour
                     }
                 }
 
-                // ---------------------------------- CREATE REFERENCE AND ASSIGN TO ENTITY
+                // ---- CREATE REFERENCE AND ASSIGN TO ENTITY
                 BlobAssetReference<FloatBlobAsset> audioClipBlobAssetRef = blobBuilder.CreateBlobAssetReference<FloatBlobAsset>(Allocator.Persistent);
                 _EntityManager.AddComponentData(audioClipDataEntity, new AudioClipDataComponent { _ClipDataBlobAsset = audioClipBlobAssetRef, _ClipIndex = i });
 
@@ -149,18 +137,18 @@ public class GrainSynth :  MonoBehaviour
             }
         }
 
-        // -------------------------------------------------- CREATE WINDOWING BLOB ASSET
+        // ---- CREATE WINDOWING BLOB ASSET
         Entity windowingBlobEntity = _EntityManager.CreateEntity();
         using (BlobBuilder blobBuilder = new BlobBuilder(Allocator.Temp))
         {
-            // ---------------------------------- CREATE BLOB
+            // ---- CREATE BLOB
             ref FloatBlobAsset windowingBlobAsset = ref blobBuilder.ConstructRoot<FloatBlobAsset>();
             BlobBuilderArray<float> windowArray = blobBuilder.Allocate(ref windowingBlobAsset.array, 512);
 
             for (int i = 0; i < windowArray.Length; i++)
                 windowArray[i] = 0.5f * (1 - Mathf.Cos(2 * Mathf.PI * i / windowArray.Length));
 
-            // ---------------------------------- CREATE REFERENCE AND ASSIGN TO ENTITY
+            // ---- CREATE REFERENCE AND ASSIGN TO ENTITY
             BlobAssetReference<FloatBlobAsset> windowingBlobAssetRef = blobBuilder.CreateBlobAssetReference<FloatBlobAsset>(Allocator.Persistent);
             _EntityManager.AddComponentData(windowingBlobEntity, new WindowingDataComponent { _WindowingArray = windowingBlobAssetRef });
         }
@@ -180,13 +168,13 @@ public class GrainSynth :  MonoBehaviour
         _EntityManager.SetComponentData(_SpeakerManagerEntity, new SpeakerManagerComponent
         {
             _ListenerPos = _Listener.transform.position,
-            _EmitterToListenerActivationRange = _EmitterToListenerActivationRange,
-            _EmitterToSpeakerAttachRadius = _EmitterToSpeakerAttachRadius
+            _EmitterListenerMaxDistance = _EmitterListenerActivationRange,
+            _EmitterSpeakerAttachRadius = _EmitterSpeakerAttachRadius
         });
 
         _GrainProcessorCount = (int)Mathf.Lerp(_GrainProcessorCount, currentGrainProcessors.Length, Time.deltaTime * 10f);
 
-        //----    Loop through all grain processors and fill audio buffers of assigned speakers
+        //---- Loop through all grain processors and fill its speaker's audio buffer
         for (int i = 0; i < currentGrainProcessors.Length; i++)
         {
             GrainProcessor grainProcessor = _EntityManager.GetComponentData<GrainProcessor>(currentGrainProcessors[i]);
@@ -231,12 +219,8 @@ public class GrainSynth :  MonoBehaviour
     public void RegisterSpeaker(GrainSpeakerAuthoring speaker)
     {
         if (speaker._Registered || _GrainSpeakers.Contains(speaker))
-        {
-            //print("Speaker already regsitered. Name: " + speaker.name);
             return;
-        }
 
-        //print("Registering speaker. Index: " + _GrainSpeakers.Count + "     Name: " + speaker.name);
         speaker._SpeakerIndex = _GrainSpeakers.Count;
         speaker._Registered = true;
         speaker.name = speaker.name + " - Speaker " + _GrainSpeakers.Count;
@@ -247,9 +231,6 @@ public class GrainSynth :  MonoBehaviour
     {
         int index = _AllEmitters.Count;
         _AllEmitters.Add(emitterEntity);
-
-        //print("Registering emitter: " + index);
-
         return index;
     }
 
@@ -267,7 +248,7 @@ public class GrainSynth :  MonoBehaviour
             return;
          
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(_Listener.transform.position, _EmitterToListenerActivationRange);
+        Gizmos.DrawWireSphere(_Listener.transform.position, _EmitterListenerActivationRange);
     }
 }
 

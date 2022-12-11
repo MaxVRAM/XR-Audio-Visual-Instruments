@@ -11,9 +11,10 @@ public class InteractionParameter : InteractionBase
     public enum InteractionParameterType
     {
         Speed,
-        AccelerationAbsolute,
         Acceleration,
         Deacceleration,
+        AccelerationAbsolute,
+        AccelerationDirectional,
         Scale,
         Roll,
         RollTimesMass,
@@ -26,13 +27,6 @@ public class InteractionParameter : InteractionBase
     [Range(0f, 1f)]
     public float _Smoothing = 0.2f;
 
-    public override void UpdateInteractionSource(GameObject primaryObject)
-    {
-        _PrimaryObject = primaryObject;
-        _PrimaryRigidBody = _PrimaryObject.GetComponent<Rigidbody>();
-        _Colliding = true;
-    }
-
     private void Update()
     {
         float value = _PreviousValue;
@@ -44,16 +38,20 @@ public class InteractionParameter : InteractionBase
                 case InteractionParameterType.Speed:
                     value = _PrimaryRigidBody.velocity.magnitude;
                     break;
-                case InteractionParameterType.AccelerationAbsolute:
-                    value = Mathf.Abs((_PrimaryRigidBody.velocity.magnitude - _PreviousValue) / Time.deltaTime);
-                    _PreviousValue = _PrimaryRigidBody.velocity.magnitude;
-                    break;
                 case InteractionParameterType.Acceleration:
                     value = Mathf.Max((_PrimaryRigidBody.velocity.magnitude - _PreviousValue) / Time.deltaTime, 0f);
                     _PreviousValue = _PrimaryRigidBody.velocity.magnitude;
                     break;
                 case InteractionParameterType.Deacceleration:
                     value = Mathf.Abs(Mathf.Min((_PrimaryRigidBody.velocity.magnitude - _PreviousValue) / Time.deltaTime, 0f));
+                    _PreviousValue = _PrimaryRigidBody.velocity.magnitude;
+                    break;
+                case InteractionParameterType.AccelerationAbsolute:
+                    value = Mathf.Abs((_PrimaryRigidBody.velocity.magnitude - _PreviousValue) / Time.deltaTime);
+                    _PreviousValue = _PrimaryRigidBody.velocity.magnitude;
+                    break;
+                case InteractionParameterType.AccelerationDirectional:
+                    value = (_PrimaryRigidBody.velocity.magnitude - _PreviousValue) / Time.deltaTime;
                     _PreviousValue = _PrimaryRigidBody.velocity.magnitude;
                     break;
                 case InteractionParameterType.Scale:

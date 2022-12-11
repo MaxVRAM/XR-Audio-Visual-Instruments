@@ -37,7 +37,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
     public GrainSpeakerAuthoring _LinkedSpeaker;
     public int _LinkedSpeakerIndex;
     public bool _LinkedToSpeaker = false;
-    protected bool _StaticallyLinked = false;
+    protected bool _StaticSpeakerLink = false;
 
 
     [Header("Runtime Dynamics")]
@@ -45,18 +45,15 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
     public bool _IsTriggered = false;
     public GameObject _PrimaryObject;
     public GameObject _SecondaryObject;
+    public Collision _LatestCollision;
     protected bool _InSpeakerRange = false;
     public bool _IsWithinEarshot = true;
     public float _CurrentDistance = 0;
     public float _DistanceVolume = 0;
     public float _TimeExisted = 0;
 
-    //[SerializeField]
-    //protected GameObject _CollidingDummyEmitterGameObject;
-    //protected List<GameObject> _RemoteInteractions;
 
     public DSPBase[] _DSPChainParams;
-
 
     void Start()
     {
@@ -74,7 +71,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
         if (_PrimaryObject == null)
             _PrimaryObject = this.transform.parent.gameObject;
 
-        Initialise();
+        InitialiseTypeAndInteractions();
     }
 
     public void Awake()
@@ -133,38 +130,53 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
 
         // Burst emitters only need a single pass to generate grain data for its duration.
         if (_EmitterType == EmitterType.Burst) 
-        {
             _IsPlaying = false;
-        }
+
         Translation trans = _EntityManager.GetComponentData<Translation>(_EmitterEntity);
         _EntityManager.SetComponentData(_EmitterEntity, new Translation { Value = transform.position });
     }
 
-    public void ResetEmitter(GameObject secondaryObject, GrainSpeakerAuthoring speaker)
+    public void ResetEmitter(GameObject primaryObject, GameObject secondaryObject, Collision collision)
     {
         _TimeExisted = 0;
-        _IsPlaying = true;
-        _IsTriggered = true;
-        _StaticallyLinked = true;
-        _LinkedSpeaker = speaker;
-        _SecondaryObject = secondaryObject;
         gameObject.transform.localPosition = Vector3.zero;
-        Initialise();
+
+        if (primaryObject != null)
+            _PrimaryObject = primaryObject;
+        if (secondaryObject != null)
+            _SecondaryObject = secondaryObject;
+        if (collision != null)
+        {
+            _SecondaryObject = collision.collider.gameObject;
+            _LatestCollision = collision;
+        }
+
+        InitialiseTypeAndInteractions();
+
+        if ((_EmitterType == EmitterType.Burst || _ContactEmitter) && _LatestCollision == null)
+        {
+            _IsPlaying = false;
+            _IsTriggered = false;
+        }
+        else
+        {
+            _IsPlaying = true;
+            _IsTriggered = true;
+        }
     }
 
-    public virtual void Initialise() { }
+    public void UpdateLinkedSpeaker(GrainSpeakerAuthoring speaker)
+    {
+        _LinkedSpeaker = speaker;
+        _LinkedToSpeaker = speaker != null ? true : false;
+        _StaticSpeakerLink = speaker != null ? true : false;
+    }
+
+    public virtual void InitialiseTypeAndInteractions() { }
     protected virtual void UpdateProperties() { }
-
-    public virtual void SetupContactEmitter(Collision collision, GrainSpeakerAuthoring speaker) { }
-    public virtual void SetupAttachedEmitter(GameObject primaryObject, GameObject secondaryObject, GrainSpeakerAuthoring speaker) { }
-
     public GrainSpeakerAuthoring DynamicallyLinkedSpeaker { get { return GrainSynth.Instance._GrainSpeakers[_LinkedSpeakerIndex]; } }
 
-    // Only for burst emitters
-    public virtual void NewCollision(Collision collision) { }
-
-    // Only for continuous emitters
-    public void UpdateCurrentCollisionStatus(Collision collision)
+    public void UpdateCollision(Collision collision)
     {
         if (collision == null)
         {
@@ -173,11 +185,13 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
         }
         else
         {
-            _IsTriggered = true;
+            _IsPlaying = true;
             if (!_ColliderRigidityVolumeScale)
                 _VolumeMultiply = 1;
             else if (collision.collider.GetComponent<SurfaceParameters>() != null)
                 _VolumeMultiply = collision.collider.GetComponent<SurfaceParameters>()._Rigidity;
+            else
+                _VolumeMultiply = 1;
         }
     }
 
