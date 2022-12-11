@@ -4,6 +4,7 @@ using Unity.Transforms;
 using Unity.Collections;
 using Unity.Jobs;
 using System;
+using Substance.Game;
 
 // https://docs.unity3d.com/Packages/com.unity.entities@0.13/api/
 
@@ -58,7 +59,7 @@ public class RangeCheckSystem : SystemBase
         //----    SPEAKERS
         EntityQuery emitterLinkedQuery = GetEntityQuery(typeof(ContinuousEmitterComponent));
         NativeArray<ContinuousEmitterComponent> emitterLinks = GetEntityQuery(typeof(ContinuousEmitterComponent)).ToComponentDataArray<ContinuousEmitterComponent>(Allocator.TempJob);
-
+        
         JobHandle speakerRangeCheck = Entities.WithName("speakerRangeCheck").ForEach((ref PooledObjectComponent poolObj, in GrainSpeakerComponent speaker, in Translation trans ) =>
         {
             float dist = math.distance(trans.Value, speakerManager._ListenerPos);
@@ -70,23 +71,19 @@ public class RangeCheckSystem : SystemBase
             // Pool speakers without linked emitters
             if (poolObj._State == PooledObjectState.Active)
             {
-                int emitterIndex = -1;
-                int attachedEmitters = 0;
+                bool linked = false;
                 // Check if any emitters are attached to this speaker
                 for (int e = 0; e < emitterLinks.Length; e++)
                 {
                     if (emitterLinks[e]._SpeakerIndex == speaker._SpeakerIndex)
                     {
-                        attachedEmitters++;
+                        linked = true;
                         break;
                     }
                 }
                 // If no emitters are attatched, change speaker pooled status to "pooled"
-                if (attachedEmitters == 0)
+                if (!linked)
                     poolObj._State = PooledObjectState.Pooled;
-                else if (attachedEmitters == 1)
-                {
-                }
             }
         }).WithDisposeOnCompletion(emitterLinks)
         .ScheduleParallel(this.Dependency);
@@ -118,6 +115,7 @@ public class RangeCheckSystem : SystemBase
                         }
                     }
                 }
+
                 // Attach the emitter to the nearest valid speaker
                 if (closestSpeakerIndex != int.MaxValue)
                 {
@@ -141,26 +139,25 @@ public class RangeCheckSystem : SystemBase
 
         JobHandle speakerActivation = Job.WithName("speakerActivation").WithoutBurst().WithCode(() =>
         {
-            bool spawned = false;
             // Find a pooled speaker
             for (int s = 0; s < pooledSpeakerStates.Length; s++)
             {
+                bool spawned = false;
+                int speakerIndex = GetComponent<GrainSpeakerComponent>(speakerEntities[s])._SpeakerIndex;
                 if (pooledSpeakerStates[s]._State == PooledObjectState.Pooled && !spawned)
                 {
                     // Find an unlinked emitter to link with pooled speaker
                     for (int e = 0; e < emitters.Length; e++)
                     {
-                        if (emitters[e]._ListenerInRange && !emitters[e]._LinkedToSpeaker && !spawned)
+                        if (emitters[e]._ListenerInRange && !emitters[e]._LinkedToSpeaker)
                         {
                             spawned = true;
-
-                            int speakerIndex = GetComponent<GrainSpeakerComponent>(speakerEntities[s])._SpeakerIndex;
                             float3 speakerPos = GetComponent<Translation>(emitterEnts[e]).Value;
 
                             // Update emitter component with speaker link
                             ContinuousEmitterComponent emitter = GetComponent<ContinuousEmitterComponent>(emitterEnts[e]);
                             emitter._LinkedToSpeaker = true;
-                            emitter._SpeakerIndex = GetComponent<GrainSpeakerComponent>(speakerEntities[s])._SpeakerIndex;
+                            emitter._SpeakerIndex = speakerIndex;
                             emitter._LastGrainEmissionDSPIndex = dspTimer._CurrentDSPSample;
                             SetComponent(emitterEnts[e], emitter);
 
@@ -178,12 +175,36 @@ public class RangeCheckSystem : SystemBase
                         }
                     }
                 }
+                // TODO ---- Triangulate attached emitter positions and move speaker to the centre
+                if (pooledSpeakerStates[s]._State == PooledObjectState.Active)
+                {
+                    int emitterIndex = -1;
+                    int attachedEmitters = 0;
+                    // Check if any emitters are attached to this speaker
+                    for (int e = 0; e < emitters.Length; e++)
+                    {
+                        if (emitters[e]._ListenerInRange && emitters[e]._LinkedToSpeaker && speakerIndex == emitters[e]._SpeakerIndex)
+                        {
+                            emitterIndex = e;
+                            attachedEmitters++;
+                        }
+                    }
+                    if (attachedEmitters > 0 && emitterIndex != -1)
+                    {
+                        // Update speaker position
+                        Translation speakerTrans = GetComponent<Translation>(speakerEntities[s]);
+                        speakerTrans.Value = GetComponent<Translation>(emitterEnts[emitterIndex]).Value;
+                        SetComponent(speakerEntities[s], speakerTrans);
+                    }
+                }
             }
         }).WithDisposeOnCompletion(speakerEntities).WithDisposeOnCompletion(pooledSpeakerStates)
         .WithDisposeOnCompletion(emitterEnts).WithDisposeOnCompletion(emitters)
         .Schedule(activeSpeakersInRange);
-
         this.Dependency = speakerActivation;
+
+
+
     }
 
     public static ContinuousEmitterComponent UnLink(ContinuousEmitterComponent emitter)
