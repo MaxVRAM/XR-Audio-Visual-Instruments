@@ -324,8 +324,8 @@ MonoBehaviour:
       _Interaction:
         _Input: {fileID: 2306625123323876118}
         _Value: 0
-      _InteractionAmount: 1
-      _InteractionShape: 2.49
+      _InteractionAmount: 0.76
+      _InteractionShape: 2.19
       _Noise:
         _Amount: 0
         _FreezeOnTrigger: 0

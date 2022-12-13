@@ -37,7 +37,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
     public GrainSpeakerAuthoring _LinkedSpeaker;
     public int _LinkedSpeakerIndex;
     public bool _LinkedToSpeaker = false;
-    protected bool _StaticSpeakerLink = false;
+    protected bool _FixedSpeakerLink = false;
 
 
     [Header("Runtime Dynamics")]
@@ -46,7 +46,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
     public GameObject _PrimaryObject;
     public GameObject _SecondaryObject;
     public Collision _LatestCollision;
-    protected bool _InSpeakerRange = false;
+    protected bool _InListenerRadius = false;
     public bool _IsWithinEarshot = true;
     public float _CurrentDistance = 0;
     public float _DistanceVolume = 0;
@@ -109,18 +109,18 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
         if (_CurrentDistance < _MaxAudibleDistance)
         {
             _IsWithinEarshot = true;
-            _EntityManager.AddComponent<WithinEarshot>(_EmitterEntity);
+            _EntityManager.AddComponent<InListenerRadiusTag>(_EmitterEntity);
         }
         else
         {
             _IsWithinEarshot = false;
-            _EntityManager.RemoveComponent<WithinEarshot>(_EmitterEntity);
+            _EntityManager.RemoveComponent<InListenerRadiusTag>(_EmitterEntity);
         }
 
         if (_IsPlaying)
-            _EntityManager.AddComponent<IsPlayingTag>(_EmitterEntity);
+            _EntityManager.AddComponent<PlayingTag>(_EmitterEntity);
         else
-            _EntityManager.RemoveComponent<IsPlayingTag>(_EmitterEntity);
+            _EntityManager.RemoveComponent<PlayingTag>(_EmitterEntity);
 
         _DistanceVolume = AudioUtils.EmitterFromListenerVolumeAdjust(_HeadPosition.position, transform.position, _MaxAudibleDistance);
         #endregion
@@ -169,7 +169,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
     {
         _LinkedSpeaker = speaker;
         _LinkedToSpeaker = speaker != null ? true : false;
-        _StaticSpeakerLink = speaker != null ? true : false;
+        _FixedSpeakerLink = speaker != null ? true : false;
     }
 
     public virtual void InitialiseTypeAndInteractions() { }
@@ -215,7 +215,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
 
     protected void OnDrawGizmos()
     {
-        Gizmos.color = _InSpeakerRange ? Color.yellow : Color.blue;
+        Gizmos.color = _InListenerRadius ? Color.yellow : Color.blue;
         Gizmos.DrawSphere(transform.position, .1f);
     }
 

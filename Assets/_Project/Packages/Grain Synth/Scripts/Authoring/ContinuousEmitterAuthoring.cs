@@ -1,10 +1,5 @@
 ﻿using Unity.Entities;
-using Unity.Mathematics;
 using UnityEngine;
-using Unity.Transforms;
-using System.Collections.Generic;
-using Random = UnityEngine.Random;
-using UnityEditor.UI;
 
 [System.Serializable]
 public class ContinuousParameters
@@ -33,32 +28,27 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         _EmitterEntity = entity;
-        int linkedSpeakerIndex = int.MaxValue;
-
-        if (_LinkedSpeaker == null && gameObject.GetComponent<GrainSpeakerAuthoring>() != null)
-            _LinkedSpeaker = gameObject.GetComponent<GrainSpeakerAuthoring>();
-
-        if (_LinkedSpeaker != null)
-        {
-            _StaticSpeakerLink = true;
-            _LinkedSpeaker.AddEmitterLink(gameObject);
-            linkedSpeakerIndex = _LinkedSpeaker.GetRegisterAndGetIndex();
-            dstManager.AddComponentData(_EmitterEntity, new StaticLinkTag { });
-        }
-        _LinkedSpeakerIndex = linkedSpeakerIndex;
-
         int index = GrainSynth.Instance.RegisterEmitter(entity);
+
+        if (_LinkedSpeaker != null || gameObject.TryGetComponent(out _LinkedSpeaker))
+        {
+            _FixedSpeakerLink = true;
+            _LinkedSpeaker.AddEmitterLink(gameObject);
+            _LinkedSpeakerIndex = _LinkedSpeaker.GetRegisterAndGetIndex();
+            dstManager.AddComponentData(_EmitterEntity, new FixedSpeakerLinkTag { });
+        }
+        else _LinkedSpeakerIndex = int.MaxValue;
 
         #region ADD EMITTER COMPONENT DATA
         dstManager.AddComponentData(_EmitterEntity, new ContinuousEmitterComponent
         {
-            _Playing = _IsPlaying,
-            _LinkedToSpeaker = _StaticSpeakerLink,
-            _StaticallyLinked = _StaticSpeakerLink,
+            _IsPlaying = _IsPlaying,
+            _SpeakerAttached = _FixedSpeakerLink,
+            _FixedSpeakerLink = _FixedSpeakerLink,
             _PingPong = _PingPongAtEndOfClip,
-            _LastGrainEmissionDSPIndex = GrainSynth.Instance._CurrentDSPSample,
+            _LastSampleIndex = GrainSynth.Instance._CurrentDSPSample,
 
-            _Playhead = new ModulateParameterComponent
+            _Playhead = new ModulationComponent
             {
                 _StartValue = _Parameters._Playhead._Idle,
                 _InteractionAmount = _Parameters._Playhead._InteractionAmount,
@@ -68,7 +58,7 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _Min = _Parameters._Playhead._Min,
                 _Max = _Parameters._Playhead._Max
             },
-            _Density = new ModulateParameterComponent
+            _Density = new ModulationComponent
             {
                 _StartValue = _Parameters._Density._Idle,
                 _InteractionAmount = _Parameters._Density._InteractionAmount,
@@ -78,7 +68,7 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _Min = _Parameters._Density._Min,
                 _Max = _Parameters._Density._Max
             },
-            _Duration = new ModulateParameterComponent
+            _Duration = new ModulationComponent
             {
                 _StartValue = _Parameters._GrainDuration._Idle * _SamplesPerMS,
                 _InteractionAmount = _Parameters._GrainDuration._InteractionAmount * _SamplesPerMS,
@@ -88,7 +78,7 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _Min = _Parameters._GrainDuration._Min * _SamplesPerMS,
                 _Max = _Parameters._GrainDuration._Max * _SamplesPerMS
             },
-            _Transpose = new ModulateParameterComponent
+            _Transpose = new ModulationComponent
             {
                 _StartValue = _Parameters._Transpose._Idle,
                 _InteractionAmount = _Parameters._Transpose._InteractionAmount,
@@ -98,7 +88,7 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _Min = _Parameters._Transpose._Min,
                 _Max = _Parameters._Transpose._Max
             },
-            _Volume = new ModulateParameterComponent
+            _Volume = new ModulationComponent
             {
                 _StartValue = _Parameters._Volume._Idle,
                 _InteractionAmount = _Parameters._Volume._InteractionAmount,
@@ -111,15 +101,13 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
 
             _DistanceAmplitude = 1,
             _AudioClipIndex = _ClipIndex,
-            _SpeakerIndex = linkedSpeakerIndex,
+            _SpeakerIndex = _LinkedSpeakerIndex,
             _EmitterIndex = index,
-            _SampleRate = AudioSettings.outputSampleRate
+            _OutputSampleRate = AudioSettings.outputSampleRate
         });
-
         #if UNITY_EDITOR
                 dstManager.SetName(entity, "Grain Emitter:   " + transform.parent.name + " " + gameObject.name);
         #endif
-
         #endregion
 
         #region ADD DSP EFFECT COMPONENT DATA
@@ -142,10 +130,13 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
             ContinuousEmitterComponent continuousData = _EntityManager.GetComponentData<ContinuousEmitterComponent>(_EmitterEntity);
 
             #region UPDATE EMITTER COMPONENT DATA
-            continuousData._Playing = _IsPlaying;
-            continuousData._SpeakerIndex = _StaticSpeakerLink ? _LinkedSpeaker._SpeakerIndex : continuousData._SpeakerIndex;
+            continuousData._IsPlaying = _IsPlaying;
             continuousData._AudioClipIndex = _ClipIndex;
             continuousData._PingPong = _PingPongAtEndOfClip;
+            continuousData._SpeakerIndex = _FixedSpeakerLink ? _LinkedSpeaker._SpeakerIndex : continuousData._SpeakerIndex;
+            _LinkedToSpeaker = continuousData._SpeakerAttached;
+            _LinkedSpeakerIndex = continuousData._SpeakerIndex;
+            _InListenerRadius = continuousData._InListenerRadius;
 
             if (continuousData._SpeakerIndex < GrainSynth.Instance._GrainSpeakers.Count)
                 continuousData._DistanceAmplitude = AudioUtils.EmitterFromSpeakerVolumeAdjust(_HeadPosition.position,
@@ -154,7 +145,7 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
             else
                 continuousData._DistanceAmplitude = 0;
 
-            continuousData._Playhead = new ModulateParameterComponent
+            continuousData._Playhead = new ModulationComponent
             {
                 _StartValue = _Parameters._Playhead._Idle,
                 _InteractionAmount = _Parameters._Playhead._InteractionAmount,
@@ -166,7 +157,7 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _Max = _Parameters._Playhead._Max,
                 _InteractionInput = _Parameters._Playhead._Interaction.GetValue()
             };
-            continuousData._Density = new ModulateParameterComponent
+            continuousData._Density = new ModulationComponent
             {
                 _StartValue = _Parameters._Density._Idle,
                 _InteractionAmount = _Parameters._Density._InteractionAmount,
@@ -178,7 +169,7 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _Max = _Parameters._Density._Max,
                 _InteractionInput = _Parameters._Density._Interaction.GetValue()
             };
-            continuousData._Duration = new ModulateParameterComponent
+            continuousData._Duration = new ModulationComponent
             {
                 _StartValue = _Parameters._GrainDuration._Idle * _SamplesPerMS,
                 _InteractionAmount = _Parameters._GrainDuration._InteractionAmount * _SamplesPerMS,
@@ -190,7 +181,7 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _Max = _Parameters._GrainDuration._Max * _SamplesPerMS,
                 _InteractionInput = _Parameters._GrainDuration._Interaction.GetValue()
             };
-            continuousData._Transpose = new ModulateParameterComponent
+            continuousData._Transpose = new ModulationComponent
             {
                 _StartValue = _Parameters._Transpose._Idle,
                 _InteractionAmount = _Parameters._Transpose._InteractionAmount,
@@ -202,7 +193,7 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _Max = _Parameters._Transpose._Max,
                 _InteractionInput = _Parameters._Transpose._Interaction.GetValue()
             };
-            continuousData._Volume = new ModulateParameterComponent
+            continuousData._Volume = new ModulationComponent
             {
                 _StartValue = _Parameters._Volume._Idle,
                 _InteractionAmount = _Parameters._Volume._InteractionAmount,
@@ -214,13 +205,8 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
                 _Max = _Parameters._Volume._Max,
                 _InteractionInput = _Parameters._Volume._Interaction.GetValue() * _VolumeMultiply
             };
-
             _EntityManager.SetComponentData(_EmitterEntity, continuousData);
             #endregion
-
-            _LinkedSpeakerIndex = continuousData._SpeakerIndex;
-            _LinkedToSpeaker = continuousData._LinkedToSpeaker;
-            _InSpeakerRange = continuousData._ListenerInRange;
         }
     }
 }

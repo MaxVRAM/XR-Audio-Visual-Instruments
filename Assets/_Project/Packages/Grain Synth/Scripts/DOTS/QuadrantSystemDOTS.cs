@@ -52,7 +52,7 @@ public class DOTS_QuadrantSystem : SystemBase
     protected override void OnCreate()
     {
         // Multi hash map that has a single key which holds many values, in this case a has for a quadrant which holds entities
-        // This is created as a persistant collection so it can be used by other classes
+        // This is created as a persistent collection so it can be used by other classes
         _QuadrantMultiHashMap = new NativeMultiHashMap<int, QuadData>(0, Allocator.Persistent);
         base.OnCreate();
     }
@@ -65,13 +65,13 @@ public class DOTS_QuadrantSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        //-- Build query for entitys we want to work on
+        //-- Build query for entities we want to work on
         EntityQuery quadrantEntityQuery = GetEntityQuery(typeof(Translation), typeof(QuadEntityType));
 
         //-- Clear the hash map each update
         _QuadrantMultiHashMap.Clear();
 
-        //-- Expand capacity of the quadrant multi hash map if there are more entitys in the query than capacity
+        //-- Expand capacity of the quadrant multi hash map if there are more entities in the query than capacity
         if (quadrantEntityQuery.CalculateEntityCount() > _QuadrantMultiHashMap.Capacity)
         {
             _QuadrantMultiHashMap.Capacity = quadrantEntityQuery.CalculateEntityCount();

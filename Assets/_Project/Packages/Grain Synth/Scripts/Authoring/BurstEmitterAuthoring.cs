@@ -1,8 +1,5 @@
 ﻿using Unity.Entities;
-using Unity.Mathematics;
 using UnityEngine;
-using Unity.Transforms;
-using Random = UnityEngine.Random;
 
 [System.Serializable]
 public class BurstParameters
@@ -33,31 +30,31 @@ public class BurstEmitterAuthoring : BaseEmitterClass
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         _EmitterEntity = entity;
-        int linkedSpeakerIndex = int.MaxValue;
-
-        if (_LinkedSpeaker == null && gameObject.GetComponent<GrainSpeakerAuthoring>() != null)
-            _LinkedSpeaker = gameObject.GetComponent<GrainSpeakerAuthoring>();
-
-        if (_LinkedSpeaker != null)
-        {
-            _StaticSpeakerLink = true;
-            _LinkedSpeaker.AddEmitterLink(gameObject);
-            linkedSpeakerIndex = _LinkedSpeaker.GetRegisterAndGetIndex();
-            dstManager.AddComponentData(_EmitterEntity, new StaticLinkTag { });
-        }
-        _LinkedSpeakerIndex = linkedSpeakerIndex;
-
         int index = GrainSynth.Instance.RegisterEmitter(entity);
+
+        if (_LinkedSpeaker != null || gameObject.TryGetComponent(out _LinkedSpeaker))
+        {
+            _FixedSpeakerLink = true;
+            _LinkedSpeaker.AddEmitterLink(gameObject);
+            _LinkedSpeakerIndex = _LinkedSpeaker.GetRegisterAndGetIndex();
+            dstManager.AddComponentData(_EmitterEntity, new FixedSpeakerLinkTag { });
+        }
+        else _LinkedSpeakerIndex = int.MaxValue;
 
         #region ADD EMITTER COMPONENT DATA
         dstManager.AddComponentData(_EmitterEntity, new BurstEmitterComponent
         {
-            _Playing = false,
-            _AttachedToSpeaker = _StaticSpeakerLink,
-            _StaticallyLinked = _StaticSpeakerLink,
+            _IsPlaying = false,
+            _EmitterIndex = index,
+            _DistanceAmplitude = 1,
+            _AudioClipIndex = _ClipIndex,
             _PingPong = _PingPongAtEndOfClip,
+            _SpeakerIndex = _LinkedSpeakerIndex,
+            _FixedSpeakerLink = _FixedSpeakerLink,
+            _SpeakerAttached = _FixedSpeakerLink,
+            _OutputSampleRate = AudioSettings.outputSampleRate,
 
-            _BurstDuration = new ModulateParameterComponent
+            _BurstDuration = new ModulationComponent
             {
                 _StartValue = _Parameters._BurstDuration._Default * _SamplesPerMS,
                 _InteractionAmount = _Parameters._BurstDuration._InteractionAmount * _SamplesPerMS,
@@ -69,7 +66,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
                 _LockStartValue = false,
                 _LockEndValue = false
             },
-            _Playhead = new ModulateParameterComponent
+            _Playhead = new ModulationComponent
             {
                 _StartValue = _Parameters._Playhead._Start,
                 _EndValue = _Parameters._Playhead._End,                
@@ -82,7 +79,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
                 _LockStartValue = _Parameters._Playhead._LockStartValue,
                 _LockEndValue = false
             },
-            _Density = new ModulateParameterComponent
+            _Density = new ModulationComponent
             {
                 _StartValue = _Parameters._Density._Start,
                 _EndValue = _Parameters._Density._End,
@@ -95,7 +92,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
                 _LockStartValue = false,
                 _LockEndValue = false
             },
-            _GrainDuration = new ModulateParameterComponent
+            _GrainDuration = new ModulationComponent
             {
                 _StartValue = _Parameters._GrainDuration._Start * _SamplesPerMS,
                 _EndValue = _Parameters._GrainDuration._End * _SamplesPerMS,                
@@ -108,7 +105,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
                 _LockStartValue = false,
                 _LockEndValue = false
             },
-            _Transpose = new ModulateParameterComponent
+            _Transpose = new ModulationComponent
             {
                 _StartValue = _Parameters._Transpose._Start,
                 _EndValue = _Parameters._Transpose._End,
@@ -121,7 +118,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
                 _LockStartValue = false,
                 _LockEndValue = _Parameters._Transpose._LockEndValue
             },
-            _Volume = new ModulateParameterComponent
+            _Volume = new ModulationComponent
             {
                 _StartValue = _Parameters._Volume._Start,
                 _EndValue = _Parameters._Volume._End,
@@ -133,14 +130,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
                 _Max = _Parameters._Volume._Max,
                 _LockStartValue = false,
                 _LockEndValue = _Parameters._Volume._LockEndValue
-            },
-
-
-            _DistanceAmplitude = 1,
-            _AudioClipIndex = _ClipIndex,
-            _SpeakerIndex = linkedSpeakerIndex,
-            _EmitterIndex = index,
-            _SampleRate = AudioSettings.outputSampleRate
+            }
         });
 
         #if UNITY_EDITOR
@@ -169,10 +159,13 @@ public class BurstEmitterAuthoring : BaseEmitterClass
             BurstEmitterComponent burstData = _EntityManager.GetComponentData<BurstEmitterComponent>(_EmitterEntity);
 
             #region UPDATE EMITTER COMPONENT DATA
-            burstData._Playing = true;
-            burstData._SpeakerIndex = _StaticSpeakerLink ? _LinkedSpeaker._SpeakerIndex : burstData._SpeakerIndex;
+            burstData._IsPlaying = true;
             burstData._AudioClipIndex = _ClipIndex;
             burstData._PingPong = _PingPongAtEndOfClip;
+            burstData._SpeakerIndex = _FixedSpeakerLink ? _LinkedSpeaker._SpeakerIndex : burstData._SpeakerIndex;
+            _LinkedSpeakerIndex = burstData._SpeakerIndex;
+            _LinkedToSpeaker = burstData._SpeakerAttached;
+            _InListenerRadius = burstData._InListenerRadius;
             
             if (burstData._SpeakerIndex < GrainSynth.Instance._GrainSpeakers.Count)
                 burstData._DistanceAmplitude = AudioUtils.EmitterFromSpeakerVolumeAdjust(_HeadPosition.position,
@@ -180,8 +173,8 @@ public class BurstEmitterAuthoring : BaseEmitterClass
                     transform.position) * _DistanceVolume;
             else
                 burstData._DistanceAmplitude = 0;
-
-            burstData._BurstDuration = new ModulateParameterComponent
+                
+            burstData._BurstDuration = new ModulationComponent
             {
                 _StartValue = _Parameters._BurstDuration._Default * _SamplesPerMS,
                 _InteractionAmount = _Parameters._BurstDuration._InteractionAmount * _SamplesPerMS,
@@ -194,7 +187,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
                 _LockEndValue = false,
                 _InteractionInput = _Parameters._BurstDuration._Interaction.GetValue()
             };
-            burstData._Playhead = new ModulateParameterComponent
+            burstData._Playhead = new ModulationComponent
             {
                 _StartValue = _Parameters._Playhead._Start,
                 _EndValue = _Parameters._Playhead._End,
@@ -208,7 +201,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
                 _LockEndValue = false,
                 _InteractionInput = _Parameters._Playhead._Interaction.GetValue()
             };
-            burstData._Density = new ModulateParameterComponent
+            burstData._Density = new ModulationComponent
             {
                 _StartValue = _Parameters._Density._Start,
                 _EndValue = _Parameters._Density._End,
@@ -222,7 +215,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
                 _LockEndValue = false,
                 _InteractionInput = _Parameters._Density._Interaction.GetValue()
             };
-            burstData._GrainDuration = new ModulateParameterComponent
+            burstData._GrainDuration = new ModulationComponent
             {
                 _StartValue = _Parameters._GrainDuration._Start * _SamplesPerMS,
                 _EndValue = _Parameters._GrainDuration._End * _SamplesPerMS,
@@ -236,7 +229,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
                 _LockEndValue = false,
                 _InteractionInput = _Parameters._GrainDuration._Interaction.GetValue()
             };
-            burstData._Transpose = new ModulateParameterComponent
+            burstData._Transpose = new ModulationComponent
             {
                 _StartValue = _Parameters._Transpose._Start,
                 _EndValue = _Parameters._Transpose._End,
@@ -250,7 +243,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
                 _LockEndValue = _Parameters._Transpose._LockEndValue,
                 _InteractionInput = _Parameters._Transpose._Interaction.GetValue()
             };
-            burstData._Volume = new ModulateParameterComponent
+            burstData._Volume = new ModulationComponent
             {
                 _StartValue = _Parameters._Volume._Start,
                 _EndValue = _Parameters._Volume._End,
@@ -264,13 +257,8 @@ public class BurstEmitterAuthoring : BaseEmitterClass
                 _LockEndValue = _Parameters._Volume._LockEndValue,
                 _InteractionInput = _Parameters._Volume._Interaction.GetValue() * _VolumeMultiply
             };
-
             _EntityManager.SetComponentData(_EmitterEntity, burstData);
             #endregion
-
-            _LinkedSpeakerIndex = burstData._SpeakerIndex;
-            _LinkedToSpeaker = burstData._AttachedToSpeaker;
-            _InSpeakerRange = burstData._InRange;
         }
         // TODO hacky solution based on previous "dummy emitter" paradigm. May cause issues and require an overhaul.
         if (_ContactEmitter && _EmitterType == EmitterType.Burst)

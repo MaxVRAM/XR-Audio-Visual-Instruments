@@ -41,7 +41,7 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     #region -------------------------- VARIABLES  
     EntityManager _EntityManager;
     Entity _SpeakerEntity;
-    GrainSpeakerComponent _SpeakerComponenet;
+    GrainSpeakerComponent _SpeakerComponent;
 
     MeshRenderer _MeshRenderer;
 
@@ -105,7 +105,7 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         //---   ADD POOLING COMP IF NOT STATICALLY PAIRED TO EMITTER
         if (!StaticallyPairedToEmitter)
-            dstManager.AddComponentData(entity, new PooledObjectComponent { _State = PooledObjectState.Pooled });
+            dstManager.AddComponentData(entity, new ObjectPoolComponent { _State = PooledState.Pooled });
 
         //---   CREATE GRAIN PLAYBACK DATA ARRAY - CURRENT MAXIMUM LENGTH SET TO ONE SECOND OF SAMPLES (_SAMPLERATE)      
         _GrainPlaybackDataArray = new GrainPlaybackData[_GrainPlaybackDataToPool];
@@ -131,11 +131,10 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _Initialized = true;
     }
 
-    public void AddEmitterLink(GameObject emitterGO)
+    public void AddEmitterLink(GameObject emitterGameObject)
     {
-        _StaticallyPairedEmitters.Add(emitterGO);
+        _StaticallyPairedEmitters.Add(emitterGameObject);
     }
-
   
     public int GetRegisterAndGetIndex()
     {     
@@ -177,12 +176,12 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         #region ---   CHECK PAIRING TO EMITTERS       
         if (!StaticallyPairedToEmitter)
         {
-            //---   CLEAR PLAYBACK DATA IF NOT CONNECTED TOO EMITTERS
-            _SpeakerComponenet = _EntityManager.GetComponentData<GrainSpeakerComponent>(_SpeakerEntity);
-            bool isCurrentlyConnected = _EntityManager.GetComponentData<PooledObjectComponent>(_SpeakerEntity)._State == PooledObjectState.Active;
+            //---   CLEAR PLAYBACK DATA IF NOT CONNECTED TO EMITTERS
+            _SpeakerComponent = _EntityManager.GetComponentData<GrainSpeakerComponent>(_SpeakerEntity);
+            bool isCurrentlyConnected = _EntityManager.GetComponentData<ObjectPoolComponent>(_SpeakerEntity)._State == PooledState.Active;
 
 
-            //---   IF PREVIOUSLY CONNCETED AND NOW DISCONNECTED
+            //---   IF PREVIOUSLY CONNECTED AND NOW DISCONNECTED
             if (_ConnectedToEmitter && !isCurrentlyConnected)
             {
                 for (int i = 0; i < _GrainPlaybackDataArray.Length; i++)
@@ -190,7 +189,6 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
                     _GrainPlaybackDataArray[i]._Pooled = true;
                     _GrainPlaybackDataArray[i]._IsPlaying = false;
                 }
-
                 _PooledGrainCount = _GrainPlaybackDataArray.Length;
             }
 

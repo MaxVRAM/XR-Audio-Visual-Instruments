@@ -44,7 +44,7 @@ public class GrainSynth :  MonoBehaviour
     [Header("Speakers")]
     public GrainSpeakerAuthoring _SpeakerPrefab;
     public List<GrainSpeakerAuthoring> _GrainSpeakers = new List<GrainSpeakerAuthoring>();
-    public int _MaxDyanmicSpeakers = 5;
+    public int _MaxDynamicSpeakers = 5;
 
     int _MaxSpeakers;
 
@@ -72,7 +72,6 @@ public class GrainSynth :  MonoBehaviour
             _AudioClipList.Add(clip);
             index = _AudioClipList.IndexOf(clip);
         }
-
         return index;
     }
 
@@ -81,22 +80,22 @@ public class GrainSynth :  MonoBehaviour
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _SampleRate = AudioSettings.outputSampleRate;
 
-        for (int i = 0; i < _MaxDyanmicSpeakers; i++)
+        for (int i = 0; i < _MaxDynamicSpeakers; i++)
             CreateSpeaker(transform.position);
 
         _DSPTimerEntity = _EntityManager.CreateEntity();
-        _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentDSPSample = _CurrentDSPSample, _GrainQueueDuration = (int)(AudioSettings.outputSampleRate * _GrainQueueInMS) });
+        _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample, _GrainQueueDuration = (int)(AudioSettings.outputSampleRate * _GrainQueueInMS) });
 
-        _GrainQuery = _EntityManager.CreateEntityQuery(typeof(GrainProcessor));
+        _GrainQuery = _EntityManager.CreateEntityQuery(typeof(GrainProcessorComponent));
 
         // ---- CREATE SPEAKER MANAGER
         _Listener = FindObjectOfType<AudioListener>();
         _SpeakerManagerEntity = _EntityManager.CreateEntity();
-        _EntityManager.AddComponentData(_SpeakerManagerEntity, new SpeakerManagerComponent
+        _EntityManager.AddComponentData(_SpeakerManagerEntity, new ActivationRadiusComponent
         {
             _ListenerPos = _Listener.transform.position,
-            _EmitterListenerMaxDistance = _EmitterListenerActivationRange,
-            _EmitterSpeakerAttachRadius = _EmitterSpeakerAttachRadius
+            _EmitterToListenerRadius = _EmitterListenerActivationRange,
+            _EmitterToSpeakerRadius = _EmitterSpeakerAttachRadius
         });
 
         // ----   CREATE AUDIO SOURCE BLOB ASSETS AND ASSIGN TO AudioClipDataComponent ENTITIES
@@ -113,17 +112,17 @@ public class GrainSynth :  MonoBehaviour
             using (BlobBuilder blobBuilder = new BlobBuilder(Allocator.Temp))
             {
                 // ---- CREATE BLOB
-                ref FloatBlobAsset audioclipBlobAsset = ref blobBuilder.ConstructRoot<FloatBlobAsset>();
-                BlobBuilderArray<float> audioclipArray = blobBuilder.Allocate(ref audioclipBlobAsset.array, (clipData.Length / clipChannels));
+                ref FloatBlobAsset audioClipBlobAsset = ref blobBuilder.ConstructRoot<FloatBlobAsset>();
+                BlobBuilderArray<float> audioClipArray = blobBuilder.Allocate(ref audioClipBlobAsset.array, (clipData.Length / clipChannels));
 
                 for (int s = 0; s < clipData.Length - 1; s += clipChannels)
                 {
-                    audioclipArray[s / clipChannels] = 0;
+                    audioClipArray[s / clipChannels] = 0;
                     
                     // MonoSum stereo audio files
                     for (int c = 0; c < clipChannels; c++)
                     {
-                        audioclipArray[s / clipChannels] += clipData[s + c];
+                        audioClipArray[s / clipChannels] += clipData[s + c];
                     }
                 }
 
@@ -160,16 +159,16 @@ public class GrainSynth :  MonoBehaviour
         DSPTimerComponent dspTimer = _EntityManager.GetComponentData<DSPTimerComponent>(_DSPTimerEntity);
 
         // BRAD - Should this be Time.deltaTime * sample rate, or would AudioSettings.dspTime be better? Not sure
-        _EntityManager.SetComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentDSPSample = _CurrentDSPSample + (int)(Time.deltaTime * AudioSettings.outputSampleRate), _GrainQueueDuration = _GrainQueueDurationInSamples });
+        _EntityManager.SetComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample + (int)(Time.deltaTime * AudioSettings.outputSampleRate), _GrainQueueDuration = _GrainQueueDurationInSamples });
 
         NativeArray<Entity> currentGrainProcessors = _GrainQuery.ToEntityArray(Allocator.TempJob);
 
         // Update audio listener position
-        _EntityManager.SetComponentData(_SpeakerManagerEntity, new SpeakerManagerComponent
+        _EntityManager.SetComponentData(_SpeakerManagerEntity, new ActivationRadiusComponent
         {
             _ListenerPos = _Listener.transform.position,
-            _EmitterListenerMaxDistance = _EmitterListenerActivationRange,
-            _EmitterSpeakerAttachRadius = _EmitterSpeakerAttachRadius
+            _EmitterToListenerRadius = _EmitterListenerActivationRange,
+            _EmitterToSpeakerRadius = _EmitterSpeakerAttachRadius
         });
 
         _GrainProcessorCount = (int)Mathf.Lerp(_GrainProcessorCount, currentGrainProcessors.Length, Time.deltaTime * 10f);
@@ -177,7 +176,7 @@ public class GrainSynth :  MonoBehaviour
         //---- Loop through all grain processors and fill its speaker's audio buffer
         for (int i = 0; i < currentGrainProcessors.Length; i++)
         {
-            GrainProcessor grainProcessor = _EntityManager.GetComponentData<GrainProcessor>(currentGrainProcessors[i]);
+            GrainProcessorComponent grainProcessor = _EntityManager.GetComponentData<GrainProcessorComponent>(currentGrainProcessors[i]);
 
             if (grainProcessor._SamplePopulated)
             {
@@ -191,7 +190,7 @@ public class GrainSynth :  MonoBehaviour
                 playbackData._IsPlaying = true;
                 playbackData._PlayheadIndex = 0;
                 playbackData._SizeInSamples = processedSamples.Length;
-                playbackData._DSPStartTime = grainProcessor._DSPStartIndex;
+                playbackData._DSPStartTime = grainProcessor._StartSampleIndex;
                 playbackData._PlayheadPos = grainProcessor._PlayheadNorm;
 
                 NativeToManagedCopyMemory(playbackData._GrainSamples, processedSamples);

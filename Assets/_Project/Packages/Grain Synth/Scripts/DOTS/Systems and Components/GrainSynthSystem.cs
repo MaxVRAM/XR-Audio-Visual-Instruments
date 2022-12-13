@@ -42,7 +42,7 @@ class RandomSystem : ComponentSystem
 [UpdateAfter(typeof(RangeCheckSystem))]
 public class GrainSynthSystem : SystemBase
 {
-    // Command buffer for removing tween componants once they are completed
+    // Command buffer for removing tween components once they are completed
     private EndSimulationEntityCommandBufferSystem _CommandBufferSystem;
 
     protected override void OnCreate()
@@ -59,7 +59,7 @@ public class GrainSynthSystem : SystemBase
         EntityCommandBuffer.ParallelWriter entityCommandBuffer = _CommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
         
         // ----------------------------------- EMITTER UPDATE
-        // Get all audio clip data componenets
+        // Get all audio clip data components
         NativeArray<AudioClipDataComponent> audioClipData = GetEntityQuery(typeof(AudioClipDataComponent)).ToComponentDataArray<AudioClipDataComponent>(Allocator.TempJob);
         WindowingDataComponent windowingData = GetSingleton<WindowingDataComponent>();
         DSPTimerComponent dspTimer = GetSingleton<DSPTimerComponent>();
@@ -71,9 +71,9 @@ public class GrainSynthSystem : SystemBase
 
         JobHandle emitGrains = Entities.WithNativeDisableParallelForRestriction(randomArray).ForEach
         (
-            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref ContinuousEmitterComponent emitter, ref WithinEarshot earshot, ref IsPlayingTag playing) =>
+            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref ContinuousEmitterComponent emitter, ref InListenerRadiusTag earshot, ref PlayingTag playing) =>
             {
-                if (emitter._LinkedToSpeaker)
+                if (emitter._SpeakerAttached)
                 {
                     // Max grains to stop it getting stuck in a while loop
                     int maxGrains = 50;
@@ -92,15 +92,15 @@ public class GrainSynthSystem : SystemBase
                     // Compute first grain value
                     int duration = (int)ComputeEmitterParameter(emitter._Duration, randomDuration);
                     float density = ComputeEmitterParameter(emitter._Density, randomDensity);
-                    int offset = (int)(emitter._LastGrainDuration / density);
-                    int sampleIndexNextGrainStart = emitter._LastGrainEmissionDSPIndex + offset;
+                    int offset = (int)(emitter._PreviousGrainDuration / density);
+                    int sampleIndexNextGrainStart = emitter._LastSampleIndex + offset;
                     float playhead = ComputeEmitterParameter(emitter._Playhead, randomPlayhead);
                     float volume = ComputeEmitterParameter(emitter._Volume, randomVolume);
                     float transpose = ComputeEmitterParameter(emitter._Transpose, randomTranspose);
                     float pitch = Mathf.Pow(2, Mathf.Clamp(transpose, -4f, 4f));
 
                     // Create new grain
-                    while (sampleIndexNextGrainStart <= dspTimer._CurrentDSPSample + dspTimer._GrainQueueDuration && grainCount < maxGrains)
+                    while (sampleIndexNextGrainStart <= dspTimer._CurrentSampleIndex + dspTimer._GrainQueueDuration && grainCount < maxGrains)
                     {
                         if (volume * emitter._DistanceAmplitude > 0.01f)
                         {
@@ -113,12 +113,12 @@ public class GrainSynthSystem : SystemBase
                                     if (dspChain[j]._SampleTail > dspTailLength)
                                         dspTailLength = dspChain[j]._SampleTail;
 
-                            dspTailLength = Mathf.Clamp(dspTailLength, 0, emitter._SampleRate - duration);
+                            dspTailLength = Mathf.Clamp(dspTailLength, 0, emitter._OutputSampleRate - duration);
 
 
                             Entity grainProcessorEntity = entityCommandBuffer.CreateEntity(entityInQueryIndex);
 
-                            //Add pingpong tag if needed
+                            //Add ping-pong tag if needed
                             int clipLength = audioClipData[emitter._AudioClipIndex]._ClipDataBlobAsset.Value.array.Length;
                             if (emitter._PingPong)
                             {
@@ -129,7 +129,7 @@ public class GrainSynthSystem : SystemBase
                             }
 
                             // Build grain processor entity
-                            entityCommandBuffer.AddComponent(entityInQueryIndex, grainProcessorEntity, new GrainProcessor
+                            entityCommandBuffer.AddComponent(entityInQueryIndex, grainProcessorEntity, new GrainProcessorComponent
                             {
                                 _AudioClipDataComponent = audioClipData[emitter._AudioClipIndex],
 
@@ -140,10 +140,10 @@ public class GrainSynthSystem : SystemBase
                                 _Volume = volume * emitter._DistanceAmplitude,
 
                                 _SpeakerIndex = emitter._SpeakerIndex,
-                                _DSPStartIndex = sampleIndexNextGrainStart,
+                                _StartSampleIndex = sampleIndexNextGrainStart,
                                 _SamplePopulated = false,
 
-                                _DSPEffectSampleTailLength = dspTailLength
+                                _EffectTailSampleLength = dspTailLength
                             });
 
                             // Attach sample and DSP buffers to grain processor
@@ -162,8 +162,8 @@ public class GrainSynthSystem : SystemBase
                         }
 
                         // Remember this grain's timing values for next iteration
-                        emitter._LastGrainEmissionDSPIndex = sampleIndexNextGrainStart;
-                        emitter._LastGrainDuration = duration;
+                        emitter._LastSampleIndex = sampleIndexNextGrainStart;
+                        emitter._PreviousGrainDuration = duration;
 
                         // Get random values for next iteration and update random array to avoid repeating values
                         randomPlayhead = randomGen.NextFloat(-1, 1);
@@ -194,14 +194,14 @@ public class GrainSynthSystem : SystemBase
         #region BURST GRAINS
         JobHandle emitBurst = Entities.WithNativeDisableParallelForRestriction(randomArray).ForEach
         (
-            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref BurstEmitterComponent burst, ref WithinEarshot earshot, ref IsPlayingTag playing) =>
+            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref BurstEmitterComponent burst, ref InListenerRadiusTag earshot, ref PlayingTag playing) =>
             {
-                if (burst._AttachedToSpeaker)
+                if (burst._SpeakerAttached)
                 {
                     int grainsCreated = 0;
 
                     // TODO - CHECK IF THIS NEEDS TO HAVE GRAIN QUEUE DURATION ADDED, POSSIBLE CAUSE OF UNESSESSARY LATENCY ON BURST TRIGGER
-                    int currentDSPTime = dspTimer._CurrentDSPSample + dspTimer._GrainQueueDuration;
+                    int currentDSPTime = dspTimer._CurrentSampleIndex + dspTimer._GrainQueueDuration;
                     int dspTailLength = 0;
                     var randomGen = randomArray[nativeThreadIndex];
 
@@ -239,12 +239,12 @@ public class GrainSynthSystem : SystemBase
                                     if (dspChain[j]._SampleTail > dspTailLength)
                                         dspTailLength = dspChain[j]._SampleTail;
 
-                            dspTailLength = Mathf.Clamp(dspTailLength, 0, burst._SampleRate - duration);
+                            dspTailLength = Mathf.Clamp(dspTailLength, 0, burst._OutputSampleRate - duration);
 
                             // Build grain processor entity
                             Entity grainProcessorEntity = entityCommandBuffer.CreateEntity(entityInQueryIndex);
 
-                            //Add pingpong tag if needed
+                            //Add ping-pong tag if needed
                             int clipLength = audioClipData[burst._AudioClipIndex]._ClipDataBlobAsset.Value.array.Length;
                             if (burst._PingPong)
                             {
@@ -255,7 +255,7 @@ public class GrainSynthSystem : SystemBase
                             }
 
                             // Then add grain data
-                            entityCommandBuffer.AddComponent(entityInQueryIndex, grainProcessorEntity, new GrainProcessor
+                            entityCommandBuffer.AddComponent(entityInQueryIndex, grainProcessorEntity, new GrainProcessorComponent
                             {
                                 _AudioClipDataComponent = audioClipData[burst._AudioClipIndex],
 
@@ -266,10 +266,10 @@ public class GrainSynthSystem : SystemBase
                                 _Volume = volume * burst._DistanceAmplitude,
 
                                 _SpeakerIndex = burst._SpeakerIndex,
-                                _DSPStartIndex = offset + currentDSPTime,
+                                _StartSampleIndex = offset + currentDSPTime,
                                 _SamplePopulated = false,
 
-                                _DSPEffectSampleTailLength = dspTailLength
+                                _EffectTailSampleLength = dspTailLength
                             });
 
                             // Attach sample and DSP buffers to grain processor
@@ -310,7 +310,7 @@ public class GrainSynthSystem : SystemBase
                         pitch = Mathf.Pow(2, Mathf.Clamp(transpose, -4f, 4f));
                         }
 
-                    burst._Playing = false;
+                    burst._IsPlaying = false;
                 }
             }
         ).WithDisposeOnCompletion(audioClipData)
@@ -326,7 +326,7 @@ public class GrainSynthSystem : SystemBase
         //---   TAKES GRAIN PROCESSOR INFORMATION AND FILLS THE SAMPLE BUFFER + DSP BUFFER (W/ 0s TO THE SAME LENGTH AS SAMPLE BUFFER)
         JobHandle processGrains = Entities.WithNone<PingPongTag>().ForEach
         (
-            (int entityInQueryIndex, DynamicBuffer <GrainSampleBufferElement> sampleOutputBuffer, DynamicBuffer<DSPSampleBufferElement> dspBuffer, ref GrainProcessor grain) =>
+            (int entityInQueryIndex, DynamicBuffer <GrainSampleBufferElement> sampleOutputBuffer, DynamicBuffer<DSPSampleBufferElement> dspBuffer, ref GrainProcessorComponent grain) =>
             {
                 if (!grain._SamplePopulated)
                 {
@@ -362,7 +362,7 @@ public class GrainSynthSystem : SystemBase
                     }
 
                     // --Add additional samples to increase grain playback size based on DSP effect tail length
-                    for (int i = 0; i < grain._DSPEffectSampleTailLength; i++)
+                    for (int i = 0; i < grain._EffectTailSampleLength; i++)
                     {
                         sampleOutputBuffer.Add(new GrainSampleBufferElement { Value = 0 });
                         dspBuffer.Add(new DSPSampleBufferElement { Value = 0 });
@@ -379,7 +379,7 @@ public class GrainSynthSystem : SystemBase
         //---TAKES GRAIN PROCESSOR INFORMATION AND FILLS THE SAMPLE BUFFER +DSP BUFFER(W / 0s TO THE SAME LENGTH AS SAMPLE BUFFER)
         JobHandle processPingPongGrains = Entities.ForEach
         (
-            (int entityInQueryIndex, DynamicBuffer <GrainSampleBufferElement> sampleOutputBuffer, DynamicBuffer<DSPSampleBufferElement> dspBuffer, ref GrainProcessor grain, in PingPongTag pingpong) =>
+            (int entityInQueryIndex, DynamicBuffer <GrainSampleBufferElement> sampleOutputBuffer, DynamicBuffer<DSPSampleBufferElement> dspBuffer, ref GrainProcessorComponent grain, in PingPongTag pingpong) =>
             {
                 if (!grain._SamplePopulated)
                 {
@@ -422,7 +422,7 @@ public class GrainSynthSystem : SystemBase
                     }
 
                     // --Add additional samples to increase grain playback size based on DSP effect tail length
-                    for (int i = 0; i < grain._DSPEffectSampleTailLength; i++)
+                    for (int i = 0; i < grain._EffectTailSampleLength; i++)
                     {
                         sampleOutputBuffer.Add(new GrainSampleBufferElement { Value = 0 });
                         dspBuffer.Add(new DSPSampleBufferElement { Value = 0 });
@@ -437,7 +437,7 @@ public class GrainSynthSystem : SystemBase
         #region DSP CHAIN        
         JobHandle dspGrains = Entities.ForEach
         (
-           (DynamicBuffer<DSPParametersElement> dspParamsBuffer, DynamicBuffer<GrainSampleBufferElement> sampleOutputBuffer, DynamicBuffer < DSPSampleBufferElement > dspBuffer, ref GrainProcessor grain) =>
+           (DynamicBuffer<DSPParametersElement> dspParamsBuffer, DynamicBuffer<GrainSampleBufferElement> sampleOutputBuffer, DynamicBuffer < DSPSampleBufferElement > dspBuffer, ref GrainProcessorComponent grain) =>
            {
                if (grain._SamplePopulated)
                {
@@ -466,27 +466,6 @@ public class GrainSynthSystem : SystemBase
         ).ScheduleParallel(processPingPongGrains);
         #endregion
 
-        #region ROLLING BUFFER
-
-        //// ----------------------------------- AUDIO SAMPLE BUFFER TEST
-        //Entities.ForEach((ref DynamicBuffer<AudioSampleBufferElement> audioBuffer, in RollingBufferFiller rollingBufferFiller) =>
-        //{
-        //    // Testing audio buffer, filling with a sin wave. Doesn't take start time into account yet
-        //    float freq = 500;
-        //    int startIndex = dspTimer._CurrentDSPSample + 1000;
-
-        //    for (int i = 0; i < rollingBufferFiller._SampleCount; i++)
-        //    {
-        //        int currentIndex = (startIndex + i) % audioBuffer.Length;
-
-        //        float norm = currentIndex / (audioBuffer.Length - 1f);
-        //        float sinWaveSample = math.sin(freq * norm * Mathf.PI * 2) * .5f;
-        //        audioBuffer[currentIndex] = new AudioSampleBufferElement { Value = sinWaveSample };
-        //    }
-        //}).ScheduleParallel();
-
-        #endregion
-
         this.Dependency = dspGrains;
     }
 
@@ -499,7 +478,7 @@ public class GrainSynthSystem : SystemBase
     {
         return Mathf.Pow((val - inMin) / (inMax - inMin), exp) * (outMax - outMin) + outMin;
     }
-    public static float ComputeEmitterParameter(ModulateParameterComponent mod, float r)
+    public static float ComputeEmitterParameter(ModulationComponent mod, float r)
     {
         float interaction = Mathf.Pow(mod._InteractionInput / 1, mod._Shape) * mod._InteractionAmount;
 
@@ -514,7 +493,7 @@ public class GrainSynthSystem : SystemBase
 
         return Mathf.Clamp(mod._StartValue + interaction + random, mod._Min, mod._Max);
     }
-    public static float ComputeBurstParameter(ModulateParameterComponent mod, float t, float n, float r)
+    public static float ComputeBurstParameter(ModulationComponent mod, float t, float n, float r)
     {
         float timeShaped = Mathf.Pow(t / n, mod._Shape);
 

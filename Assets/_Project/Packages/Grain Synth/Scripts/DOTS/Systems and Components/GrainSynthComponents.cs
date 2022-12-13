@@ -4,10 +4,16 @@ using Unity.Transforms;
 
 #region ---------- COMPONENTS
 
+public struct DSPTimerComponent : IComponentData
+{
+    public int _CurrentSampleIndex;
+    public int _GrainQueueDuration;
+}
+
 public struct AudioClipDataComponent :IComponentData
 {
-    public BlobAssetReference<FloatBlobAsset> _ClipDataBlobAsset;
     public int _ClipIndex;
+    public BlobAssetReference<FloatBlobAsset> _ClipDataBlobAsset;
 }
 
 public struct WindowingDataComponent : IComponentData
@@ -15,82 +21,48 @@ public struct WindowingDataComponent : IComponentData
     public BlobAssetReference<FloatBlobAsset> _WindowingArray;   
 }
 
-public struct SpeakerManagerComponent : IComponentData
-{
-    public float3 _ListenerPos;
-    public float _EmitterListenerMaxDistance;
-    public float _EmitterSpeakerAttachRadius;
-}
-
-public struct GrainProcessor : IComponentData
+public struct GrainProcessorComponent : IComponentData
 {
     public AudioClipDataComponent _AudioClipDataComponent;
-
-    public float _PlayheadNorm;
+    public int _StartSampleIndex;
     public int _SampleCount;
-
+    public float _PlayheadNorm;
     public float _Pitch;
     public float _Volume;
-
     public int _SpeakerIndex;
-
-    public int _DSPStartIndex;
     public bool _SamplePopulated;
-
-    public int _DSPEffectSampleTailLength;
+    public int _EffectTailSampleLength;
 }
+
+public struct ActivationRadiusComponent : IComponentData
+{
+    public float3 _ListenerPos;
+    public float _EmitterToListenerRadius;
+    public float _EmitterToSpeakerRadius;
+}
+
+public struct PlayingTag : IComponentData {}
+public struct PingPongTag : IComponentData {}
+public struct FixedSpeakerLinkTag : IComponentData {}
+public struct InListenerRadiusTag : IComponentData {}
 
 public struct GrainSpeakerComponent : IComponentData
 {
     public int _SpeakerIndex;
 }
 
-public struct PooledObjectComponent : IComponentData
+public struct ObjectPoolComponent : IComponentData
 {
-    public PooledObjectState _State;
+    public PooledState _State;
 }
 
-public enum PooledObjectState
+public enum PooledState
 {
     Pooled,
     Active
 }
 
-public struct StaticLinkTag : IComponentData
-{
-}
-
-public struct PingPongTag : IComponentData
-{
-}
-
-public struct IsPlayingTag : IComponentData
-{
-}
-
-public struct WithinEarshot : IComponentData
-{
-}
-
-public struct AttachedToSpeakerTag : IComponentData
-{
-}
-
-public struct PopulatedTag : IComponentData
-{
-}
-
-public struct AudibleGrain : IComponentData
-{
-}
-
-public struct DSPTimerComponent : IComponentData
-{
-    public int _CurrentDSPSample;
-    public int _GrainQueueDuration;
-}
-
-public struct ModulateParameterComponent : IComponentData
+public struct ModulationComponent : IComponentData
 {
     public float _StartValue;
     public float _EndValue;
@@ -109,60 +81,43 @@ public struct ModulateParameterComponent : IComponentData
 
 public struct ContinuousEmitterComponent : IComponentData
 {
-    public bool _LinkedToSpeaker;
-    public int _SpeakerIndex;
-    public bool _StaticallyLinked;
-    public bool _ListenerInRange;
     public int _EmitterIndex;
-    public bool _Playing;   
     public int _AudioClipIndex;
+    public bool _IsPlaying;
     public bool _PingPong;
-
-    public ModulateParameterComponent _Playhead;
-    public ModulateParameterComponent _Density;
-    public ModulateParameterComponent _Duration;
-    public ModulateParameterComponent _Transpose;
-    public ModulateParameterComponent _Volume;
-
+    public bool _InListenerRadius;
     public float _DistanceAmplitude;
-    public int _LastGrainEmissionDSPIndex;
-    public int _LastGrainDuration;
-    public float _PlayheadPosNormalized;
-    public int _SampleRate;
-    public int _DebugCount;
+    public bool _FixedSpeakerLink;
+    public bool _SpeakerAttached;
+    public int _SpeakerIndex;
+    public int _LastSampleIndex;
+    public int _PreviousGrainDuration;
+    public int _OutputSampleRate;
+    public ModulationComponent _Playhead;
+    public ModulationComponent _Density;
+    public ModulationComponent _Duration;
+    public ModulationComponent _Transpose;
+    public ModulationComponent _Volume;
 }
 
 public struct BurstEmitterComponent : IComponentData
 {
-    public bool _AttachedToSpeaker;
-    public int _SpeakerIndex;
-    public bool _StaticallyLinked;
-    public bool _InRange;
     public int _EmitterIndex;
-    public bool _Playing;
     public int _AudioClipIndex;
+    public bool _IsPlaying;
     public bool _PingPong;
-
-    public ModulateParameterComponent _BurstDuration;
-    public ModulateParameterComponent _Density;
-    public ModulateParameterComponent _Playhead;
-    public ModulateParameterComponent _GrainDuration;
-    public ModulateParameterComponent _Transpose;
-    public ModulateParameterComponent _Volume;
-
+    public bool _InListenerRadius;
     public float _DistanceAmplitude;
-    public int _LastGrainEmissionDSPIndex;
-    public int _RandomOffsetInSamples;
-    public int _SampleRate;
-    public int _DebugCount;
-}
-
-
-public struct RingBufferFiller : IComponentData
-{
-    public int _StartIndex;  
-    public int _EndIndex;
-    public int _SampleCount;
+    public bool _FixedSpeakerLink;
+    public bool _SpeakerAttached;
+    public int _SpeakerIndex;
+    public int _OutputSampleRate;
+    public ModulationComponent _BurstDuration;
+    public ModulationComponent _Density;
+    public ModulationComponent _Playhead;
+    public ModulationComponent _GrainDuration;
+    public ModulationComponent _Transpose;
+    public ModulationComponent _Volume;
 }
 
 #endregion
@@ -178,17 +133,6 @@ public struct GrainSampleBufferElement : IBufferElementData
 public struct DSPSampleBufferElement : IBufferElementData
 {
     public float Value;
-}
-
-//[InternalBufferCapacity(44100)]
-public struct AudioRingBufferElement : IBufferElementData
-{
-    public float Value;
-}
-
-public struct GrainSpeakerBufferElement : IBufferElementData
-{
-    public GrainSpeakerComponent Value;
 }
 
 [System.Serializable]
@@ -221,7 +165,6 @@ public enum DSPTypes
     Filter,
     Chopper
 }
-
 
 #endregion
 
