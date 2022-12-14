@@ -4,17 +4,16 @@
 			"path": "."
 		},
 		{
-			"path": "Assets/_Project/Packages/Grain Synth/Scripts"
+			"path": "Assets/_Project/Scripts"
 		}
 	],
 	"settings": {
 		"files.exclude": {
 			"**/*.meta": true,
-			"**/Assets/_Project/Packages/Granulator/Oculus/**": true,
-			"**/Assets/_Sandbox/**": true,
+			"**/Assets/_Framework/Oculus/**": true,
 		},
 		"omnisharp.useModernNet": false,
 		"omnisharp.enableRoslynAnalyzers": true,
-		"omnisharp.analyzeOpenDocumentsOnly": true,
+		"omnisharp.analyzeOpenDocumentsOnly": true
 	}
 }
