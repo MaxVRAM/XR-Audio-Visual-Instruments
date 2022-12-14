@@ -46,7 +46,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
     public GameObject _PrimaryObject;
     public GameObject _SecondaryObject;
     public Collision _LatestCollision;
-    protected bool _InListenerRadius = false;
+    public bool _InListenerRadius = false;
     public bool _IsWithinEarshot = true;
     public float _CurrentDistance = 0;
     public float _DistanceVolume = 0;
@@ -69,7 +69,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
         }
 
         if (_PrimaryObject == null)
-            _PrimaryObject = this.transform.parent.gameObject;
+            _PrimaryObject = transform.parent.gameObject;
 
         InitialiseTypeAndInteractions();
     }

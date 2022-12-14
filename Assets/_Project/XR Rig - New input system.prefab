@@ -4873,6 +4873,7 @@ MonoBehaviour:
   _IsTriggered: 0
   _PrimaryObject: {fileID: 0}
   _SecondaryObject: {fileID: 0}
+  _InListenerRadius: 0
   _IsWithinEarshot: 1
   _CurrentDistance: 0.7138927
   _DistanceVolume: 0.801053

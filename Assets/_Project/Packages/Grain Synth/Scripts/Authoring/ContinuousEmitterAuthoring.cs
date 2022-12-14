@@ -125,7 +125,7 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
 
     protected override void UpdateProperties()
     {
-        if (_IsWithinEarshot & _IsPlaying)
+        if (_InListenerRadius & _IsPlaying)
         {
             ContinuousEmitterComponent continuousData = _EntityManager.GetComponentData<ContinuousEmitterComponent>(_EmitterEntity);
 

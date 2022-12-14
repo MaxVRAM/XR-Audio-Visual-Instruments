@@ -15,5 +15,6 @@
 		},
 		"omnisharp.useModernNet": false,
 		"omnisharp.enableRoslynAnalyzers": true,
+		"omnisharp.analyzeOpenDocumentsOnly": true,
 	}
 }

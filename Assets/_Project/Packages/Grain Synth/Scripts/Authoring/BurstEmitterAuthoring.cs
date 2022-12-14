@@ -154,7 +154,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
 
     protected override void UpdateProperties()
     {
-        if (_IsWithinEarshot && _IsPlaying)
+        if (_InListenerRadius && _IsPlaying)
         {
             BurstEmitterComponent burstData = _EntityManager.GetComponentData<BurstEmitterComponent>(_EmitterEntity);
 

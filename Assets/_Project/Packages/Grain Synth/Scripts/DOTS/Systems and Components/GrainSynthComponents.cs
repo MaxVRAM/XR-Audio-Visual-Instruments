@@ -79,6 +79,17 @@ public struct ModulationComponent : IComponentData
     public float _InteractionInput;
 }
 
+public struct EmitterHost : IComponentData
+{
+    public int _HostIndex;
+    public bool _InListenerRadius;
+    public float _DistanceAttenuation;
+    public bool _DedicatedSpeaker;
+    public bool _SpeakerAttached;
+    public int _SpeakerIndex;
+    public bool _NewSpeaker;
+}
+
 public struct ContinuousEmitterComponent : IComponentData
 {
     public int _EmitterIndex;
