@@ -13,15 +13,8 @@ public class GrainPlaybackData
     public float[] _GrainSamples;
     public int _PlayheadIndex = 0;
     public int _SizeInSamples = -1;
-
-    // Used for visualizing the grain
-    public float _PlayheadPos;
-
-    // The DSP sample that the grain starts at
     public int _DSPStartTime;
-
     public bool _Pooled = true;
-
 
     public GrainPlaybackData(int maxGrainSize)
     {
@@ -32,7 +25,7 @@ public class GrainPlaybackData
 
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(ConvertToEntity))]
-public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
+public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
     public delegate void GrainEmitted(GrainPlaybackData data, int currentDSPSample);
     public event GrainEmitted OnGrainEmitted;
@@ -41,7 +34,7 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     #region -------------------------- VARIABLES  
     EntityManager _EntityManager;
     Entity _SpeakerEntity;
-    GrainSpeakerComponent _SpeakerComponent;
+    SpeakerComponent _SpeakerComponent;
 
     MeshRenderer _MeshRenderer;
 
@@ -68,11 +61,11 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public bool _Registered = false;
 
     [HideInInspector]
-    public bool StaticallyPairedToEmitter { get { return _StaticallyPairedEmitters.Count > 0; } }
+    public bool DedicatedHost { get { return _StaticallyPairedEmitters.Count > 0; } }
     public List<GameObject> _StaticallyPairedEmitters = new List<GameObject>();
 
     // TODO - Change to state?
-    bool _ConnectedToEmitter = false;
+    bool _IsActive = false;
     public bool _DebugLog = false;
     #endregion
 
@@ -100,12 +93,12 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
 
         //---   ADD SPEAKER COMP
-        dstManager.AddComponentData(entity, new GrainSpeakerComponent { _SpeakerIndex = _SpeakerIndex });
+        dstManager.AddComponentData(entity, new SpeakerComponent { _SpeakerIndex = _SpeakerIndex });
 
 
         //---   ADD POOLING COMP IF NOT STATICALLY PAIRED TO EMITTER
-        if (!StaticallyPairedToEmitter)
-            dstManager.AddComponentData(entity, new ObjectPoolComponent { _State = PooledState.Pooled });
+        if (!DedicatedHost)
+            dstManager.AddComponentData(entity, new PoolingComponent { _State = PooledState.Pooled });
 
         //---   CREATE GRAIN PLAYBACK DATA ARRAY - CURRENT MAXIMUM LENGTH SET TO ONE SECOND OF SAMPLES (_SAMPLERATE)      
         _GrainPlaybackDataArray = new GrainPlaybackData[_GrainPlaybackDataToPool];
@@ -158,7 +151,7 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
 
         //---   UPDATE TRANSLATION COMPONENT 
-        if (!StaticallyPairedToEmitter)
+        if (!DedicatedHost)
         {
             transform.position = _EntityManager.GetComponentData<Translation>(_SpeakerEntity).Value;
         }
@@ -173,16 +166,16 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             }
         }
 
-        #region ---   CHECK PAIRING TO EMITTERS       
-        if (!StaticallyPairedToEmitter)
+        #region ---   DYNAMIC EMITTER HOST ATTACHMENT       
+        if (!DedicatedHost)
         {
             //---   CLEAR PLAYBACK DATA IF NOT CONNECTED TO EMITTERS
-            _SpeakerComponent = _EntityManager.GetComponentData<GrainSpeakerComponent>(_SpeakerEntity);
-            bool isCurrentlyConnected = _EntityManager.GetComponentData<ObjectPoolComponent>(_SpeakerEntity)._State == PooledState.Active;
+            _SpeakerComponent = _EntityManager.GetComponentData<SpeakerComponent>(_SpeakerEntity);
+            bool currentlyActive = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._State == PooledState.Active;
 
 
             //---   IF PREVIOUSLY CONNECTED AND NOW DISCONNECTED
-            if (_ConnectedToEmitter && !isCurrentlyConnected)
+            if (_IsActive && !currentlyActive)
             {
                 for (int i = 0; i < _GrainPlaybackDataArray.Length; i++)
                 {
@@ -194,14 +187,14 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
 
             //---   SET MESH VISIBILITY AND VOLUME BASED ON CONNECTION TO EMITTER
-            _TargetVolume = isCurrentlyConnected ? 1 : 0;
+            _TargetVolume = currentlyActive ? 1 : 0;
             _AudioSource.volume = Mathf.Lerp(_AudioSource.volume, _TargetVolume, Time.deltaTime * _VolumeSmoothing);
             if (_TargetVolume == 0 && _AudioSource.volume < .005f)
                 _AudioSource.volume = 0;
 
             if (_MeshRenderer != null)
-                _MeshRenderer.enabled = isCurrentlyConnected;
-            _ConnectedToEmitter = isCurrentlyConnected;
+                _MeshRenderer.enabled = currentlyActive;
+            _IsActive = currentlyActive;
         }
 
         //if (_PooledGrainCount == _GrainPlaybackDataToPool)
@@ -226,7 +219,6 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
                 {
                     _GrainPlaybackDataArray[i]._Pooled = false;
                     _PooledGrainCount--;
-                    //print("GetGrainPlaybackDataFromPool - Returnign grain at index: " + i);
                     return _GrainPlaybackDataArray[i];
                 }
             }
@@ -245,45 +237,9 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (!_Initialized)
             return;
 
-        
-
-        //---   DEBUG
-        float cadence = (playbackData._DSPStartTime - _PrevStartSample) / (float)AudioSettings.outputSampleRate;
-        float duration = playbackData._SizeInSamples / (float)AudioSettings.outputSampleRate;
-        float DSPStartOffset = playbackData._DSPStartTime - _GrainSynth._CurrentDSPSample;
-        //print("Current DSP offset: " + DSPStartOffset + "  duration  : " + duration + "  Cadence: " + cadence);
-
-
-        //Debug.Log("ADDING GRAIN AT DSP OFFSET: " + DSPStartOffset);
-
-
         _PrevStartSample = playbackData._DSPStartTime;
-
-
         // Fire event if hooked up
         OnGrainEmitted?.Invoke(playbackData, _GrainSynth._CurrentDSPSample);
-
-        //if (_DebugLog)
-        //{
-        //int samplesBetweenGrains = playbackData._DSPStartTime - prevStartSample;
-        //float msBetweenGrains = (samplesBetweenGrains / (float)AudioSettings.outputSampleRate) * 1000;
-        //float DSPSampleDiff = playbackData._DSPStartTime - _GrainSynth._CurrentDSPSample;
-        //int DSPMSDiff = (int)((DSPSampleDiff / (float)AudioSettings.outputSampleRate) * 1000);
-        //    print
-        //    (
-        //        "Grain added. Start sample: " + playbackData._DSPStartTime +
-        //        " Cadence samples: " + samplesBetweenGrains +
-        //        " Cadence m/s:   " + msBetweenGrains +
-        //        " DSP sample diff:   " + DSPSampleDiff +
-        //        " DSP m/s diff:   " + DSPMSDiff
-        //    );
-        //}
-
-        //_DebugGUI.LogLatency(DSPMSDiff);
-
-       
-
-        //print("Grain added. Sample 1000: " + playbackData._GrainSamples[1000] + "  playbackData duration: " + playbackData._GrainSamples.Length);
     }
     #endregion
 
@@ -384,7 +340,7 @@ public class GrainSpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     void OnDrawGizmos()
     {
-        if (_ConnectedToEmitter)
+        if (_IsActive)
         {
             if(_SpeakerIndex == 0)
                 Gizmos.color = Color.blue;

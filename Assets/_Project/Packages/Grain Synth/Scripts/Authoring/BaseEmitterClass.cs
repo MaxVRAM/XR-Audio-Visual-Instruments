@@ -34,7 +34,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
     public bool _ColliderRigidityVolumeScale = false;
 
     [Header("Speaker Configuration")]
-    public GrainSpeakerAuthoring _LinkedSpeaker;
+    public SpeakerAuthoring _LinkedSpeaker;
     public int _LinkedSpeakerIndex;
     public bool _LinkedToSpeaker = false;
     protected bool _FixedSpeakerLink = false;
@@ -165,7 +165,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
         }
     }
 
-    public void UpdateLinkedSpeaker(GrainSpeakerAuthoring speaker)
+    public void UpdateLinkedSpeaker(SpeakerAuthoring speaker)
     {
         _LinkedSpeaker = speaker;
         _LinkedToSpeaker = speaker != null ? true : false;
@@ -174,7 +174,7 @@ public class BaseEmitterClass : MonoBehaviour, IConvertGameObjectToEntity
 
     public virtual void InitialiseTypeAndInteractions() { }
     protected virtual void UpdateProperties() { }
-    public GrainSpeakerAuthoring DynamicallyLinkedSpeaker { get { return GrainSynth.Instance._GrainSpeakers[_LinkedSpeakerIndex]; } }
+    public SpeakerAuthoring DynamicallyLinkedSpeaker { get { return GrainSynth.Instance._GrainSpeakers[_LinkedSpeakerIndex]; } }
 
     public void UpdateCollision(Collision collision)
     {

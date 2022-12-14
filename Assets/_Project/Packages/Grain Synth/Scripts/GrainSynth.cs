@@ -42,8 +42,8 @@ public class GrainSynth :  MonoBehaviour
     int _GrainProcessorCount = 0;
 
     [Header("Speakers")]
-    public GrainSpeakerAuthoring _SpeakerPrefab;
-    public List<GrainSpeakerAuthoring> _GrainSpeakers = new List<GrainSpeakerAuthoring>();
+    public SpeakerAuthoring _SpeakerPrefab;
+    public List<SpeakerAuthoring> _GrainSpeakers = new List<SpeakerAuthoring>();
     public int _MaxDynamicSpeakers = 5;
 
     int _MaxSpeakers;
@@ -95,7 +95,7 @@ public class GrainSynth :  MonoBehaviour
         {
             _ListenerPos = _Listener.transform.position,
             _EmitterToListenerRadius = _EmitterListenerActivationRange,
-            _EmitterToSpeakerRadius = _EmitterSpeakerAttachRadius
+            _SpeakerAttachRadius = _EmitterSpeakerAttachRadius
         });
 
         // ----   CREATE AUDIO SOURCE BLOB ASSETS AND ASSIGN TO AudioClipDataComponent ENTITIES
@@ -168,7 +168,7 @@ public class GrainSynth :  MonoBehaviour
         {
             _ListenerPos = _Listener.transform.position,
             _EmitterToListenerRadius = _EmitterListenerActivationRange,
-            _EmitterToSpeakerRadius = _EmitterSpeakerAttachRadius
+            _SpeakerAttachRadius = _EmitterSpeakerAttachRadius
         });
 
         _GrainProcessorCount = (int)Mathf.Lerp(_GrainProcessorCount, currentGrainProcessors.Length, Time.deltaTime * 10f);
@@ -212,10 +212,10 @@ public class GrainSynth :  MonoBehaviour
 
     public void CreateSpeaker(Vector3 pos)
     {
-        GrainSpeakerAuthoring speaker = Instantiate(_SpeakerPrefab, pos, quaternion.identity, transform);    
+        SpeakerAuthoring speaker = Instantiate(_SpeakerPrefab, pos, quaternion.identity, transform);    
     }
 
-    public void RegisterSpeaker(GrainSpeakerAuthoring speaker)
+    public void RegisterSpeaker(SpeakerAuthoring speaker)
     {
         if (speaker._Registered || _GrainSpeakers.Contains(speaker))
             return;

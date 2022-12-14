@@ -12,7 +12,7 @@ public class BurstParameters
     public BurstVolume _Volume;
 }
 
-public class BurstEmitterAuthoring : BaseEmitterClass
+public class BurstAuthoring : BaseEmitterClass
 {
     public BurstParameters _Parameters;
 
@@ -154,7 +154,7 @@ public class BurstEmitterAuthoring : BaseEmitterClass
 
     protected override void UpdateProperties()
     {
-        if (_InListenerRadius && _IsPlaying)
+        if (_IsWithinEarshot && _IsPlaying)
         {
             BurstEmitterComponent burstData = _EntityManager.GetComponentData<BurstEmitterComponent>(_EmitterEntity);
 

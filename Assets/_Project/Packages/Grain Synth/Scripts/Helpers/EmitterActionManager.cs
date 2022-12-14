@@ -10,7 +10,7 @@ public class EmitterActionManager : MonoBehaviour
     /// <summary>
     /// When true, this object will spawn "contact" emitters from colliding objects.
     /// </summary>
-    public GrainSpeakerAuthoring _Speaker;
+    public SpeakerAuthoring _Speaker;
     public List<BaseEmitterClass> _SelfEmitters;
     public List<BaseEmitterClass> _ContactEmitters;
     public InteractionBase[] _Interactions;
@@ -24,7 +24,7 @@ public class EmitterActionManager : MonoBehaviour
         _ThisGameObject = gameObject;
         
         if (_Speaker == null)
-            _Speaker = GetComponentInChildren<GrainSpeakerAuthoring>();
+            _Speaker = GetComponentInChildren<SpeakerAuthoring>();
 
         BaseEmitterClass[] emitters = GetComponentsInChildren<BaseEmitterClass>();
 
@@ -48,7 +48,7 @@ public class EmitterActionManager : MonoBehaviour
             emitter.ResetEmitter(primaryObject, secondaryObject, collision);
     }
 
-    public void UpdateEmitterSpeaker(GrainSpeakerAuthoring speaker)
+    public void UpdateEmitterSpeaker(SpeakerAuthoring speaker)
     {
         if (speaker != null)
         {

@@ -11,7 +11,7 @@ public class ContinuousParameters
     public ContinuousVolume _Volume;
 }
 
-public class ContinuousEmitterAuthoring : BaseEmitterClass
+public class ContinuousAuthoring : BaseEmitterClass
 {
     public ContinuousParameters _Parameters;
 
@@ -125,7 +125,7 @@ public class ContinuousEmitterAuthoring : BaseEmitterClass
 
     protected override void UpdateProperties()
     {
-        if (_InListenerRadius & _IsPlaying)
+        if (_IsWithinEarshot & _IsPlaying)
         {
             ContinuousEmitterComponent continuousData = _EntityManager.GetComponentData<ContinuousEmitterComponent>(_EmitterEntity);
 

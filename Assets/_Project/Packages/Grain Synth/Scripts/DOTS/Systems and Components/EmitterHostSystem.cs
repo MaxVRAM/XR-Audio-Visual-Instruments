@@ -12,58 +12,58 @@ using Substance.Game;
 //     Processes dynamic emitter-speaker link components amd updates entity in-range statuses.
 /// <summary>
 [UpdateAfter(typeof(DOTS_QuadrantSystem))]
-public class RangeCheckSystem : SystemBase
+public class EmitterHostSystem : SystemBase
 {
     protected override void OnUpdate()
     {
         DSPTimerComponent dspTimer = GetSingleton<DSPTimerComponent>();       
-        ActivationRadiusComponent activationRange = GetSingleton<ActivationRadiusComponent>();
+        ActivationRadiusComponent activationRanges = GetSingleton<ActivationRadiusComponent>();
 
         EntityQueryDesc speakerQueryDesc = new EntityQueryDesc
         {
-            All = new ComponentType[] { typeof(GrainSpeakerComponent), typeof(ObjectPoolComponent), typeof(Translation) }
+            All = new ComponentType[] { typeof(SpeakerComponent), typeof(PoolingComponent), typeof(Translation) }
         };
 
-        EntityQueryDesc emitterQueryDesc = new EntityQueryDesc
+        EntityQueryDesc hostQueryDesc = new EntityQueryDesc
         {
-            None = new ComponentType[] { typeof(FixedSpeakerLinkTag) },
-            All = new ComponentType[] { typeof(ContinuousEmitterComponent), typeof(Translation) }
+            None = new ComponentType[] { typeof(DedicatedSpeakerTag) },
+            All = new ComponentType[] { typeof(EmitterHostComponent), typeof(Translation) }
         };
 
         EntityQuery speakersQuery = GetEntityQuery(speakerQueryDesc);
-        EntityQuery emittersQuery = GetEntityQuery(emitterQueryDesc);
+        EntityQuery hostQuery = GetEntityQuery(hostQueryDesc);
 
 
-        //----    UPDATE ENTITY IN-RANGE STATUSES
-        NativeArray<ObjectPoolComponent> speakerPool = speakersQuery.ToComponentDataArray<ObjectPoolComponent>(Allocator.TempJob);
+        //----    UPDATE HOST IN-RANGE STATUSES
+        NativeArray<PoolingComponent> speakerPool = speakersQuery.ToComponentDataArray<PoolingComponent>(Allocator.TempJob);
         NativeArray<Translation> speakerTranslations = speakersQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
-        JobHandle checkEmitterRangeJob = Entities.WithName("CheckEmitterRange").ForEach
+        JobHandle updateHostRangeJob = Entities.WithName("UpdateHostRange").ForEach
         (
-            (ref ContinuousEmitterComponent emitter, in Translation trans) =>
+            (ref EmitterHostComponent host, in Translation translation) =>
             {
-                if (!emitter._FixedSpeakerLink)
+                if (!host._DedicatedSpeaker)
                 {
-                    // Calculate if emitter is currently in-range
-                    float emitterListenerDistance = math.distance(trans.Value, activationRange._ListenerPos);
-                    bool inListenerRadiusNow = emitterListenerDistance < activationRange._EmitterToListenerRadius;
+                    // Calculate if host is currently in-range
+                    float listenerDistance = math.distance(translation.Value, activationRanges._ListenerPos);
+                    bool inListenerRadiusNow = listenerDistance < activationRanges._EmitterToListenerRadius;
 
-                    // Update in-range status of emitters from the listener.
+                    // Update in-range status of host from the listener.
                     if (!inListenerRadiusNow)
                     {
-                        emitter._InListenerRadius = false;
-                        emitter._SpeakerAttached = false;
-                        emitter._SpeakerIndex = int.MaxValue;
+                        host._InListenerRadius = false;
+                        host._SpeakerAttached = false;
+                        host._SpeakerIndex = int.MaxValue;
                     }
-                    else emitter._InListenerRadius = true;
+                    else host._InListenerRadius = true;
 
-                    // Unlink emitters outside speaker attachment radius.
-                    if (emitter._SpeakerAttached)
+                    // Unlink hosts outside speaker attachment radius.
+                    if (host._SpeakerAttached)
                     {
-                        float emitterToSpeakerDist = math.distance(trans.Value, speakerTranslations[emitter._SpeakerIndex].Value);
-                        if (speakerPool[emitter._SpeakerIndex]._State == PooledState.Pooled || emitterToSpeakerDist > activationRange._EmitterToSpeakerRadius)
+                        float emitterToSpeakerDist = math.distance(translation.Value, speakerTranslations[host._SpeakerIndex].Value);
+                        if (speakerPool[host._SpeakerIndex]._State == PooledState.Pooled || emitterToSpeakerDist > activationRanges._SpeakerAttachRadius)
                         {
-                            emitter._SpeakerAttached = false;
-                            emitter._SpeakerIndex = int.MaxValue;
+                            host._SpeakerAttached = false;
+                            host._SpeakerIndex = int.MaxValue;
                         }
                     }
                 }
@@ -75,57 +75,57 @@ public class RangeCheckSystem : SystemBase
 
 
 
-        //----    DEACTIVATE SPEAKERS WITHOUT ATTACHED ENTITIES
-        NativeArray<ContinuousEmitterComponent> emitterAttached = emittersQuery.ToComponentDataArray<ContinuousEmitterComponent>(Allocator.TempJob);
+        //----    DEACTIVATE SPEAKERS WITHOUT ATTACHED HOSTS
+        NativeArray<EmitterHostComponent> hostsWithSpeaker = hostQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
         JobHandle updateSpeakerPoolJob = Entities.WithName("UpdateSpeakerPool").ForEach
         (
-            (ref ObjectPoolComponent pooling, in GrainSpeakerComponent speaker) =>
+            (ref PoolingComponent pooling, in SpeakerComponent speaker) =>
             {
                 if (pooling._State == PooledState.Active)
                 {
-                    for (int e = 0; e < emitterAttached.Length; e++)
-                        if (emitterAttached[e]._SpeakerIndex == speaker._SpeakerIndex)
+                    for (int e = 0; e < hostsWithSpeaker.Length; e++)
+                        if (hostsWithSpeaker[e]._SpeakerIndex == speaker._SpeakerIndex)
                             // Exit job iteration before ending loop / pooling speaker
                             return;
                     pooling._State = PooledState.Pooled;
                 }
             }
-        ).WithDisposeOnCompletion(emitterAttached)
-        .ScheduleParallel(checkEmitterRangeJob);
+        ).WithDisposeOnCompletion(hostsWithSpeaker)
+        .ScheduleParallel(updateHostRangeJob);
 
 
 
 
-        //----    ATTACH EMITTER TO ACTIVE IN-RANGE SPEAKER
+        //----    ATTACH HOST TO ACTIVE IN-RANGE SPEAKER
         NativeArray<Entity> inRangeSpeaker = speakersQuery.ToEntityArray(Allocator.TempJob);
         JobHandle linkToActiveSpeakerJob = Entities.WithName("LinkToActiveSpeaker").ForEach
         (
-            (ref ContinuousEmitterComponent emitter, in Translation emitterTranslation) =>
+            (ref EmitterHostComponent host, in Translation translation) =>
             {
-                // Find emitters in listener radius not currently linked to a speaker
-                if (!emitter._SpeakerAttached && emitter._InListenerRadius)
+                // Find hosts in listener radius not currently linked to a speaker
+                if (!host._SpeakerAttached && host._InListenerRadius)
                 {
                     float closestDist = float.MaxValue;
                     int closestSpeakerIndex = int.MaxValue;
-                    // Find closest speaker to the emitter
+                    // Find closest speaker to the host
                     for (int i = 0; i < inRangeSpeaker.Length; i++)
                     {
-                        if (GetComponent<ObjectPoolComponent>(inRangeSpeaker[i])._State == PooledState.Active)
+                        if (GetComponent<PoolingComponent>(inRangeSpeaker[i])._State == PooledState.Active)
                         {
-                            float dist = math.distance(emitterTranslation.Value, GetComponent<Translation>(inRangeSpeaker[i]).Value);
-                            if (dist < activationRange._EmitterToSpeakerRadius)
+                            float dist = math.distance(translation.Value, GetComponent<Translation>(inRangeSpeaker[i]).Value);
+                            if (dist < activationRanges._SpeakerAttachRadius)
                             {
                                 closestDist = dist;
-                                closestSpeakerIndex = GetComponent<GrainSpeakerComponent>(inRangeSpeaker[i])._SpeakerIndex;
+                                closestSpeakerIndex = GetComponent<SpeakerComponent>(inRangeSpeaker[i])._SpeakerIndex;
                             }
                         }
                     }
-                    // Attach the emitter to the nearest valid speaker
+                    // Attach the host to the nearest valid speaker
                     if (closestSpeakerIndex != int.MaxValue)
                     {
-                        emitter._SpeakerAttached = true;
-                        emitter._SpeakerIndex = closestSpeakerIndex;
-                        emitter._LastSampleIndex = dspTimer._CurrentSampleIndex;
+                        host._SpeakerAttached = true;
+                        host._SpeakerIndex = closestSpeakerIndex;
+                        host._NewSpeaker = true;
                     }
                 }
             }
@@ -135,11 +135,11 @@ public class RangeCheckSystem : SystemBase
 
 
 
-        //----     SPAWN A POOLED SPEAKER ON THE EMITTER IF NO NEARBY SPEAKERS WERE FOUND
-        NativeArray<Entity> emitterEntities = emittersQuery.ToEntityArray(Allocator.TempJob);
-        NativeArray<ContinuousEmitterComponent> emitters = emittersQuery.ToComponentDataArray<ContinuousEmitterComponent>(Allocator.TempJob);
+        //----     SPAWN A POOLED SPEAKER ON A HOST IF NO NEARBY SPEAKERS WERE FOUND
+        NativeArray<Entity> hostEntities = hostQuery.ToEntityArray(Allocator.TempJob);
+        NativeArray<EmitterHostComponent> hosts = hostQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
         NativeArray<Entity> speakerEntities = speakersQuery.ToEntityArray(Allocator.TempJob);
-        NativeArray<ObjectPoolComponent> speakers = speakersQuery.ToComponentDataArray<ObjectPoolComponent>(Allocator.TempJob);        
+        NativeArray<PoolingComponent> speakers = speakersQuery.ToComponentDataArray<PoolingComponent>(Allocator.TempJob);        
 
         JobHandle speakerActivation = Job.WithName("speakerActivation").WithoutBurst().WithCode(() =>
         {
@@ -149,28 +149,28 @@ public class RangeCheckSystem : SystemBase
                 bool spawned = false;
                 if (!spawned && speakers[s]._State == PooledState.Pooled)
                 {
-                    // Find an unlinked emitter to link with pooled speaker
-                    for (int e = 0; e < emitters.Length; e++)
+                    // Find an unlinked host to link with pooled speaker
+                    for (int e = 0; e < hosts.Length; e++)
                     {
-                        if (emitters[e]._InListenerRadius && !emitters[e]._SpeakerAttached)
+                        if (hosts[e]._InListenerRadius && !hosts[e]._SpeakerAttached)
                         {
                             spawned = true;
-                            float3 speakerPos = GetComponent<Translation>(emitterEntities[e]).Value;
+                            float3 speakerPos = GetComponent<Translation>(hostEntities[e]).Value;
 
-                            // Update emitter component with speaker link
-                            ContinuousEmitterComponent emitter = GetComponent<ContinuousEmitterComponent>(emitterEntities[e]);
-                            emitter._SpeakerAttached = true;
-                            emitter._SpeakerIndex = GetComponent<GrainSpeakerComponent>(speakerEntities[s])._SpeakerIndex;
-                            emitter._LastSampleIndex = dspTimer._CurrentSampleIndex;
-                            SetComponent(emitterEntities[e], emitter);
+                            // Update host component with speaker link
+                            EmitterHostComponent host = GetComponent<EmitterHostComponent>(hostEntities[e]);
+                            host._SpeakerAttached = true;
+                            host._SpeakerIndex = GetComponent<SpeakerComponent>(speakerEntities[s])._SpeakerIndex;
+                            host._NewSpeaker = true;
+                            SetComponent(hostEntities[e], host);
 
                             // Update speaker position
                             Translation speakerTrans = GetComponent<Translation>(speakerEntities[s]);
-                            speakerTrans.Value = GetComponent<Translation>(emitterEntities[e]).Value;
+                            speakerTrans.Value = GetComponent<Translation>(hostEntities[e]).Value;
                             SetComponent(speakerEntities[s], speakerTrans);
 
                             // Update speaker pooled status to active
-                            ObjectPoolComponent pooledObj = GetComponent<ObjectPoolComponent>(speakerEntities[s]);
+                            PoolingComponent pooledObj = GetComponent<PoolingComponent>(speakerEntities[s]);
                             pooledObj._State = PooledState.Active;
                             SetComponent(speakerEntities[s], pooledObj);
 
@@ -180,17 +180,17 @@ public class RangeCheckSystem : SystemBase
                 }
             }
         }).WithDisposeOnCompletion(speakerEntities).WithDisposeOnCompletion(speakers)
-        .WithDisposeOnCompletion(emitterEntities).WithDisposeOnCompletion(emitters)
+        .WithDisposeOnCompletion(hostEntities).WithDisposeOnCompletion(hosts)
         .Schedule(linkToActiveSpeakerJob);
 
 
 
 
-        NativeArray<ContinuousEmitterComponent> emitterToSitOn = emittersQuery.ToComponentDataArray<ContinuousEmitterComponent>(Allocator.TempJob);
-        NativeArray<Translation> emitterTranslations = emittersQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
+        NativeArray<ContinuousEmitterComponent> hostsToSitSpeakers = hostQuery.ToComponentDataArray<ContinuousEmitterComponent>(Allocator.TempJob);
+        NativeArray<Translation> hostTranslations = hostQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
         JobHandle moveSpeakersJob = Entities.WithName("MoveSpeakers").ForEach
         (
-            (ref Translation translation, in ObjectPoolComponent pooling, in GrainSpeakerComponent speaker) =>
+            (ref Translation translation, in PoolingComponent pooling, in SpeakerComponent speaker) =>
             {
                 // TODO ---- Triangulate attached emitter positions and move speaker to the centre
                 if (pooling._State == PooledState.Active)
@@ -198,18 +198,18 @@ public class RangeCheckSystem : SystemBase
                     int emitterIndex = -1;
                     int attachedEmitters = 0;
                     // Check if any emitters are attached to this speaker
-                    for (int e = 0; e < emitterToSitOn.Length; e++)
-                        if (emitterToSitOn[e]._SpeakerIndex == speaker._SpeakerIndex)
+                    for (int e = 0; e < hostsToSitSpeakers.Length; e++)
+                        if (hostsToSitSpeakers[e]._SpeakerIndex == speaker._SpeakerIndex)
                         {
                             emitterIndex = e;
                             attachedEmitters++;
                         }
                     if (attachedEmitters == 1 && emitterIndex != -1)
-                        translation = emitterTranslations[emitterIndex];
+                        translation = hostTranslations[emitterIndex];
                 }
             }
-        ).WithDisposeOnCompletion(emitterToSitOn)
-        .WithDisposeOnCompletion(emitterTranslations)
+        ).WithDisposeOnCompletion(hostsToSitSpeakers)
+        .WithDisposeOnCompletion(hostTranslations)
         .ScheduleParallel(speakerActivation);
 
         Dependency = moveSpeakersJob;

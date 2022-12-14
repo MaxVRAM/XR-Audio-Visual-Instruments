@@ -38,20 +38,18 @@ public struct ActivationRadiusComponent : IComponentData
 {
     public float3 _ListenerPos;
     public float _EmitterToListenerRadius;
-    public float _EmitterToSpeakerRadius;
+    public float _SpeakerAttachRadius;
 }
 
 public struct PlayingTag : IComponentData {}
 public struct PingPongTag : IComponentData {}
-public struct FixedSpeakerLinkTag : IComponentData {}
-public struct InListenerRadiusTag : IComponentData {}
 
-public struct GrainSpeakerComponent : IComponentData
+public struct SpeakerComponent : IComponentData
 {
     public int _SpeakerIndex;
 }
 
-public struct ObjectPoolComponent : IComponentData
+public struct PoolingComponent : IComponentData
 {
     public PooledState _State;
 }
@@ -79,7 +77,11 @@ public struct ModulationComponent : IComponentData
     public float _InteractionInput;
 }
 
-public struct EmitterHost : IComponentData
+public struct FixedSpeakerLinkTag : IComponentData {}
+public struct DedicatedSpeakerTag : IComponentData {}
+public struct InListenerRadiusTag : IComponentData {}
+
+public struct EmitterHostComponent : IComponentData
 {
     public int _HostIndex;
     public bool _InListenerRadius;

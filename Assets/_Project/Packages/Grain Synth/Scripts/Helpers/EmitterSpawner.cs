@@ -9,7 +9,7 @@ public class EmitterSpawner : MonoBehaviour
 {
     public GameObject _TetherObject;
     public bool _EmittersUseSharedSpeaker = true;
-    public GrainSpeakerAuthoring _SharedSpeaker;
+    public SpeakerAuthoring _SharedSpeaker;
     public GameObject _SelectedPrefab;
     public List<GameObject> _SliderPrefabs;
     public bool _RandomPrefab = false;
@@ -28,9 +28,9 @@ public class EmitterSpawner : MonoBehaviour
         _Name = transform.parent.name + " > " + this.name;
 
         if (_SharedSpeaker == null)
-            _SharedSpeaker = GetComponent<GrainSpeakerAuthoring>();
+            _SharedSpeaker = GetComponent<SpeakerAuthoring>();
             if (_SharedSpeaker == null)
-                _SharedSpeaker = GetComponentInChildren<GrainSpeakerAuthoring>();
+                _SharedSpeaker = GetComponentInChildren<SpeakerAuthoring>();
 
         if (_EmittersUseSharedSpeaker && _SharedSpeaker == null)
             Debug.LogWarning("Emitter Spawner [" + _Name + "] has no speaker to provide spawned objects!");
