@@ -9,10 +9,10 @@ using Substance.Game;
 // https://docs.unity3d.com/Packages/com.unity.entities@0.13/api/
 
 /// <summary>
-//     Processes dynamic emitter-speaker link components amd updates entity in-range statuses.
+//     Processes dynamic emitter host <-> speaker link components amd updates entity in-range statuses.
 /// <summary>
 [UpdateAfter(typeof(DOTS_QuadrantSystem))]
-public class EmitterHostSystem : SystemBase
+public class AttachmentSystem : SystemBase
 {
     protected override void OnUpdate()
     {
@@ -45,14 +45,14 @@ public class EmitterHostSystem : SystemBase
                 {
                     // Calculate if host is currently in-range
                     float listenerDistance = math.distance(translation.Value, activationRanges._ListenerPos);
-                    bool inListenerRadiusNow = listenerDistance < activationRanges._EmitterToListenerRadius;
+                    bool inListenerRadiusNow = listenerDistance < activationRanges._ListenerRadius;
 
                     // Update in-range status of host from the listener.
                     if (!inListenerRadiusNow)
                     {
+                        host._SpeakerIndex = int.MaxValue;
                         host._InListenerRadius = false;
                         host._SpeakerAttached = false;
-                        host._SpeakerIndex = int.MaxValue;
                     }
                     else host._InListenerRadius = true;
 
@@ -60,10 +60,11 @@ public class EmitterHostSystem : SystemBase
                     if (host._SpeakerAttached)
                     {
                         float emitterToSpeakerDist = math.distance(translation.Value, speakerTranslations[host._SpeakerIndex].Value);
-                        if (speakerPool[host._SpeakerIndex]._State == PooledState.Pooled || emitterToSpeakerDist > activationRanges._SpeakerAttachRadius)
+                        if (speakerPool[host._SpeakerIndex]._State == PooledState.Pooled || emitterToSpeakerDist > activationRanges._AttachmentRadius)
                         {
-                            host._SpeakerAttached = false;
                             host._SpeakerIndex = int.MaxValue;
+                            host._SpeakerAttached = false;
+                            host._NewSpeaker = false;
                         }
                     }
                 }
@@ -113,7 +114,7 @@ public class EmitterHostSystem : SystemBase
                         if (GetComponent<PoolingComponent>(inRangeSpeaker[i])._State == PooledState.Active)
                         {
                             float dist = math.distance(translation.Value, GetComponent<Translation>(inRangeSpeaker[i]).Value);
-                            if (dist < activationRanges._SpeakerAttachRadius)
+                            if (dist < activationRanges._AttachmentRadius)
                             {
                                 closestDist = dist;
                                 closestSpeakerIndex = GetComponent<SpeakerComponent>(inRangeSpeaker[i])._SpeakerIndex;
@@ -122,9 +123,9 @@ public class EmitterHostSystem : SystemBase
                     }
                     // Attach the host to the nearest valid speaker
                     if (closestSpeakerIndex != int.MaxValue)
-                    {
-                        host._SpeakerAttached = true;
+                    {                        
                         host._SpeakerIndex = closestSpeakerIndex;
+                        host._SpeakerAttached = true;
                         host._NewSpeaker = true;
                     }
                 }
@@ -159,15 +160,15 @@ public class EmitterHostSystem : SystemBase
 
                             // Update host component with speaker link
                             EmitterHostComponent host = GetComponent<EmitterHostComponent>(hostEntities[e]);
-                            host._SpeakerAttached = true;
                             host._SpeakerIndex = GetComponent<SpeakerComponent>(speakerEntities[s])._SpeakerIndex;
+                            host._SpeakerAttached = true;
                             host._NewSpeaker = true;
                             SetComponent(hostEntities[e], host);
 
                             // Update speaker position
-                            Translation speakerTrans = GetComponent<Translation>(speakerEntities[s]);
-                            speakerTrans.Value = GetComponent<Translation>(hostEntities[e]).Value;
-                            SetComponent(speakerEntities[s], speakerTrans);
+                            Translation speakerTranslation = GetComponent<Translation>(speakerEntities[s]);
+                            speakerTranslation.Value = GetComponent<Translation>(hostEntities[e]).Value;
+                            SetComponent(speakerEntities[s], speakerTranslation);
 
                             // Update speaker pooled status to active
                             PoolingComponent pooledObj = GetComponent<PoolingComponent>(speakerEntities[s]);
@@ -192,20 +193,20 @@ public class EmitterHostSystem : SystemBase
         (
             (ref Translation translation, in PoolingComponent pooling, in SpeakerComponent speaker) =>
             {
-                // TODO ---- Triangulate attached emitter positions and move speaker to the centre
+                // TODO ---- Triangulate attached host positions and move speaker to the centre
                 if (pooling._State == PooledState.Active)
                 {
-                    int emitterIndex = -1;
-                    int attachedEmitters = 0;
-                    // Check if any emitters are attached to this speaker
+                    int hostIndex = -1;
+                    int attachedHosts = 0;
+                    // Check if any hosts are attached to this speaker
                     for (int e = 0; e < hostsToSitSpeakers.Length; e++)
                         if (hostsToSitSpeakers[e]._SpeakerIndex == speaker._SpeakerIndex)
                         {
-                            emitterIndex = e;
-                            attachedEmitters++;
+                            hostIndex = e;
+                            attachedHosts++;
                         }
-                    if (attachedEmitters == 1 && emitterIndex != -1)
-                        translation = hostTranslations[emitterIndex];
+                    if (attachedHosts == 1 && hostIndex != -1)
+                        translation = hostTranslations[hostIndex];
                 }
             }
         ).WithDisposeOnCompletion(hostsToSitSpeakers)
@@ -213,5 +214,15 @@ public class EmitterHostSystem : SystemBase
         .ScheduleParallel(speakerActivation);
 
         Dependency = moveSpeakersJob;
+    }
+
+
+
+    private EmitterHostComponent AttachToSpeaker(EmitterHostComponent host, int index)
+    {
+        host._SpeakerAttached = true;
+        host._SpeakerIndex = index;
+        host._NewSpeaker = true;
+        return host;
     }
 }

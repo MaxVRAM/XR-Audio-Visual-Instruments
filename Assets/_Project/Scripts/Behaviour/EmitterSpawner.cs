@@ -66,14 +66,18 @@ public class EmitterSpawner : MonoBehaviour
                 objectToSpawn = _SliderPrefabs[Mathf.RoundToInt(Random.Range(0, _SliderPrefabs.Count))];
             else objectToSpawn = _SelectedPrefab;
 
-            if (objectToSpawn.GetComponent<EmitterActionManager>() != null)
+            if (objectToSpawn.GetComponent<HostAuthoring>() != null)
             {
-                GameObject newObject = Instantiate(objectToSpawn, _TetherObject.transform.position,
-                    Quaternion.identity, gameObject.transform);
-                EmitterActionManager newObjectActionManager = newObject.GetComponent<EmitterActionManager>();
-                newObjectActionManager.ResetEmitterInteractions(newObject, _TetherObject, null);
-                newObjectActionManager.UpdateEmitterSpeaker(_EmittersUseSharedSpeaker ? _SharedSpeaker : null);
+                GameObject newObject = Instantiate(
+                    objectToSpawn,
+                    _TetherObject.transform.position,
+                    Quaternion.identity,
+                    gameObject.transform);
                 newObject.name = newObject.name + " (" + (_Sliders.Count) + ")";
+
+               HostAuthoring objectHost = newObject.GetComponent<HostAuthoring>();
+
+               if (objectHost != null) objectHost.SetTargetObject(_TetherObject);
 
                 _Sliders.Add(newObject);
                 _NextSpawnCountdown = _SpawnFrequency;

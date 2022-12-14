@@ -15,37 +15,24 @@ public class ContinuousAuthoring : EmitterAuthoring
 {
     public ContinuousParameters _Parameters;
 
-    public override void InitialiseTypeAndInteractions()
-    {
-        _EmitterType = EmitterType.Continuous;
-        _Parameters._Playhead._Interaction.UpdateSource(_PrimaryObject, _SecondaryObject, _LatestCollision);
-        _Parameters._Density._Interaction.UpdateSource(_PrimaryObject, _SecondaryObject, _LatestCollision);
-        _Parameters._GrainDuration._Interaction.UpdateSource(_PrimaryObject, _SecondaryObject, _LatestCollision);
-        _Parameters._Transpose._Interaction.UpdateSource(_PrimaryObject, _SecondaryObject, _LatestCollision);
-        _Parameters._Volume._Interaction.UpdateSource(_PrimaryObject, _SecondaryObject, _LatestCollision);
-    }
-
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         _EmitterEntity = entity;
+        _EmitterType = EmitterType.Continuous;
         int index = GrainSynth.Instance.RegisterEmitter(entity);
 
-        if (_LinkedSpeaker != null || gameObject.TryGetComponent(out _LinkedSpeaker))
-        {
-            _FixedSpeakerLink = true;
-            _LinkedSpeaker.AddEmitterLink(gameObject);
-            _LinkedSpeakerIndex = _LinkedSpeaker.GetRegisterAndGetIndex();
-            dstManager.AddComponentData(_EmitterEntity, new FixedSpeakerLinkTag { });
-        }
-        else _LinkedSpeakerIndex = int.MaxValue;
-
         #region ADD EMITTER COMPONENT DATA
-        dstManager.AddComponentData(_EmitterEntity, new ContinuousEmitterComponent
+
+        dstManager.AddComponentData(_EmitterEntity, new ContinuousComponent
         {
-            _IsPlaying = _IsPlaying,
-            _SpeakerAttached = _FixedSpeakerLink,
-            _FixedSpeakerLink = _FixedSpeakerLink,
+            _IsPlaying = false,
+            _EmitterIndex = index,
+            _DistanceAmplitude = 1,
+            _AudioClipIndex = _ClipIndex,
             _PingPong = _PingPongAtEndOfClip,
+            _SpeakerIndex = _SpeakerIndex,
+            _SpeakerAttached = _Speaker != null,
+            _OutputSampleRate = AudioSettings.outputSampleRate,
             _LastSampleIndex = GrainSynth.Instance._CurrentDSPSample,
 
             _Playhead = new ModulationComponent
@@ -97,20 +84,18 @@ public class ContinuousAuthoring : EmitterAuthoring
                 _PerlinNoise = _Parameters._Volume._Noise._Perlin,
                 _Min = _Parameters._Volume._Min,
                 _Max = _Parameters._Volume._Max
-            },
-
-            _DistanceAmplitude = 1,
-            _AudioClipIndex = _ClipIndex,
-            _SpeakerIndex = _LinkedSpeakerIndex,
-            _EmitterIndex = index,
-            _OutputSampleRate = AudioSettings.outputSampleRate
+            }
         });
+
         #if UNITY_EDITOR
                 dstManager.SetName(entity, "Grain Emitter:   " + transform.parent.name + " " + gameObject.name);
         #endif
+
         #endregion
 
+
         #region ADD DSP EFFECT COMPONENT DATA
+
         dstManager.AddBuffer<DSPParametersElement>(_EmitterEntity);
         DynamicBuffer<DSPParametersElement> dspParams = dstManager.GetBuffer<DSPParametersElement>(_EmitterEntity);
         for (int i = 0; i < _DSPChainParams.Length; i++)
@@ -118,32 +103,31 @@ public class ContinuousAuthoring : EmitterAuthoring
             dspParams.Add(_DSPChainParams[i].GetDSPBufferElement());
         }
         dstManager.AddComponentData(entity, new QuadEntityType { _Type = QuadEntityType.QuadEntityTypeEnum.Emitter });
+
         #endregion
 
         _Initialised = true;
     }
 
-    protected override void UpdateProperties()
+    protected override void UpdateEntity()
     {
-        if (_IsWithinEarshot & _IsPlaying)
+        if (_InListenerRadius & _IsPlaying)
         {
-            ContinuousEmitterComponent continuousData = _EntityManager.GetComponentData<ContinuousEmitterComponent>(_EmitterEntity);
+            ContinuousComponent continuousData = _EntityManager.GetComponentData<ContinuousComponent>(_EmitterEntity);
 
             #region UPDATE EMITTER COMPONENT DATA
             continuousData._IsPlaying = _IsPlaying;
             continuousData._AudioClipIndex = _ClipIndex;
             continuousData._PingPong = _PingPongAtEndOfClip;
-            continuousData._SpeakerIndex = _FixedSpeakerLink ? _LinkedSpeaker._SpeakerIndex : continuousData._SpeakerIndex;
-            _LinkedToSpeaker = continuousData._SpeakerAttached;
-            _LinkedSpeakerIndex = continuousData._SpeakerIndex;
-            _InListenerRadius = continuousData._InListenerRadius;
+            continuousData._DistanceAmplitude = _DistanceAmplitude;
+            continuousData._SpeakerIndex = _SpeakerIndex;
 
-            if (continuousData._SpeakerIndex < GrainSynth.Instance._GrainSpeakers.Count)
-                continuousData._DistanceAmplitude = AudioUtils.EmitterFromSpeakerVolumeAdjust(_HeadPosition.position,
-                    GrainSynth.Instance._GrainSpeakers[continuousData._SpeakerIndex].gameObject.transform.position,
-                    transform.position) * _DistanceVolume;
-            else
-                continuousData._DistanceAmplitude = 0;
+            // if (continuousData._SpeakerIndex < GrainSynth.Instance._GrainSpeakers.Count)
+            //     continuousData._DistanceAmplitude = AudioUtils.EmitterFromSpeakerVolumeAdjust(_HeadPosition.position,
+            //         GrainSynth.Instance._GrainSpeakers[continuousData._SpeakerIndex].gameObject.transform.position,
+            //         transform.position) * _DistanceAmplitude;
+            // else
+            //     continuousData._DistanceAmplitude = 0;
 
             continuousData._Playhead = new ModulationComponent
             {
@@ -205,6 +189,7 @@ public class ContinuousAuthoring : EmitterAuthoring
                 _Max = _Parameters._Volume._Max,
                 _InteractionInput = _Parameters._Volume._Interaction.GetValue() * _VolumeMultiply
             };
+
             _EntityManager.SetComponentData(_EmitterEntity, continuousData);
             #endregion
         }

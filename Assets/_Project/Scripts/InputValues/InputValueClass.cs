@@ -46,8 +46,6 @@ public class InputValueClass : MonoBehaviour
         }
         if (collision != null)
         {
-            _SecondaryObject = collision.collider.gameObject;
-            _SecondaryRigidBody = _SecondaryObject.GetComponent<Rigidbody>();
             _Colliding = true;
             _Collision = collision;
             _CollidedMaterial = collision.collider.material;
@@ -78,12 +76,6 @@ public class InputValueClass : MonoBehaviour
             _OutputValue = 0;
 
         _OutputValue = Mathf.Clamp(_OutputValue, 0f, 1f);
-    }
-
-    public void UpdateCollideStatus(bool colliding, PhysicMaterial material)
-    {
-        _Colliding = colliding;
-        _CollidedMaterial = material;
     }
 
     public virtual void ProcessCollision(Collision collision) { }

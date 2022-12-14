@@ -36,8 +36,8 @@ public class GrainSynth :  MonoBehaviour
 
 
     [Header("Emitters")]
-    public float _EmitterListenerActivationRange = 3;
-    public float _EmitterSpeakerAttachRadius = 1;
+    public float _ListenerRadius = 3;
+    public float _AttachmentRadius = 1;
     [SerializeField]
     int _GrainProcessorCount = 0;
 
@@ -94,8 +94,8 @@ public class GrainSynth :  MonoBehaviour
         _EntityManager.AddComponentData(_SpeakerManagerEntity, new ActivationRadiusComponent
         {
             _ListenerPos = _Listener.transform.position,
-            _EmitterToListenerRadius = _EmitterListenerActivationRange,
-            _SpeakerAttachRadius = _EmitterSpeakerAttachRadius
+            _ListenerRadius = _ListenerRadius,
+            _AttachmentRadius = _AttachmentRadius
         });
 
         // ----   CREATE AUDIO SOURCE BLOB ASSETS AND ASSIGN TO AudioClipDataComponent ENTITIES
@@ -167,8 +167,8 @@ public class GrainSynth :  MonoBehaviour
         _EntityManager.SetComponentData(_SpeakerManagerEntity, new ActivationRadiusComponent
         {
             _ListenerPos = _Listener.transform.position,
-            _EmitterToListenerRadius = _EmitterListenerActivationRange,
-            _SpeakerAttachRadius = _EmitterSpeakerAttachRadius
+            _ListenerRadius = _ListenerRadius,
+            _AttachmentRadius = _AttachmentRadius
         });
 
         _GrainProcessorCount = (int)Mathf.Lerp(_GrainProcessorCount, currentGrainProcessors.Length, Time.deltaTime * 10f);
@@ -247,7 +247,7 @@ public class GrainSynth :  MonoBehaviour
             return;
          
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(_Listener.transform.position, _EmitterListenerActivationRange);
+        Gizmos.DrawWireSphere(_Listener.transform.position, _ListenerRadius);
     }
 }
 

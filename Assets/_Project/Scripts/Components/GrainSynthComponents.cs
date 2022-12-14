@@ -37,8 +37,8 @@ public struct GrainProcessorComponent : IComponentData
 public struct ActivationRadiusComponent : IComponentData
 {
     public float3 _ListenerPos;
-    public float _EmitterToListenerRadius;
-    public float _SpeakerAttachRadius;
+    public float _ListenerRadius;
+    public float _AttachmentRadius;
 }
 
 public struct PlayingTag : IComponentData {}
@@ -60,6 +60,20 @@ public enum PooledState
     Active
 }
 
+public struct FixedSpeakerLinkTag : IComponentData {}
+public struct DedicatedSpeakerTag : IComponentData {}
+public struct InListenerRadiusTag : IComponentData {}
+
+public struct EmitterHostComponent : IComponentData
+{
+    public int _HostIndex;
+    public bool _InListenerRadius;
+    public bool _DedicatedSpeaker;
+    public bool _SpeakerAttached;
+    public int _SpeakerIndex;
+    public bool _NewSpeaker;
+}
+
 public struct ModulationComponent : IComponentData
 {
     public float _StartValue;
@@ -77,30 +91,13 @@ public struct ModulationComponent : IComponentData
     public float _InteractionInput;
 }
 
-public struct FixedSpeakerLinkTag : IComponentData {}
-public struct DedicatedSpeakerTag : IComponentData {}
-public struct InListenerRadiusTag : IComponentData {}
-
-public struct EmitterHostComponent : IComponentData
-{
-    public int _HostIndex;
-    public bool _InListenerRadius;
-    public float _DistanceAttenuation;
-    public bool _DedicatedSpeaker;
-    public bool _SpeakerAttached;
-    public int _SpeakerIndex;
-    public bool _NewSpeaker;
-}
-
-public struct ContinuousEmitterComponent : IComponentData
+public struct ContinuousComponent : IComponentData
 {
     public int _EmitterIndex;
     public int _AudioClipIndex;
     public bool _IsPlaying;
     public bool _PingPong;
-    public bool _InListenerRadius;
     public float _DistanceAmplitude;
-    public bool _FixedSpeakerLink;
     public bool _SpeakerAttached;
     public int _SpeakerIndex;
     public int _LastSampleIndex;
@@ -113,15 +110,13 @@ public struct ContinuousEmitterComponent : IComponentData
     public ModulationComponent _Volume;
 }
 
-public struct BurstEmitterComponent : IComponentData
+public struct BurstComponent : IComponentData
 {
     public int _EmitterIndex;
     public int _AudioClipIndex;
     public bool _IsPlaying;
     public bool _PingPong;
-    public bool _InListenerRadius;
     public float _DistanceAmplitude;
-    public bool _FixedSpeakerLink;
     public bool _SpeakerAttached;
     public int _SpeakerIndex;
     public int _OutputSampleRate;

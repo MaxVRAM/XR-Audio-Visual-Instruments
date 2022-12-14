@@ -495,8 +495,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: a45b7a18716cf8942a2d659aad1bb28d, type: 3}
   - {fileID: 8300000, guid: 5d31d7d3f3b07f64eb090bfdd69c1846, type: 3}
   - {fileID: 8300000, guid: 73c2d133b8ac5be47abe67f3f5b41bb2, type: 3}
-  _EmitterListenerActivationRange: 6
-  _EmitterSpeakerAttachRadius: 0.5
+  _ListenerRadius: 3
+  _AttachmentRadius: 1
   _GrainProcessorCount: 0
   _SpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
     type: 3}
@@ -560,8 +560,8 @@ GameObject:
   m_Component:
   - component: {fileID: 99037933}
   - component: {fileID: 99037938}
-  - component: {fileID: 99037937}
   - component: {fileID: 99037935}
+  - component: {fileID: 99037937}
   - component: {fileID: 99037942}
   - component: {fileID: 99037941}
   - component: {fileID: 99037940}
@@ -581,7 +581,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 99037932}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.638, y: 0, z: 1.007}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.14999999, y: 0.14999999, z: 0.14999999}
   m_Children: []
   m_Father: {fileID: 1064300460}

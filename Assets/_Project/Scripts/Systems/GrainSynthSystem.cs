@@ -39,7 +39,7 @@ class RandomSystem : ComponentSystem
     protected override void OnUpdate() { }
 }
 
-[UpdateAfter(typeof(RangeCheckSystem))]
+[UpdateAfter(typeof(AttachmentSystem))]
 public class GrainSynthSystem : SystemBase
 {
     // Command buffer for removing tween components once they are completed
@@ -71,7 +71,7 @@ public class GrainSynthSystem : SystemBase
 
         JobHandle emitGrains = Entities.WithNativeDisableParallelForRestriction(randomArray).ForEach
         (
-            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref ContinuousEmitterComponent emitter, ref InListenerRadiusTag earshot, ref PlayingTag playing) =>
+            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref ContinuousComponent emitter, ref InListenerRadiusTag earshot, ref PlayingTag playing) =>
             {
                 if (emitter._SpeakerAttached)
                 {
@@ -194,7 +194,7 @@ public class GrainSynthSystem : SystemBase
         #region BURST GRAINS
         JobHandle emitBurst = Entities.WithNativeDisableParallelForRestriction(randomArray).ForEach
         (
-            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref BurstEmitterComponent burst, ref InListenerRadiusTag earshot, ref PlayingTag playing) =>
+            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref BurstComponent burst, ref InListenerRadiusTag earshot, ref PlayingTag playing) =>
             {
                 if (burst._SpeakerAttached)
                 {
@@ -367,7 +367,6 @@ public class GrainSynthSystem : SystemBase
                         sampleOutputBuffer.Add(new GrainSampleBufferElement { Value = 0 });
                         dspBuffer.Add(new DSPSampleBufferElement { Value = 0 });
                     }
-
                     grain._SamplePopulated = true; // TODO - SWAP THIS TO A TAG COMPONENT TO STOP HAVING TO USE GRAINM PROCESSOR AS A REF INPUT AND AVOID IF STATEMENTS IN THIS AND DSP JOB
                 }
             }
@@ -395,12 +394,10 @@ public class GrainSynthSystem : SystemBase
                             // Invert the source sample increment
                             increment = -increment;
                         }
-
                         // Set rate of sample read to alter pitch - interpolate sample if not integer to create 
                         sourceIndex += increment;
                         float sourceIndexRemainder = sourceIndex % 1;
                         float sourceValue;
-
                         if (sourceIndexRemainder != 0)
                         {
                             sourceValue = math.lerp(
@@ -408,15 +405,12 @@ public class GrainSynthSystem : SystemBase
                                 grain._AudioClipDataComponent._ClipDataBlobAsset.Value.array[(int)sourceIndex + 1],
                                 sourceIndexRemainder);
                         }
-                        else
-                        {
-                            sourceValue = grain._AudioClipDataComponent._ClipDataBlobAsset.Value.array[(int)sourceIndex];
-                        }
+                        else sourceValue = grain._AudioClipDataComponent._ClipDataBlobAsset.Value.array[(int)sourceIndex];
 
                         // Adjusted for volume and windowing
                         sourceValue *= grain._Volume;
-                        sourceValue *= windowingData._WindowingArray.Value.array[(int)Map(i, 0, grain._SampleCount, 0, windowingData._WindowingArray.Value.array.Length)];
-
+                        sourceValue *= windowingData._WindowingArray.Value.array[
+                            (int)Map(i, 0, grain._SampleCount, 0, windowingData._WindowingArray.Value.array.Length)];
                         sampleOutputBuffer.Add(new GrainSampleBufferElement { Value = sourceValue });
                         dspBuffer.Add(new DSPSampleBufferElement { Value = 0 });
                     }
@@ -466,7 +460,7 @@ public class GrainSynthSystem : SystemBase
         ).ScheduleParallel(processPingPongGrains);
         #endregion
 
-        this.Dependency = dspGrains;
+        Dependency = dspGrains;
     }
 
     #region HELPERS
@@ -481,115 +475,25 @@ public class GrainSynthSystem : SystemBase
     public static float ComputeEmitterParameter(ModulationComponent mod, float r)
     {
         float interaction = Mathf.Pow(mod._InteractionInput / 1, mod._Shape) * mod._InteractionAmount;
-
         float random;
-
         if (mod._PerlinNoise)
-        {
             random = mod._PerlinValue * mod._Noise * Mathf.Abs(mod._Max - mod._Min);
-        }   
         else
             random = r * mod._Noise * Mathf.Abs(mod._Max - mod._Min);
-
         return Mathf.Clamp(mod._StartValue + interaction + random, mod._Min, mod._Max);
     }
     public static float ComputeBurstParameter(ModulationComponent mod, float t, float n, float r)
     {
         float timeShaped = Mathf.Pow(t / n, mod._Shape);
-
         float modulationOverTime = timeShaped * (mod._EndValue - mod._StartValue);
-
         float interaction = mod._InteractionAmount * mod._InteractionInput;
-
         if (mod._LockStartValue)
             interaction *= timeShaped;
         else if (mod._LockEndValue)
             interaction *= 1 - timeShaped;
-
         float random = r * mod._Noise * Mathf.Abs(mod._Max - mod._Min);
-
         return Mathf.Clamp(mod._StartValue + modulationOverTime + interaction + random, mod._Min, mod._Max);
     }
 
     #endregion
-}
-
-
-[UpdateAfter(typeof(GrainSynthSystem))]
-public class GrainsToAudioBuffersSystem : SystemBase
-{
-    protected override void OnCreate()
-    {
-
-    }
-
-    protected override void OnUpdate()
-    {
-        ////----    FILL GRAIN SPEAKER ROLLING BUFFERS
-        //NativeArray<Entity> grainEnts = GetEntityQuery(typeof(GrainProcessor), typeof(DynamicBuffer<GrainSampleBufferElement>)).ToEntityArray(Allocator.TempJob);
-        //NativeArray<GrainProcessor> grains = GetEntityQuery(typeof(GrainProcessor)).ToComponentDataArray<GrainProcessor>(Allocator.TempJob);
-
-        //Entities.WithName("FillSpeakerRingBuffer").ForEach
-        //(
-        //   (ref DynamicBuffer<AudioRingBufferElement> ringBuffer, ref RingBufferFiller ringBufferFiller, in GrainSpeakerComponent grainSpeaker) =>
-        //   {
-        //       BufferFromEntity<GrainSampleBufferElement> bufferLookup = GetBufferFromEntity<GrainSampleBufferElement>(true);
-
-        //       //--  Fill buffer with grains
-        //       int startIndex = int.MaxValue;
-        //       int endIndexUnclamped = 0;
-
-        //       for (int i = 0; i < grainEnts.Length; i++)
-        //       {
-        //           Entity grainEnt = grainEnts[i];
-
-        //           if (!bufferLookup.HasComponent(grainEnt))
-        //               return;
-                                    
-        //           DynamicBuffer <GrainSampleBufferElement> grainSampleBuffer = bufferLookup[grainEnt];
-
-        //           //--  If the grain is routing to this speaker
-        //           if (grains[i]._SpeakerIndex == grainSpeaker._SpeakerIndex && grains[i]._SamplePopulated && grainSampleBuffer.Length > 0)
-        //           {
-        //               //-- Update values for the ring buffer filler
-        //               startIndex = math.min(startIndex, grains[i]._DSPStartIndex);
-        //               endIndexUnclamped = math.max(endIndexUnclamped, grains[i]._DSPStartIndex + grains[i]._SampleCount);
-
-        //               //Debug.Log("ring buffer sample count: " + ringBufferFiller._SampleCount + "  grainSampleBuffer:  " + grainSampleBuffer.Length + "   Audio buffer length: " + ringBuffer.Length);
-
-        //               //--  Fill ring buffer from grain samples
-        //               for (int s = 0; s < grainSampleBuffer.Length; s++)
-        //               {
-        //                   float grainSampleVal = grainSampleBuffer[s].Value;
-
-        //                   int ringBuffIndex = (grains[i]._DSPStartIndex + s) % (ringBuffer.Length - 1);
-        //                   float ringBufferVal = ringBuffer[ringBuffIndex].Value;
-        //                   ringBuffer[ringBuffIndex] = new AudioRingBufferElement { Value = ringBufferVal + grainSampleVal };
-        //               }
-        //           }
-        //       }
-
-
-
-
-
-
-
-        //       //-- Clear previous samples
-        //       //int prevSampleCount = ringBufferFiller._SampleCount;
-        //       //int prevStartIndex = ringBufferFiller._StartIndex;
-        //       //ringBufferFiller._StartIndex = startIndex;
-        //       //ringBufferFiller._EndIndex = endIndexUnclamped % ringBuffer.Length;
-        //       //ringBufferFiller._SampleCount = endIndexUnclamped - startIndex;
-
-        //       //for (int s = 0; s < prevSampleCount; s++)
-        //       //{
-        //       //    int index = (prevStartIndex + s) % ringBuffer.Length;
-        //       //    ringBuffer[s] = new AudioRingBufferElement { Value = 0 };
-        //       //}
-        //   }
-        //).WithDisposeOnCompletion(grainEnts)
-        ////.WithDisposeOnCompletion(grains)
-        //.ScheduleParallel();
-    }
 }
