@@ -65,10 +65,11 @@ namespace EXPToolkit
         // The master timers continuous value. Aggregate of all delta times
         public float _ContinuousValue = 0;
 
-        float _TimerOffset = 0;
+        // float _TimerOffset = 0;
 
         public bool m_OutputOSC = false;
-        float previousMasterScaler = 1;
+
+        // float previousMasterScaler = 1;
 
         public AnimationCurve m_BeatCurve;
         
@@ -334,7 +335,7 @@ namespace EXPToolkit
     public class TempoTimer
     {
         public delegate void RhythmTrigger(MasterTimer.Tempo rhythmType, int index);
-        public static event RhythmTrigger onRhythmTrigger;
+        public static event RhythmTrigger OnRhythmTrigger;
 
         // Tempo of the timer
         public MasterTimer.Tempo Tempo { get; private set; }
@@ -348,7 +349,7 @@ namespace EXPToolkit
         // INdex of the beat that it's sending
         int _BeatIndex;
 
-        float _TimerOffset = 0;
+        // float _TimerOffset = 0;
 
         // Constructor that sets the Freq based on the tempo
         public TempoTimer(MasterTimer.Tempo tempoType)
@@ -388,9 +389,9 @@ namespace EXPToolkit
             if (NormalizedTimer < prevTime)
             {                
                 _BeatIndex = (int)(masterTimer / Freq);
-                _BeatIndex = _BeatIndex % 4;
+                _BeatIndex %= 4;
 
-                onRhythmTrigger?.Invoke(Tempo, _BeatIndex);
+                OnRhythmTrigger?.Invoke(Tempo, _BeatIndex);
             }
         }
     }

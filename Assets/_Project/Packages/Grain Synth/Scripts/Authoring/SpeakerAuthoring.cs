@@ -9,17 +9,18 @@ using UnityEngine.Profiling;
 
 public class GrainPlaybackData
 {
+    public bool _Pooled = true;
     public bool _IsPlaying = false;
-    public float[] _GrainSamples;
+    public float[] _SampleData;
     public int _PlayheadIndex = 0;
+    public float _PlayheadNormalised = 0;
     public int _SizeInSamples = -1;
     public int _DSPStartTime;
-    public bool _Pooled = true;
 
     public GrainPlaybackData(int maxGrainSize)
     {
         // Instantiate the playback data with max grain samples
-        _GrainSamples = new float[maxGrainSize];
+        _SampleData = new float[maxGrainSize];
     }
 }
 
@@ -110,17 +111,6 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         _AudioSource.rolloffMode = AudioRolloffMode.Custom;
         _AudioSource.maxDistance = 500;
-        
-        //Debug.Log(_PooledGrainCount);
-
-        ////---   ADD RING BUFFER COMP AND INIT
-        //dstManager.AddComponentData(entity, new RingBufferFiller { _StartIndex = 0, _SampleCount = 0 });
-        //dstManager.AddBuffer<AudioRingBufferElement>(entity);
-        //DynamicBuffer<AudioRingBufferElement> buffer = _EntityManager.GetBuffer<AudioRingBufferElement>(entity);
-
-        //for (int i = 0; i < AudioSettings.outputSampleRate; i++)        
-        //    buffer.Add(new AudioRingBufferElement { Value = 0 });        
-
         _Initialized = true;
     }
 
@@ -204,15 +194,13 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
 
     #region GRAIN PLAYBACK DATA POOLING
-    //---   FINDS A GRAIN PLAYBACK DATA THAT IS POOLED
+    //---   FINDS POOLED GRAIN PLAYBACK DATA
     public GrainPlaybackData GetGrainPlaybackDataFromPool()
     {
         if (!_Initialized)
             return null;
-
         // If pooled grains exist then find the first one
         if (_PooledGrainCount > 0)
-        {
             for (int i = 0; i < _GrainPlaybackDataArray.Length; i++)
             {
                 if (_GrainPlaybackDataArray[i]._Pooled)
@@ -222,12 +210,8 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
                     return _GrainPlaybackDataArray[i];
                 }
             }
-        }
         else
-        {
             return null;
-        }        
-
         return null;
     }
 
@@ -236,7 +220,6 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     {
         if (!_Initialized)
             return;
-
         _PrevStartSample = playbackData._DSPStartTime;
         // Fire event if hooked up
         OnGrainEmitted?.Invoke(playbackData, _GrainSynth._CurrentDSPSample);
@@ -262,6 +245,8 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
                 
         print(name + "---------------------------  " + action + "       A: " + ActiveGrainPlaybackDataCount + "  P: " + _PooledGrainCount + "      T: " + _DebugTotalGrainsCreated);        
     }
+
+
 
     // AUDIO BUFFER CALLS
     // DSP Buffer size in audio settings
@@ -309,26 +294,13 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
                         for (int chan = 0; chan < channels; chan++)
                         {
                             _SamplesPerRead++;
-                            data[dataIndex + chan] += grainData._GrainSamples[grainData._PlayheadIndex];
+                            data[dataIndex + chan] += grainData._SampleData[grainData._PlayheadIndex];
                         }
                         grainData._PlayheadIndex++;
                     }
                 }
             }           
         }
-
-
-        //--- DEBUG
-        //int playingCount = 0;
-        //for (int i = 0; i < _GrainPlaybackDataArray.Length; i++)
-        //{
-        //    if (!_GrainPlaybackDataArray[i]._IsPlaying)
-        //        continue;
-
-        //    playingCount++;
-
-           
-        //}
 
         // ----------------------DEBUG
         float dt = (float)AudioSettings.dspTime - prevTime;

@@ -191,9 +191,9 @@ public class GrainSynth :  MonoBehaviour
                 playbackData._PlayheadIndex = 0;
                 playbackData._SizeInSamples = processedSamples.Length;
                 playbackData._DSPStartTime = grainProcessor._StartSampleIndex;
-                playbackData._PlayheadPos = grainProcessor._PlayheadNorm;
+                playbackData._PlayheadNormalised = grainProcessor._PlayheadNorm;
 
-                NativeToManagedCopyMemory(playbackData._GrainSamples, processedSamples);
+                NativeToManagedCopyMemory(playbackData._SampleData, processedSamples);
 
                 // Destroy entity once we have sapped it of it's samply goodness and add playback data to speaker grain pool
                 _EntityManager.DestroyEntity(currentGrainProcessors[i]);

@@ -12,7 +12,7 @@ public class BurstParameters
     public BurstVolume _Volume;
 }
 
-public class BurstAuthoring : BaseEmitterClass
+public class BurstAuthoring : EmitterClass
 {
     public BurstParameters _Parameters;
 

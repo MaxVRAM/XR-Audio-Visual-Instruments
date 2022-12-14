@@ -6,7 +6,7 @@ using UnityEngine;
 public class GrainEmitterAttachmentLine : MonoBehaviour
 {
     LineRenderer _Line;
-    public ContinuousEmitterAuthoring _GrainEmitter;
+    public ContinuousAuthoring _GrainEmitter;
 
     // Start is called before the first frame update
     void Start()

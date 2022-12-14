@@ -8,7 +8,7 @@ public class GrainEmitterPS : MonoBehaviour
     ParticleSystem.EmissionModule _Emission;
     ParticleSystem.MainModule _Main;
 
-    public ContinuousEmitterAuthoring _GrainEmitter;
+    public ContinuousAuthoring _GrainEmitter;
 
     // Start is called before the first frame update
     void Start()

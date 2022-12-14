@@ -11,7 +11,7 @@ public class ContinuousParameters
     public ContinuousVolume _Volume;
 }
 
-public class ContinuousAuthoring : BaseEmitterClass
+public class ContinuousAuthoring : EmitterClass
 {
     public ContinuousParameters _Parameters;
 

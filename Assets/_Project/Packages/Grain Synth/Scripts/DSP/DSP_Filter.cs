@@ -4,12 +4,14 @@ using UnityEngine;
 // A classic bi-quad filter design
 public class DSP_Filter : DSPBase
 {
+    public enum FilterType { LowPass, HiPass, BandPass, PeakNotch, None }
+
     [Range(0f, 1f)]
     [SerializeField]
     public float _Mix = 1;
 
     [SerializeField]
-    public FilterConstruction.FilterType _FilterType;
+    public FilterType _FilterType;
 
     [Range(0f, 1f)]
     [SerializeField]
@@ -30,6 +32,15 @@ public class DSP_Filter : DSPBase
         _SampleRate = AudioSettings.outputSampleRate;
     }
 
+    private class FilterCoefficientClass
+    {
+        public float a0;
+        public float a1;
+        public float a2;
+        public float b1;
+        public float b2;
+    }
+
     public override DSPParametersElement GetDSPBufferElement()
     {
         DSPParametersElement dspParams = new DSPParametersElement();
@@ -38,16 +49,16 @@ public class DSP_Filter : DSPBase
         float gain = Mathf.Clamp(_FilterGain, 0.5f, 1f);
         float q = Mathf.Clamp(_FilterQ, 0.1f, 5f);
 
-        //--  Construct bi-quad filter coefficents
-        FilterCoefficients newCoefficients;
+        //--  Construct bi-quad filter coefficients
+        FilterCoefficientClass newCoefficients;
 
-        if (_FilterType == FilterConstruction.FilterType.LowPass)
+        if (_FilterType == FilterType.LowPass)
             newCoefficients = LowPass(cutoffFreq, gain, q, _SampleRate);
-        else if (_FilterType == FilterConstruction.FilterType.HiPass)
+        else if (_FilterType == FilterType.HiPass)
             newCoefficients = HiPass(cutoffFreq, gain, q, _SampleRate);
-        else if (_FilterType == FilterConstruction.FilterType.BandPass)
+        else if (_FilterType == FilterType.BandPass)
             newCoefficients = BandPass(cutoffFreq, gain, q, _SampleRate);
-        else if (_FilterType == FilterConstruction.FilterType.PeakNotch)
+        else if (_FilterType == FilterType.PeakNotch)
             newCoefficients = PeakNotch(cutoffFreq, gain, q, _SampleRate);
         else
             newCoefficients = AllPass(cutoffFreq, gain, q, _SampleRate);
@@ -66,7 +77,7 @@ public class DSP_Filter : DSPBase
 
     public static void ProcessDSP(DSPParametersElement dspParams, DynamicBuffer<GrainSampleBufferElement> sampleBuffer, DynamicBuffer<DSPSampleBufferElement> dspBuffer)
     {
-        float outputSample = 0;
+        float outputSample;
 
         float previousX1 = 0;
         float previousX2 = 0;
@@ -75,7 +86,7 @@ public class DSP_Filter : DSPBase
 
         for (int i = 0; i < sampleBuffer.Length; i++)
         {
-            // Apply coefficients to input singal and history data
+            // Apply coefficients to input signal and history data
             outputSample = (sampleBuffer[i].Value * dspParams._Value0 +
                              previousX1 * dspParams._Value1 +
                              previousX2 * dspParams._Value2) -
@@ -92,9 +103,9 @@ public class DSP_Filter : DSPBase
         }
     }
 
-    private static FilterCoefficients LowPass(float cutoff, float gain, float q, int sampleRate)
+    private static FilterCoefficientClass LowPass(float cutoff, float gain, float q, int sampleRate)
     {
-        FilterCoefficients newFilterCoefficients = new FilterCoefficients();
+        FilterCoefficientClass newFilterCoefficients = new FilterCoefficientClass();
 
         float omega = cutoff * 2 * Mathf.PI / sampleRate;
         float sn = Mathf.Sin(omega);
@@ -115,9 +126,9 @@ public class DSP_Filter : DSPBase
         return newFilterCoefficients;
     }
 
-    private static FilterCoefficients HiPass(float cutoff, float gain, float q, float sampleRate)
+    private static FilterCoefficientClass HiPass(float cutoff, float gain, float q, float sampleRate)
     {
-        FilterCoefficients newFilterCoefficients = new FilterCoefficients();
+        FilterCoefficientClass newFilterCoefficients = new FilterCoefficientClass();
 
         float omega = cutoff * 2 * Mathf.PI / sampleRate;
         float sn = Mathf.Sin(omega);
@@ -135,9 +146,9 @@ public class DSP_Filter : DSPBase
         return newFilterCoefficients;
     }
 
-    private static FilterCoefficients BandPass(float cutoff, float gain, float q, float sampleRate)
+    private static FilterCoefficientClass BandPass(float cutoff, float gain, float q, float sampleRate)
     {
-        FilterCoefficients newFilterCoefficients = new FilterCoefficients();
+        FilterCoefficientClass newFilterCoefficients = new FilterCoefficientClass();
 
         float omega = cutoff * 2 * Mathf.PI / sampleRate;
         float sn = Mathf.Sin(omega);
@@ -155,9 +166,9 @@ public class DSP_Filter : DSPBase
         return newFilterCoefficients;
     }
 
-    private static FilterCoefficients PeakNotch(float cutoff, float gain, float q, float sampleRate)
+    private static FilterCoefficientClass PeakNotch(float cutoff, float gain, float q, float sampleRate)
     {
-        FilterCoefficients newFilterCoefficients = new FilterCoefficients();
+        FilterCoefficientClass newFilterCoefficients = new FilterCoefficientClass();
 
         float omega = cutoff * 2 * Mathf.PI / sampleRate;
         float sn = Mathf.Sin(omega);
@@ -178,9 +189,9 @@ public class DSP_Filter : DSPBase
         return newFilterCoefficients;
     }
 
-    private static FilterCoefficients AllPass(float cutoff, float gain, float q, float sampleRate)
+    private static FilterCoefficientClass AllPass(float cutoff, float gain, float q, float sampleRate)
     {
-        FilterCoefficients newFilterCoefficients = new FilterCoefficients();
+        FilterCoefficientClass newFilterCoefficients = new FilterCoefficientClass();
 
         float omega = cutoff * 2 * Mathf.PI / sampleRate;
         float sn = Mathf.Sin(omega);

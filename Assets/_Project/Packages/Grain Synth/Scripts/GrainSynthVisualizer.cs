@@ -9,12 +9,12 @@ public class GrainSynthVisualizer : MonoBehaviour
 {
     #region ------------------------------------- VARIABLES 
     float _SampleRate;
-    public ContinuousEmitterAuthoring _Emitter;
+    public ContinuousAuthoring _Emitter;
     public SpeakerAuthoring _GrainSpeaker;
     Vector3 _LookAtPos;
     int _ClipSampleCount;
 
-    public bool _DrawWavefrom = true;
+    public bool _DrawWaveform = true;
     public bool _DrawTimeline = true;
 
     public Transform _WaveformParent;
@@ -52,7 +52,7 @@ public class GrainSynthVisualizer : MonoBehaviour
     int _IncrementY = 0;
 
     public Transform _XAxisPivot;
-    public Transform _XAxisPivot_Frametime;
+    public Transform _XAxisPivot_FrameTime;
     public Transform _YAxisPivot;
 
    
@@ -70,7 +70,7 @@ public class GrainSynthVisualizer : MonoBehaviour
         _SampleRate = AudioSettings.outputSampleRate;
         _GrainSpeaker.OnGrainEmitted += EmitGrain;
 
-        if (_DrawWavefrom)
+        if (_DrawWaveform)
         {
             // Waveform
             float[] clipData = new float[GrainSynth.Instance._AudioClips[0].samples];
@@ -91,15 +91,15 @@ public class GrainSynthVisualizer : MonoBehaviour
             int index = 0;
             for (int i = 0; i < _WaveformBlockCount; i++)
             {
-                float sumedSquaredSamples = 0;
+                float summedSquaredSamples = 0;
                 for (int s = 0; s < samplesPerBlock; s++)
                 {
-                    sumedSquaredSamples += clipData[index] * clipData[index]; // sum squared samples
+                    summedSquaredSamples += clipData[index] * clipData[index]; // sum squared samples
                     index++;
                 }
 
-                sumedSquaredSamples /= samplesPerBlock;
-                float rmsValue = Mathf.Sqrt(sumedSquaredSamples / samplesPerBlock); // rms = square root of average
+                summedSquaredSamples /= samplesPerBlock;
+                float rmsValue = Mathf.Sqrt(summedSquaredSamples / samplesPerBlock); // rms = square root of average
 
                 maxSampleValue = Mathf.Max(rmsValue, maxSampleValue);
                 minSampleValue = Mathf.Min(rmsValue, minSampleValue);
@@ -204,8 +204,8 @@ public class GrainSynthVisualizer : MonoBehaviour
             if (_XAxisPivot != null)
                 _XAxisPivot.SetScaleX(_TimelineDistance);
 
-            if (Application.isPlaying && _XAxisPivot_Frametime != null)
-                _XAxisPivot_Frametime.SetScaleX(-GrainSynth.Instance._GrainQueueInMS * .001f * (_TimelineDistance / _TimelineDuration));
+            if (Application.isPlaying && _XAxisPivot_FrameTime != null)
+                _XAxisPivot_FrameTime.SetScaleX(-GrainSynth.Instance._GrainQueueInMS * .001f * (_TimelineDistance / _TimelineDuration));
 
             for (int i = 0; i < _TimelineBlocks.Length; i++)
             {
@@ -288,17 +288,17 @@ public class GrainSynthVisualizer : MonoBehaviour
         }
 
 
-        if (_DrawWavefrom)
+        if (_DrawWaveform)
         {
             // Waveform grain
             WaveformVizGrain grain = _WaveformVizGrainPool[_WaveformGrainIndex];
-            grain.transform.position = GetPositionOnArc(grainData._PlayheadPos, 0, -_PlayheadZOffset);
+            grain.transform.position = GetPositionOnArc(grainData._PlayheadNormalised, 0, -_PlayheadZOffset);
 
             // Width from duration
             float width = grainData._SizeInSamples / (float)_ClipSampleCount;
             grain.transform.localScale = new Vector3(width, _WaveformBlockHeight * .9f, 1);
             grain.transform.LookAt(_LookAtPos);
-            grain._Lifetime = grainData._GrainSamples.Length / (float)_SampleRate;
+            grain._Lifetime = grainData._SampleData.Length / (float)_SampleRate;
             grain.gameObject.SetActive(true);
 
             _WaveformGrainIndex++;
