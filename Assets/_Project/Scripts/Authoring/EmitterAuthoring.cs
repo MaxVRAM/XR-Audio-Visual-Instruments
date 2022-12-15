@@ -14,42 +14,42 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
     public enum EmitterType {Continuous, Burst}
 
-    protected bool _Initialised = false;
     protected Entity _EmitterEntity;
     protected EntityManager _EntityManager;
-    protected float[] _PerlinSeedArray;
     protected float _VolumeMultiply = 1;
-    protected float _SamplesPerMS = 0;
+    protected float[] _PerlinSeedArray;
     protected int _LastSampleIndex = 0;
+    protected float _SamplesPerMS = 0;
+    protected bool _Initialised = false;
 
     [Header("Emitter Configuration")]
-    public int _ClipIndex = 0;
     public EmitterType _EmitterType;
     public bool _ContactEmitter = false;
+    public int _ClipIndex = 0;
 
     [Header("Playback Config")]
     [Range(0.1f, 50f)]
     public float _MaxAudibleDistance = 10f;
-    public bool _PingPongAtEndOfClip = true;
+    public bool _PingPongGrainPlayheads = true;
     public bool _ColliderRigidityVolumeScale = false;
 
-    [Header("Speaker Configuration")]
-    public SpeakerAuthoring _Speaker;
-    public int _SpeakerIndex;
-
-
     [Header("Runtime Dynamics")]
+    public int _SpeakerIndex;
     public bool _IsPlaying = true;
-    public GameObject _PrimaryObject;
-    public GameObject _SecondaryObject;
-    public Collision _LatestCollision;
-    public bool _InListenerRadius = false;
+    public float _TimeExisted = 0;
     public float _CurrentDistance = 0;
     public float _DistanceAmplitude = 0;
-    public float _TimeExisted = 0;
-
+    public bool _InListenerRadius = false;
 
     public DSP_Class[] _DSPChainParams;
+
+
+    public virtual void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem) { }
+
+    public void Awake()
+    {
+        GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
+    }
 
     void Start()
     {
@@ -64,44 +64,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         }
     }
 
-    public void Awake()
-    {
-        GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
-    }
-
-    private void Update()
-    {
-        // if (!_Initialised)
-        //     return;
-
-        // _TimeExisted += Time.deltaTime;
-        // _SamplesPerMS = AudioSettings.outputSampleRate * 0.001f;
-
-        // #region UPDATE TAGS FOR GRAIN SYNTH SYSTEM
-        // if (_CurrentDistance < _MaxAudibleDistance)
-        // {
-        //     _InListenerRadius = true;
-        //     _EntityManager.AddComponent<InListenerRadiusTag>(_EmitterEntity);
-        // }
-        // else
-        // {
-        //     _InListenerRadius = false;
-        //     _EntityManager.RemoveComponent<InListenerRadiusTag>(_EmitterEntity);
-        // }
-
-        // if (_IsPlaying)
-        //     _EntityManager.AddComponent<PlayingTag>(_EmitterEntity);
-        // else
-        //     _EntityManager.RemoveComponent<PlayingTag>(_EmitterEntity);
-
-        // #endregion
-
-        // UpdateEntity();
-        // UpdateDSPEffectsChain();
-
-        // Translation trans = _EntityManager.GetComponentData<Translation>(_EmitterEntity);
-        // _EntityManager.SetComponentData(_EmitterEntity, new Translation { Value = transform.position });
-    }
+    private void Update() { }
 
     public void ManualUpdate()
     {
@@ -111,27 +74,32 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _TimeExisted += Time.deltaTime;
         _SamplesPerMS = AudioSettings.outputSampleRate * 0.001f;
 
-        #region UPDATE TAGS FOR GRAIN SYNTH SYSTEM
         if (_InListenerRadius) _EntityManager.AddComponent<InListenerRadiusTag>(_EmitterEntity);
         else _EntityManager.RemoveComponent<InListenerRadiusTag>(_EmitterEntity);
 
-        if (_IsPlaying)
-            _EntityManager.AddComponent<PlayingTag>(_EmitterEntity);
-        else
-            _EntityManager.RemoveComponent<PlayingTag>(_EmitterEntity);
+        if (_IsPlaying) _EntityManager.AddComponent<PlayingTag>(_EmitterEntity);
+        else _EntityManager.RemoveComponent<PlayingTag>(_EmitterEntity);
 
-        Translation trans = _EntityManager.GetComponentData<Translation>(_EmitterEntity);
         _EntityManager.SetComponentData(_EmitterEntity, new Translation { Value = transform.position });
 
-        #endregion
-
-        UpdateEntity();
-        UpdateDSPEffectsChain();
-
+        UpdateComponents();
     }
 
+    protected virtual void UpdateComponents() { }
+    protected void UpdateDSPEffectsChain(bool clear = true)
+    {
+        //--- TODO not sure if clearing and adding again is the best way to do this.
+        DynamicBuffer<DSPParametersElement> dstManager = _EntityManager.GetBuffer<DSPParametersElement>(_EmitterEntity);
+        if (clear) dstManager.Clear();
+        for (int i = 0; i < _DSPChainParams.Length; i++)
+            dstManager.Add(_DSPChainParams[i].GetDSPBufferElement());
+    }
 
-    public bool UpdateDistanceFromListener(float distance)
+    /// <summary>
+    //      Updates and returns "in-range" status of emitter.
+    //      Defined by the ratio between listener distance and emitter's maximum audible range.
+    /// <summary>
+    public bool ListenerDistance(float distance)
     {
         _CurrentDistance = distance;
         _DistanceAmplitude = AudioUtils.ListenerDistanceVolume(distance, _MaxAudibleDistance);
@@ -141,15 +109,13 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         return _InListenerRadius;
     }
 
-    public void SetAttachedSpeaker(int index)
+    /// <summary>
+    //      Removes continuous emitters' start offset.
+    /// <summary>
+    public void ResetLastSampleIndex()
     {
-        _SpeakerIndex = index;
-        if (index != int.MaxValue)
-            _Speaker = GrainSynth.Instance._GrainSpeakers[_SpeakerIndex];
         _LastSampleIndex = GrainSynth.Instance._CurrentDSPSample;
     }
-
-    protected virtual void UpdateEntity() { }
 
     public void UpdateCollision(Collision collision)
     {
@@ -169,15 +135,6 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             }
     }
 
-    protected void UpdateDSPEffectsChain(bool clear = true)
-    {
-        //--- TODO not sure if clearing and adding again is the best way to do this
-        DynamicBuffer<DSPParametersElement> dspBuffer = _EntityManager.GetBuffer<DSPParametersElement>(_EmitterEntity);
-        if (clear) dspBuffer.Clear();
-        for (int i = 0; i < _DSPChainParams.Length; i++)
-            dspBuffer.Add(_DSPChainParams[i].GetDSPBufferElement());
-    }
-
     public float GeneratePerlinForParameter(int parameterIndex)
     {
         return Mathf.PerlinNoise(
@@ -190,10 +147,6 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         Gizmos.color = _InListenerRadius ? Color.yellow : Color.blue;
         Gizmos.DrawSphere(transform.position, .1f);
     }
-
-    public virtual void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem) { }
-
-    protected virtual void UpdateCollisionNumbers(int currentCollisionCount) { }
 
     private void OnDestroy()
     {

@@ -60,7 +60,6 @@ public enum PooledState
     Active
 }
 
-public struct FixedSpeakerLinkTag : IComponentData {}
 public struct DedicatedSpeakerTag : IComponentData {}
 public struct InListenerRadiusTag : IComponentData {}
 
@@ -69,9 +68,7 @@ public struct EmitterHostComponent : IComponentData
     public int _HostIndex;
     public bool _InListenerRadius;
     public bool _DedicatedSpeaker;
-    public bool _SpeakerAttached;
     public int _SpeakerIndex;
-    public bool _NewSpeaker;
 }
 
 public struct ModulationComponent : IComponentData

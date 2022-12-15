@@ -29,9 +29,9 @@ public class BurstAuthoring : EmitterAuthoring
             _EmitterIndex = index,
             _DistanceAmplitude = 1,
             _AudioClipIndex = _ClipIndex,
+            _PingPong = _PingPongGrainPlayheads,
             _SpeakerIndex = _SpeakerIndex,
-            _PingPong = _PingPongAtEndOfClip,
-            _SpeakerAttached = _Speaker != null,
+            _SpeakerAttached = _SpeakerIndex != int.MaxValue,
             _OutputSampleRate = AudioSettings.outputSampleRate,
 
             _BurstDuration = new ModulationComponent
@@ -133,20 +133,22 @@ public class BurstAuthoring : EmitterAuthoring
         _Initialised = true;
     }
 
-    protected override void UpdateEntity()
+    protected override void UpdateComponents()
     {
-        if (_InListenerRadius && _IsPlaying)
+        if (_IsPlaying && _InListenerRadius)
         {
-            BurstComponent burstData = _EntityManager.GetComponentData<BurstComponent>(_EmitterEntity);
+            BurstComponent entityData = _EntityManager.GetComponentData<BurstComponent>(_EmitterEntity);
 
             #region UPDATE EMITTER COMPONENT DATA
-            burstData._IsPlaying = true;
-            burstData._DistanceAmplitude = 0;
-            burstData._AudioClipIndex = _ClipIndex;
-            burstData._PingPong = _PingPongAtEndOfClip;
-            burstData._SpeakerIndex = _SpeakerIndex;
+            entityData._IsPlaying = true;
+            entityData._DistanceAmplitude = 0;
+            entityData._AudioClipIndex = _ClipIndex;
+            entityData._PingPong = _PingPongGrainPlayheads;
+            entityData._SpeakerIndex = _SpeakerIndex;
+            entityData._SpeakerAttached = _SpeakerIndex != int.MaxValue;
+            entityData._OutputSampleRate = AudioSettings.outputSampleRate;
                 
-            burstData._BurstDuration = new ModulationComponent
+            entityData._BurstDuration = new ModulationComponent
             {
                 _StartValue = _Parameters._BurstDuration._Default * _SamplesPerMS,
                 _InteractionAmount = _Parameters._BurstDuration._InteractionAmount * _SamplesPerMS,
@@ -159,7 +161,7 @@ public class BurstAuthoring : EmitterAuthoring
                 _LockEndValue = false,
                 _InteractionInput = _Parameters._BurstDuration._Interaction.GetValue()
             };
-            burstData._Playhead = new ModulationComponent
+            entityData._Playhead = new ModulationComponent
             {
                 _StartValue = _Parameters._Playhead._Start,
                 _EndValue = _Parameters._Playhead._End,
@@ -173,7 +175,7 @@ public class BurstAuthoring : EmitterAuthoring
                 _LockEndValue = false,
                 _InteractionInput = _Parameters._Playhead._Interaction.GetValue()
             };
-            burstData._Density = new ModulationComponent
+            entityData._Density = new ModulationComponent
             {
                 _StartValue = _Parameters._Density._Start,
                 _EndValue = _Parameters._Density._End,
@@ -187,7 +189,7 @@ public class BurstAuthoring : EmitterAuthoring
                 _LockEndValue = false,
                 _InteractionInput = _Parameters._Density._Interaction.GetValue()
             };
-            burstData._GrainDuration = new ModulationComponent
+            entityData._GrainDuration = new ModulationComponent
             {
                 _StartValue = _Parameters._GrainDuration._Start * _SamplesPerMS,
                 _EndValue = _Parameters._GrainDuration._End * _SamplesPerMS,
@@ -201,7 +203,7 @@ public class BurstAuthoring : EmitterAuthoring
                 _LockEndValue = false,
                 _InteractionInput = _Parameters._GrainDuration._Interaction.GetValue()
             };
-            burstData._Transpose = new ModulationComponent
+            entityData._Transpose = new ModulationComponent
             {
                 _StartValue = _Parameters._Transpose._Start,
                 _EndValue = _Parameters._Transpose._End,
@@ -215,7 +217,7 @@ public class BurstAuthoring : EmitterAuthoring
                 _LockEndValue = _Parameters._Transpose._LockEndValue,
                 _InteractionInput = _Parameters._Transpose._Interaction.GetValue()
             };
-            burstData._Volume = new ModulationComponent
+            entityData._Volume = new ModulationComponent
             {
                 _StartValue = _Parameters._Volume._Start,
                 _EndValue = _Parameters._Volume._End,
@@ -229,8 +231,11 @@ public class BurstAuthoring : EmitterAuthoring
                 _LockEndValue = _Parameters._Volume._LockEndValue,
                 _InteractionInput = _Parameters._Volume._Interaction.GetValue() * _VolumeMultiply
             };
-            _EntityManager.SetComponentData(_EmitterEntity, burstData);
+            _EntityManager.SetComponentData(_EmitterEntity, entityData);
+
             #endregion
+            
+            UpdateDSPEffectsChain();
 
             // Burst emitters only need a single pass to generate grain data for its duration.
             if (_EmitterType == EmitterType.Burst) 

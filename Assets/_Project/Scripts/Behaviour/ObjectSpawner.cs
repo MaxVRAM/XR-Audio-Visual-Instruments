@@ -3,9 +3,9 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 /// <summary>
-//     Dynamically spawn/destroy emitter objects as children of this object.
+//     Dynamically spawn/destroy child objects.
 /// <summary>
-public class EmitterSpawner : MonoBehaviour
+public class ObjectSpawner : MonoBehaviour
 {
     public GameObject _TetherObject;
     public bool _EmittersUseSharedSpeaker = true;
@@ -73,7 +73,7 @@ public class EmitterSpawner : MonoBehaviour
                     _TetherObject.transform.position,
                     Quaternion.identity,
                     gameObject.transform);
-                newObject.name = newObject.name + " (" + (_Sliders.Count) + ")";
+                newObject.name = newObject.name + " (" + _Sliders.Count + ")";
 
                HostAuthoring objectHost = newObject.GetComponent<HostAuthoring>();
 

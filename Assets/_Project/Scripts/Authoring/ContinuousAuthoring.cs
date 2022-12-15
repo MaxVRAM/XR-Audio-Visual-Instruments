@@ -29,11 +29,11 @@ public class ContinuousAuthoring : EmitterAuthoring
             _EmitterIndex = index,
             _DistanceAmplitude = 1,
             _AudioClipIndex = _ClipIndex,
-            _PingPong = _PingPongAtEndOfClip,
+            _PingPong = _PingPongGrainPlayheads,
             _SpeakerIndex = _SpeakerIndex,
-            _SpeakerAttached = _Speaker != null,
-            _OutputSampleRate = AudioSettings.outputSampleRate,
+            _SpeakerAttached = _SpeakerIndex != int.MaxValue,
             _LastSampleIndex = GrainSynth.Instance._CurrentDSPSample,
+            _OutputSampleRate = AudioSettings.outputSampleRate,
 
             _Playhead = new ModulationComponent
             {
@@ -99,9 +99,8 @@ public class ContinuousAuthoring : EmitterAuthoring
         dstManager.AddBuffer<DSPParametersElement>(_EmitterEntity);
         DynamicBuffer<DSPParametersElement> dspParams = dstManager.GetBuffer<DSPParametersElement>(_EmitterEntity);
         for (int i = 0; i < _DSPChainParams.Length; i++)
-        {
             dspParams.Add(_DSPChainParams[i].GetDSPBufferElement());
-        }
+
         dstManager.AddComponentData(entity, new QuadEntityType { _Type = QuadEntityType.QuadEntityTypeEnum.Emitter });
 
         #endregion
@@ -109,27 +108,25 @@ public class ContinuousAuthoring : EmitterAuthoring
         _Initialised = true;
     }
 
-    protected override void UpdateEntity()
+    protected override void UpdateComponents()
     {
-        if (_InListenerRadius & _IsPlaying)
+        if (_InListenerRadius)
         {
-            ContinuousComponent continuousData = _EntityManager.GetComponentData<ContinuousComponent>(_EmitterEntity);
+            ContinuousComponent entityData = _EntityManager.GetComponentData<ContinuousComponent>(_EmitterEntity);
 
             #region UPDATE EMITTER COMPONENT DATA
-            continuousData._IsPlaying = _IsPlaying;
-            continuousData._AudioClipIndex = _ClipIndex;
-            continuousData._PingPong = _PingPongAtEndOfClip;
-            continuousData._DistanceAmplitude = _DistanceAmplitude;
-            continuousData._SpeakerIndex = _SpeakerIndex;
+            entityData._IsPlaying = _IsPlaying;
+            entityData._DistanceAmplitude = 0;
+            entityData._AudioClipIndex = _ClipIndex;
+            entityData._SpeakerIndex = _SpeakerIndex;
+            entityData._PingPong = _PingPongGrainPlayheads;
+            entityData._LastSampleIndex = _LastSampleIndex;
+            entityData._DistanceAmplitude = _DistanceAmplitude;
+            entityData._SpeakerAttached = _SpeakerIndex != int.MaxValue;
+            entityData._OutputSampleRate = AudioSettings.outputSampleRate;
 
-            // if (continuousData._SpeakerIndex < GrainSynth.Instance._GrainSpeakers.Count)
-            //     continuousData._DistanceAmplitude = AudioUtils.EmitterFromSpeakerVolumeAdjust(_HeadPosition.position,
-            //         GrainSynth.Instance._GrainSpeakers[continuousData._SpeakerIndex].gameObject.transform.position,
-            //         transform.position) * _DistanceAmplitude;
-            // else
-            //     continuousData._DistanceAmplitude = 0;
 
-            continuousData._Playhead = new ModulationComponent
+            entityData._Playhead = new ModulationComponent
             {
                 _StartValue = _Parameters._Playhead._Idle,
                 _InteractionAmount = _Parameters._Playhead._InteractionAmount,
@@ -141,7 +138,7 @@ public class ContinuousAuthoring : EmitterAuthoring
                 _Max = _Parameters._Playhead._Max,
                 _InteractionInput = _Parameters._Playhead._Interaction.GetValue()
             };
-            continuousData._Density = new ModulationComponent
+            entityData._Density = new ModulationComponent
             {
                 _StartValue = _Parameters._Density._Idle,
                 _InteractionAmount = _Parameters._Density._InteractionAmount,
@@ -153,7 +150,7 @@ public class ContinuousAuthoring : EmitterAuthoring
                 _Max = _Parameters._Density._Max,
                 _InteractionInput = _Parameters._Density._Interaction.GetValue()
             };
-            continuousData._Duration = new ModulationComponent
+            entityData._Duration = new ModulationComponent
             {
                 _StartValue = _Parameters._GrainDuration._Idle * _SamplesPerMS,
                 _InteractionAmount = _Parameters._GrainDuration._InteractionAmount * _SamplesPerMS,
@@ -165,7 +162,7 @@ public class ContinuousAuthoring : EmitterAuthoring
                 _Max = _Parameters._GrainDuration._Max * _SamplesPerMS,
                 _InteractionInput = _Parameters._GrainDuration._Interaction.GetValue()
             };
-            continuousData._Transpose = new ModulationComponent
+            entityData._Transpose = new ModulationComponent
             {
                 _StartValue = _Parameters._Transpose._Idle,
                 _InteractionAmount = _Parameters._Transpose._InteractionAmount,
@@ -177,7 +174,7 @@ public class ContinuousAuthoring : EmitterAuthoring
                 _Max = _Parameters._Transpose._Max,
                 _InteractionInput = _Parameters._Transpose._Interaction.GetValue()
             };
-            continuousData._Volume = new ModulationComponent
+            entityData._Volume = new ModulationComponent
             {
                 _StartValue = _Parameters._Volume._Idle,
                 _InteractionAmount = _Parameters._Volume._InteractionAmount,
@@ -189,9 +186,11 @@ public class ContinuousAuthoring : EmitterAuthoring
                 _Max = _Parameters._Volume._Max,
                 _InteractionInput = _Parameters._Volume._Interaction.GetValue() * _VolumeMultiply
             };
+            _EntityManager.SetComponentData(_EmitterEntity, entityData);
 
-            _EntityManager.SetComponentData(_EmitterEntity, continuousData);
             #endregion
+
+            UpdateDSPEffectsChain();
         }
     }
 }

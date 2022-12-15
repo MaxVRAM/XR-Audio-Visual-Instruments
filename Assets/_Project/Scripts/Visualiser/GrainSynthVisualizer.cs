@@ -269,7 +269,7 @@ public class GrainSynthVisualizer : MonoBehaviour
         return pos;
     }
    
-    public void EmitGrain(GrainPlaybackData grainData, int currentDSPSample)
+    public void EmitGrain(GrainData grainData, int currentDSPSample)
     {
         if (_DrawTimeline)
         {

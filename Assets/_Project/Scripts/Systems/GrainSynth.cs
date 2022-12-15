@@ -43,9 +43,11 @@ public class GrainSynth :  MonoBehaviour
 
     [Header("Speakers")]
     public SpeakerAuthoring _SpeakerPrefab;
-    public List<SpeakerAuthoring> _GrainSpeakers = new List<SpeakerAuthoring>();
     public int _MaxDynamicSpeakers = 5;
+    public List<SpeakerAuthoring> _Speakers = new List<SpeakerAuthoring>();
 
+    // TODO: Implement system to reduce dynamic speakers if additional dedicated speakers are spawned at runtime.
+    // Important to avoid audio voice limit.
     int _MaxSpeakers;
 
     [Header("DSP Config")]
@@ -118,21 +120,19 @@ public class GrainSynth :  MonoBehaviour
                 for (int s = 0; s < clipData.Length - 1; s += clipChannels)
                 {
                     audioClipArray[s / clipChannels] = 0;
-                    
-                    // MonoSum stereo audio files
+                    // Mono-sum stereo audio files
+                    // TODO: Investigate if audio assets could provide benefit to the EmitterSynth framework. 
                     for (int c = 0; c < clipChannels; c++)
-                    {
                         audioClipArray[s / clipChannels] += clipData[s + c];
-                    }
                 }
 
                 // ---- CREATE REFERENCE AND ASSIGN TO ENTITY
                 BlobAssetReference<FloatBlobAsset> audioClipBlobAssetRef = blobBuilder.CreateBlobAssetReference<FloatBlobAsset>(Allocator.Persistent);
                 _EntityManager.AddComponentData(audioClipDataEntity, new AudioClipDataComponent { _ClipDataBlobAsset = audioClipBlobAssetRef, _ClipIndex = i });
 
-#if UNITY_EDITOR
-                _EntityManager.SetName(audioClipDataEntity, "Audio clip blob asset " + i);
-#endif
+                #if UNITY_EDITOR
+                    _EntityManager.SetName(audioClipDataEntity, "Audio clip blob asset " + i);
+                #endif
             }
         }
 
@@ -180,7 +180,7 @@ public class GrainSynth :  MonoBehaviour
 
             if (grainProcessor._SamplePopulated)
             {
-                GrainPlaybackData playbackData = _GrainSpeakers[grainProcessor._SpeakerIndex].GetGrainPlaybackDataFromPool();
+                GrainData playbackData = _Speakers[grainProcessor._SpeakerIndex].GetGrainDataFromPool();
 
                 if (playbackData == null)
                     break;
@@ -197,7 +197,7 @@ public class GrainSynth :  MonoBehaviour
 
                 // Destroy entity once we have sapped it of it's samply goodness and add playback data to speaker grain pool
                 _EntityManager.DestroyEntity(currentGrainProcessors[i]);
-                _GrainSpeakers[grainProcessor._SpeakerIndex].AddGrainPlaybackDataToPool(playbackData);
+                _Speakers[grainProcessor._SpeakerIndex].AddGrainPlaybackDataToPool(playbackData);
             }
         }       
         currentGrainProcessors.Dispose();
@@ -215,15 +215,15 @@ public class GrainSynth :  MonoBehaviour
         SpeakerAuthoring speaker = Instantiate(_SpeakerPrefab, pos, quaternion.identity, transform);    
     }
 
+
     public void RegisterSpeaker(SpeakerAuthoring speaker)
     {
-        if (speaker._Registered || _GrainSpeakers.Contains(speaker))
+        if (speaker._Registered || _Speakers.Contains(speaker))
             return;
-
-        speaker._SpeakerIndex = _GrainSpeakers.Count;
+        speaker._SpeakerIndex = _Speakers.Count;
         speaker._Registered = true;
-        speaker.name = speaker.name + " - Speaker " + _GrainSpeakers.Count;
-        _GrainSpeakers.Add(speaker);
+        speaker.name = speaker.name + " - Speaker " + _Speakers.Count;
+        _Speakers.Add(speaker);
     }
 
     public int RegisterEmitter(Entity emitterEntity)
@@ -236,16 +236,13 @@ public class GrainSynth :  MonoBehaviour
     void OnAudioFilterRead(float[] data, int channels)
     {
         for (int dataIndex = 0; dataIndex < data.Length; dataIndex += channels)
-        {
             _CurrentDSPSample++;
-        }
     }
 
     private void OnDrawGizmos()
     {
         if (!Application.isPlaying)
             return;
-         
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(_Listener.transform.position, _ListenerRadius);
     }

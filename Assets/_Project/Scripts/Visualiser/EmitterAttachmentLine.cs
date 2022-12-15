@@ -19,13 +19,14 @@ public class EmitterAttachmentLine : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (_Emitter._Speaker != null)
+        if (_Emitter._SpeakerIndex != int.MaxValue)
         {
-            if (Vector3.SqrMagnitude(_Emitter.transform.position - _Emitter._Speaker.transform.position) > .1f)
+            Vector3 speakerPosition = GrainSynth.Instance._Speakers[_Emitter._SpeakerIndex].transform.position;
+            if (Vector3.SqrMagnitude(_Emitter.transform.position - speakerPosition) > .1f)
             {
                 _Line.enabled = true;
                 _Line.SetPosition(0, _Emitter.transform.position);
-                _Line.SetPosition(1, _Emitter._Speaker.transform.position);
+                _Line.SetPosition(1, speakerPosition);
             }
             else
             {
