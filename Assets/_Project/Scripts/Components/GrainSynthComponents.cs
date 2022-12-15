@@ -95,7 +95,6 @@ public struct ContinuousComponent : IComponentData
     public bool _IsPlaying;
     public bool _PingPong;
     public float _DistanceAmplitude;
-    public bool _SpeakerAttached;
     public int _SpeakerIndex;
     public int _LastSampleIndex;
     public int _PreviousGrainDuration;
@@ -114,7 +113,6 @@ public struct BurstComponent : IComponentData
     public bool _IsPlaying;
     public bool _PingPong;
     public float _DistanceAmplitude;
-    public bool _SpeakerAttached;
     public int _SpeakerIndex;
     public int _OutputSampleRate;
     public ModulationComponent _BurstDuration;

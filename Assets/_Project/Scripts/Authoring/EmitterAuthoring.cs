@@ -82,10 +82,12 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         _EntityManager.SetComponentData(_EmitterEntity, new Translation { Value = transform.position });
 
-        UpdateComponents();
+        if (_IsPlaying && _InListenerRadius)
+            UpdateComponents();
     }
 
     protected virtual void UpdateComponents() { }
+
     protected void UpdateDSPEffectsChain(bool clear = true)
     {
         //--- TODO not sure if clearing and adding again is the best way to do this.
@@ -104,8 +106,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _CurrentDistance = distance;
         _DistanceAmplitude = AudioUtils.ListenerDistanceVolume(distance, _MaxAudibleDistance);
 
-        if (_CurrentDistance < _MaxAudibleDistance) _InListenerRadius = true;
-        else _InListenerRadius = false;
+        _InListenerRadius = _CurrentDistance < _MaxAudibleDistance;
         return _InListenerRadius;
     }
 
@@ -117,22 +118,27 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _LastSampleIndex = GrainSynth.Instance._CurrentDSPSample;
     }
 
-    public void UpdateCollision(Collision collision)
+    public void NewCollision(Collision collision)
     {
-        if (_EmitterType == EmitterType.Burst || _ContactEmitter)
-            if (collision == null)
-            {
-                _IsPlaying = false;
-                _VolumeMultiply = 1;
-            }
+        if (_EmitterType == EmitterType.Burst && _ContactEmitter)
+            _IsPlaying = true;
+
+        UpdateContactStatus(collision);
+    }
+
+    public void UpdateContactStatus(Collision collision)
+    {
+        if (_ContactEmitter)
+        {
+            // TODO Add feature to quickly fade-out these emitters in case their grain durations are very long
+            // May need to add fade-out property to the GrainPlayback data component.
+            if (_EmitterType == EmitterType.Continuous)
+                _IsPlaying = collision != null;
+            if (_ColliderRigidityVolumeScale && collision.collider.TryGetComponent(out SurfaceParameters surface))
+                _VolumeMultiply = surface._Rigidity;
             else
-            {
-                _IsPlaying = true;
-                if (_ColliderRigidityVolumeScale && collision.collider.GetComponent<SurfaceParameters>() != null)
-                    _VolumeMultiply = collision.collider.GetComponent<SurfaceParameters>()._Rigidity;
-                else
-                    _VolumeMultiply = 1;
-            }
+                _VolumeMultiply = 1;           
+        }
     }
 
     public float GeneratePerlinForParameter(int parameterIndex)

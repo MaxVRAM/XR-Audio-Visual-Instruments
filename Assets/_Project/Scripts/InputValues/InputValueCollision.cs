@@ -15,7 +15,7 @@ public class InputValueCollision : InputValueClass
     public InputCollisionType _InputProperty;
     public bool _UseMassOfCollider = false;
 
-    public override void ProcessCollision(Collision collision)
+    public override void ProcessCollisionValue(Collision collision)
     {
         switch (_InputProperty)
         {
@@ -23,12 +23,12 @@ public class InputValueCollision : InputValueClass
                 _OutputValue = collision.relativeVelocity.magnitude;
                 break;
             case InputCollisionType.CollisionForceTimesMass:
-                if (_PrimaryRigidBody != null)
+                if (_Inputs._LocalRigidbody != null)
                     if (_UseMassOfCollider)
-                        if (_SecondaryRigidBody != null)
-                            _OutputValue = collision.relativeVelocity.magnitude * (1 - _SecondaryRigidBody.mass / 2);
+                        if (_Inputs._RemoteRigidbody != null)
+                            _OutputValue = collision.relativeVelocity.magnitude * (1 - _Inputs._RemoteRigidbody.mass / 2);
                     else
-                        _OutputValue = collision.relativeVelocity.magnitude * _PrimaryRigidBody.mass;
+                        _OutputValue = collision.relativeVelocity.magnitude * _Inputs._LocalRigidbody.mass;
                 break;
             case InputCollisionType.CollisionPoint:
                 break;

@@ -4,9 +4,9 @@ using Unity.Physics;
 using UnityEngine;
 
 //
-// Summary:
+/// <summary>
 //     Provides an input value to use on a Grain Emitter, based on a physical interaction from the source rigid body.
-//
+/// <summary>
 [System.Serializable]
 public class InputValueRelative : InputValueClass
 {
@@ -21,7 +21,7 @@ public class InputValueRelative : InputValueClass
         LinearSpeed,
         LinearAccelerationAbsolute,
         LinearAcceleration,
-        LinearDeacceleration,
+        LinearDeceleration,
         TangentialSpeed,
         TangentialAccelerationAbsolute
     }
@@ -35,7 +35,7 @@ public class InputValueRelative : InputValueClass
     {
         float currentValue = _PreviousValue;
 
-        if (_PrimaryRigidBody != null && _SecondaryRigidBody != null)
+        if (_Inputs._LocalRigidbody != null && _Inputs._RemoteRigidbody != null)
         {
             switch (_InputProperty)
             {
@@ -68,7 +68,7 @@ public class InputValueRelative : InputValueClass
                     currentValue = Mathf.Max((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime, 0f);
                     _PreviousValue = currentValue;
                     break;
-                case InputRelativeType.LinearDeacceleration:
+                case InputRelativeType.LinearDeceleration:
                     currentValue = Mathf.Abs(Mathf.Min((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime, 0f));
                     _PreviousValue = currentValue;
                     break;
@@ -94,11 +94,11 @@ public class InputValueRelative : InputValueClass
 
     public Vector3 RelativePosition()
     {
-        return _PrimaryObject.transform.position - _SecondaryObject.transform.position;
+        return _Inputs._LocalObject.transform.position - _Inputs._RemoteObject.transform.position;
     }
     public Vector3 RelativeVelocity()
     {
-        return _PrimaryRigidBody.velocity - _SecondaryRigidBody.velocity;
+        return _Inputs._LocalRigidbody.velocity - _Inputs._RemoteRigidbody.velocity;
     }
 
     // TODO Add to global static utility

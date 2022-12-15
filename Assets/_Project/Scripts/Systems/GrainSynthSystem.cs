@@ -73,7 +73,7 @@ public class GrainSynthSystem : SystemBase
         (
             (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref ContinuousComponent emitter, ref InListenerRadiusTag earshot, ref PlayingTag playing) =>
             {
-                if (emitter._SpeakerAttached)
+                if (emitter._SpeakerIndex != int.MaxValue)
                 {
                     // Max grains to stop it getting stuck in a while loop
                     int maxGrains = 50;
@@ -196,7 +196,7 @@ public class GrainSynthSystem : SystemBase
         (
             (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref BurstComponent burst, ref InListenerRadiusTag earshot, ref PlayingTag playing) =>
             {
-                if (burst._SpeakerAttached)
+                if (burst._SpeakerIndex != int.MaxValue)
                 {
                     int grainsCreated = 0;
 

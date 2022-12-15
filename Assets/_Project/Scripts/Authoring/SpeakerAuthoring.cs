@@ -112,7 +112,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _StaticallyPairedEmitters.Add(emitterGameObject);
     }
   
-    public int GetRegisterAndGetIndex()
+    public int RegisterAndGetIndex()
     {     
         GrainSynth.Instance.RegisterSpeaker(this);
         return _SpeakerIndex;

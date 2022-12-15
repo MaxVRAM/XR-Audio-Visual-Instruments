@@ -5,7 +5,6 @@ using Unity.Entities;
 using Unity.Transforms;
 
 [DisallowMultipleComponent]
-[RequiresEntityConversion]
 [RequireComponent(typeof(ConvertToEntity))]
 public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
@@ -14,17 +13,15 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     protected EntityManager _EntityManager;
     protected Transform _HeadPosition;
 
-
-    [Header("Emitter/speaker configuration")]
-    [Tooltip("Object that provides collision and modulation data to emitters. Defaults to this game object.")]
-    public GameObject _InteractionObject;
-    public Rigidbody _InteractionRigidBody;
-    [Tooltip("An additional object to calculate 'relative' values with against the interaction object. Distance from, etc.")]
-    public GameObject _RemoteObject;
-    public Rigidbody _RemoteRigidBody;
-    [Tooltip("Place a speaker component here to dedicate a speaker to this host, overriding the runtime attachment system.")]
+    [Tooltip("If a dedicated speaker is set, the runtime attachment system will be disabled for this host.")]
     public SpeakerAuthoring _DedicatedSpeaker;
-    protected int _SpeakerIndex = int.MaxValue;
+    public int _SpeakerIndex = int.MaxValue;
+
+    [Header("Input Value configuration")]
+    [Tooltip("Objects to generate collision and modulation data with for the host's emitters. Defaults to this game object.")]
+    public GameObject _LocalObject;
+    [Tooltip("Additional object used to generate 'relative' values with, against the interaction object; 'distance from', etc.")]
+    public GameObject _RemoteObject;
     [Tooltip("Finds all emitter components in children to manage.")]
     public EmitterAuthoring[] _HostedEmitters;
     [Tooltip("Finds all input value components in children to manage.")]
@@ -37,31 +34,18 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public List<GameObject> _CollidingObjects;
 
 
-
     void Start()
     {
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _HeadPosition = FindObjectOfType<Camera>().transform;
 
-        if (_InteractionObject == null) _InteractionObject = gameObject;
-        if (_InteractionRigidBody != _InteractionObject.TryGetComponent(out _InteractionRigidBody))
-                Debug.Log(name + ":     No Rigidbody found on host's Primary Object: " + _InteractionObject.name);
-        if (_RemoteObject != null && _RemoteObject.TryGetComponent(out _RemoteRigidBody))
-                Debug.Log(name + ":     No Rigidbody found on host's Target Object: " + _RemoteObject.name);
-
         _HostedEmitters = GetComponentsInChildren<EmitterAuthoring>();
         _InputValues = GetComponentsInChildren<InputValueClass>();
 
+        if (_LocalObject == null) SetLocalObject(gameObject);
+        if (_RemoteObject != null) SetRemoteObject(_RemoteObject);
         if (_DedicatedSpeaker != null)
-            UpdateSpeakerAttachment(_DedicatedSpeaker.GetRegisterAndGetIndex());
-
-        foreach (InputValueClass inputValue in _InputValues)
-            inputValue.UpdateInteractionSources(_InteractionObject, _RemoteObject, null);
-
-        foreach (EmitterAuthoring emitter in _HostedEmitters)
-        {
-            
-        }
+            _SpeakerIndex = _DedicatedSpeaker.RegisterAndGetIndex();
     }
 
     void Awake()
@@ -81,6 +65,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             _DedicatedSpeaker = _DedicatedSpeaker != null,
             _SpeakerIndex = _SpeakerIndex
         });
+
         #if UNITY_EDITOR
                 dstManager.SetName(entity, "Emitter Host:   " + gameObject.name);
         #endif
@@ -88,22 +73,13 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _Initialised = true;
     }
 
-    public void SetTargetObject(GameObject target)
-    {
-        _RemoteObject = target;
-        if (_RemoteObject != null &&_RemoteRigidBody == null)
-            _RemoteRigidBody = _RemoteObject.GetComponent<Rigidbody>();
-        foreach (InputValueClass inputValue in _InputValues)
-            inputValue.UpdateInteractionSources(_InteractionObject, _RemoteObject, null);
-    }
-
     void Update()
     {
         if (!_Initialised)
             return;
-        
+
         // Update emitter range status. Host will be "in-range" if at least one of its emitters return true.
-        _CurrentDistance = Mathf.Abs((_HeadPosition.position - _InteractionObject.transform.position).magnitude);
+        _CurrentDistance = Mathf.Abs((_HeadPosition.position - _LocalObject.transform.position).magnitude);
         _InListenerRadius = false;
         foreach (EmitterAuthoring emitter in _HostedEmitters)
             if (emitter.ListenerDistance(_CurrentDistance))
@@ -117,49 +93,67 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         EmitterHostComponent entity = _EntityManager.GetComponentData<EmitterHostComponent>(_HostEntity);        
 
         entity._InListenerRadius = _InListenerRadius;
-        UpdateSpeakerAttachment(entity._SpeakerIndex);
+
+        if (_DedicatedSpeaker == null)
+        {
+            bool newSpeaker = false;
+            if (_SpeakerIndex != entity._SpeakerIndex)
+                newSpeaker = true;
+            _SpeakerIndex = entity._SpeakerIndex;
+
+            Debug.Log("Speaker index = " + _SpeakerIndex);
+
+            foreach (EmitterAuthoring emitter in _HostedEmitters)
+            {
+                if (newSpeaker) emitter.ResetLastSampleIndex();
+                emitter._SpeakerIndex = _SpeakerIndex;
+            }
+        }
+
         // Manually call the hosted emitters' component update function.
         foreach (EmitterAuthoring emitter in _HostedEmitters)
             emitter.ManualUpdate();
 
         _EntityManager.SetComponentData(_HostEntity, entity);
 
-    }
-    
-    public void UpdateSpeakerAttachment(int index)
-    {
-        SpeakerAuthoring speaker = _DedicatedSpeaker;
-        
-        // Get valid speaker from EmitterSynth manager.
-        if (speaker == null || index != speaker._SpeakerIndex)
-            if (index < GrainSynth.Instance._MaxDynamicSpeakers)
-                speaker = GrainSynth.Instance._Speakers[index];
-        // Zero provided index points to an invalid speaker.
-        if (speaker == null) index = int.MaxValue;
-
-        // Update host's emitters
-        foreach (EmitterAuthoring emitter in _HostedEmitters)
+        foreach (InputValueClass input in _InputValues)
         {
-            if (index != emitter._SpeakerIndex)
-                emitter.ResetLastSampleIndex();
-            emitter._SpeakerIndex = index;
         }
-        _SpeakerIndex = index;
+    }
+
+    public void SetLocalObject(GameObject go)
+    {
+        _LocalObject = go;
+        foreach (InputValueClass inputValue in _InputValues)
+            inputValue._Inputs.SetLocalObject(_LocalObject);
+    }
+
+    public void SetRemoteObject(GameObject go)
+    {
+        _RemoteObject = go;
+        foreach (InputValueClass inputValue in _InputValues)
+            inputValue._Inputs.SetRemoteObject(_RemoteObject);
     }
     
     private void OnCollisionEnter(Collision collision)
     {
         _CollidingObjects.Add(collision.collider.gameObject);
 
+        foreach (InputValueClass interaction in _InputValues)
+            interaction.SetInputCollision(true, collision.collider.material);
+
         foreach (EmitterAuthoring emitter in _HostedEmitters)
-            emitter.UpdateCollision(collision);        
+            emitter.NewCollision(collision);
     }
 
     private void OnCollisionStay(Collision collision)
     {
         _IsColliding = true;
         foreach (InputValueClass inputValue in _InputValues)
-            inputValue.UpdateInteractionSources(_InteractionObject, _RemoteObject, collision);
+            inputValue.ProcessCollisionValue(collision);
+
+        foreach (EmitterAuthoring emitter in _HostedEmitters)
+            emitter.UpdateContactStatus(collision);
     }
 
     private void OnCollisionExit(Collision collision)
@@ -167,13 +161,13 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _CollidingObjects.Remove(collision.collider.gameObject);
 
         foreach (InputValueClass inputValue in _InputValues)
-            inputValue.UpdateInteractionSources(_InteractionObject, _RemoteObject, null);
+            inputValue.SetInputCollision(false, collision.collider.material);
 
         if (_CollidingObjects.Count == 0)
         {
-            _IsColliding = true;
+            _IsColliding = false;
             foreach (EmitterAuthoring emitter in _HostedEmitters)
-                emitter.UpdateCollision(null);
+                emitter.UpdateContactStatus(null);
         }
     }
 

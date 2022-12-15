@@ -10,8 +10,6 @@ public class ObjectSpawner : MonoBehaviour
     public GameObject _TetherObject;
     public bool _EmittersUseSharedSpeaker = true;
     public SpeakerAuthoring _SharedSpeaker;
-    public GameObject _SelectedPrefab;
-    public List<GameObject> _SliderPrefabs;
     public bool _RandomPrefab = false;
     [Range(1, 200)]
     public int _TargetNumber = 1;
@@ -20,7 +18,9 @@ public class ObjectSpawner : MonoBehaviour
     public float _NextSpawnCountdown = 0;
     [Range(0f, 3f)]
     public float _SpawnRadius = 0.5f;
-    public List<GameObject> _Sliders = new List<GameObject>();
+    public GameObject _SelectedPrefab;
+    public List<GameObject> _SpawnablePrefabs;
+    public List<GameObject> _SpawnedObjects = new List<GameObject>();
     protected string _Name;
 
     void Start()
@@ -35,13 +35,13 @@ public class ObjectSpawner : MonoBehaviour
         if (_EmittersUseSharedSpeaker && _SharedSpeaker == null)
             Debug.LogWarning("Emitter Spawner [" + _Name + "] has no speaker to provide spawned objects!");
 
-        if (_SliderPrefabs.Count == 0 && _SelectedPrefab != null)
-            _SliderPrefabs.Add(_SelectedPrefab);
+        if (_SpawnablePrefabs.Count == 0 && _SelectedPrefab != null)
+            _SpawnablePrefabs.Add(_SelectedPrefab);
 
-        if (_SliderPrefabs.Count > 1 && _SelectedPrefab == null)
-            _SelectedPrefab = _SliderPrefabs[0];
+        if (_SpawnablePrefabs.Count > 1 && _SelectedPrefab == null)
+            _SelectedPrefab = _SpawnablePrefabs[0];
 
-        if (_SliderPrefabs.Count == 0)
+        if (_SpawnablePrefabs.Count == 0)
             Debug.LogWarning("Emitter Spawner [" + _Name + "] not assigned any prefabs!");
     }
 
@@ -51,46 +51,44 @@ public class ObjectSpawner : MonoBehaviour
 
         if (_TetherObject != null && _SelectedPrefab != null)
         {
-            SpawnSliders();
-            RemoveSliders();
+            SpawnObject();
+            RemoveObject();
         }
     }
 
-    private void SpawnSliders()
+    private void SpawnObject()
     {
-        if (_Sliders.Count < _TargetNumber && _NextSpawnCountdown <= 0)
+        if (_SpawnedObjects.Count < _TargetNumber && _NextSpawnCountdown <= 0)
          {
             GameObject objectToSpawn;
 
             if (_RandomPrefab)
-                objectToSpawn = _SliderPrefabs[Mathf.RoundToInt(Random.Range(0, _SliderPrefabs.Count))];
+                objectToSpawn = _SpawnablePrefabs[Mathf.RoundToInt(Random.Range(0, _SpawnablePrefabs.Count))];
             else objectToSpawn = _SelectedPrefab;
 
             if (objectToSpawn.GetComponent<HostAuthoring>() != null)
             {
-                GameObject newObject = Instantiate(
-                    objectToSpawn,
-                    _TetherObject.transform.position,
-                    Quaternion.identity,
-                    gameObject.transform);
-                newObject.name = newObject.name + " (" + _Sliders.Count + ")";
+                GameObject newObject = Instantiate(objectToSpawn,
+                    _TetherObject.transform.position, Quaternion.identity, gameObject.transform);
+                newObject.name = newObject.name + " (" + _SpawnedObjects.Count + ")";
 
-               HostAuthoring objectHost = newObject.GetComponent<HostAuthoring>();
-
-               if (objectHost != null) objectHost.SetTargetObject(_TetherObject);
-
-                _Sliders.Add(newObject);
+                if (objectToSpawn.TryGetComponent(out HostAuthoring host))
+                {
+                    host.SetLocalObject(newObject);
+                    host.SetRemoteObject(_TetherObject);
+                }
+                _SpawnedObjects.Add(newObject);
                 _NextSpawnCountdown = _SpawnFrequency;
             }
         }
     }
 
-    private void RemoveSliders()
+    private void RemoveObject()
     {
-        if (_Sliders.Count > _TargetNumber && _NextSpawnCountdown <= _SpawnFrequency)
+        if (_SpawnedObjects.Count > _TargetNumber && _NextSpawnCountdown <= _SpawnFrequency)
         {
-            Destroy(_Sliders[_Sliders.Count - 1]);
-            _Sliders.RemoveAt(_Sliders.Count - 1);
+            Destroy(_SpawnedObjects[_SpawnedObjects.Count - 1]);
+            _SpawnedObjects.RemoveAt(_SpawnedObjects.Count - 1);
             _NextSpawnCountdown = _SpawnFrequency;
         }
     }

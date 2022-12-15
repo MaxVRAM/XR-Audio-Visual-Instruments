@@ -500,8 +500,8 @@ MonoBehaviour:
   _GrainProcessorCount: 0
   _SpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
     type: 3}
-  _GrainSpeakers: []
   _MaxDynamicSpeakers: 5
+  _Speakers: []
   _SampleRate: 0
   _CurrentDSPSample: 0
   _GrainQueueInMS: 28.2
@@ -581,7 +581,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 99037932}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -0.312}
   m_LocalScale: {x: 0.14999999, y: 0.14999999, z: 0.14999999}
   m_Children: []
   m_Father: {fileID: 1064300460}
@@ -2992,15 +2992,15 @@ MonoBehaviour:
   _TetherObject: {fileID: 99037932}
   _EmittersUseSharedSpeaker: 0
   _SharedSpeaker: {fileID: 0}
-  _SelectedPrefab: {fileID: 2306625124509221286, guid: 8408191c1bcbfa340b0f13e414291219,
-    type: 3}
-  _SliderPrefabs: []
   _RandomPrefab: 0
   _TargetNumber: 4
   _SpawnFrequency: 0.2
   _NextSpawnCountdown: 0
   _SpawnRadius: 1
-  _Sliders: []
+  _SelectedPrefab: {fileID: 2306625124509221286, guid: 8408191c1bcbfa340b0f13e414291219,
+    type: 3}
+  _SpawnablePrefabs: []
+  _SpawnedObjects: []
 --- !u!1 &1102653703
 GameObject:
   m_ObjectHideFlags: 0
@@ -3091,7 +3091,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1102653703}
   m_LocalRotation: {x: -0.16774175, y: 0.46786487, z: 0.09094369, w: 0.86295676}
-  m_LocalPosition: {x: 0.23, y: 0.32, z: 4.13}
+  m_LocalPosition: {x: 0.23, y: 0.223, z: 4.13}
   m_LocalScale: {x: 5, y: 1, z: 5}
   m_Children: []
   m_Father: {fileID: 1639877265}

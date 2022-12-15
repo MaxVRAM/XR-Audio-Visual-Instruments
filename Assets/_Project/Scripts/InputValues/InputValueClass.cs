@@ -2,63 +2,43 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
+public class InputObjects
+{
+    public GameObject _LocalObject;
+    public Rigidbody _LocalRigidbody;
+    public GameObject _RemoteObject;
+    public Rigidbody _RemoteRigidbody;
+
+    public void SetLocalObject(GameObject go)
+    {
+        _LocalObject = go;
+        if (!go.TryGetComponent(out _LocalRigidbody))
+            Debug.Log("Warning: No Rigidbody component on _LocalObject    " + go.name);
+    }
+
+    public void SetRemoteObject(GameObject go)
+    {
+        _RemoteObject = go;
+        if (!go.TryGetComponent(out _RemoteRigidbody))
+            Debug.Log("Warning: No Rigidbody component on _RemoteObject    " + go.name);
+    }
+}
 
 public class InputValueClass : MonoBehaviour
 {
-    // TODO: Turn the source object properties into a class for better management
-    public GameObject _PrimaryObject;
-    public Rigidbody _PrimaryRigidBody;
-    public GameObject _SecondaryObject;
-    public Rigidbody _SecondaryRigidBody;
-    public Collision _Collision;
-
-    [SerializeField]
+    public InputObjects _Inputs;
     public float _InputMin = 0f;
     public float _InputMax = 1f;
     public float _OutputValue = 0;
     protected float _PreviousValue = 0;
     protected bool _HoldTempValue = false;
     protected bool _Colliding = false;
-    protected PhysicMaterial _CollidedMaterial;
+    protected PhysicMaterial _ColliderMaterial;
 
-    void Start()
-    {
-        if (_PrimaryObject == null)
-            _PrimaryObject = gameObject;
+    void Start() { }
 
-        if (_PrimaryObject.GetComponent<Rigidbody>() == null)
-            _PrimaryObject = this.transform.parent.gameObject;
-
-        UpdateInteractionSources(_PrimaryObject, _SecondaryObject, null);
-    }
-
-    public void UpdateInteractionSources(GameObject primaryObject, GameObject secondaryObject, Collision collision)
-    {
-        if (primaryObject != null)
-        {
-            _PrimaryObject = primaryObject;
-            _PrimaryRigidBody = _PrimaryObject.GetComponent<Rigidbody>();
-        }
-        if (secondaryObject != null)
-        {
-            _SecondaryObject = secondaryObject;
-            _SecondaryRigidBody = _PrimaryObject.GetComponent<Rigidbody>();
-        }
-        if (collision != null)
-        {
-            _Colliding = true;
-            _Collision = collision;
-            _CollidedMaterial = collision.collider.material;
-            ProcessCollision(collision);
-        }
-        else
-        {
-            _Colliding = false;
-            _Collision = null;
-            _CollidedMaterial = null;
-        }
-    }
-
+    void Update() { }
 
     public float GetValue()
     {
@@ -78,7 +58,13 @@ public class InputValueClass : MonoBehaviour
         _OutputValue = Mathf.Clamp(_OutputValue, 0f, 1f);
     }
 
-    public virtual void ProcessCollision(Collision collision) { }
+    public void SetInputCollision(bool colliding, PhysicMaterial material)
+    {
+        _Colliding = colliding;
+        _ColliderMaterial = material;
+    }
+
+    public virtual void ProcessCollisionValue(Collision collision) { }
 
     public static float Map(float val, float inMin, float inMax, float outMin, float outMax)
     {
