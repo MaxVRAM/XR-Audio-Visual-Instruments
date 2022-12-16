@@ -24,14 +24,7 @@ public class AttachmentSystem : SystemBase
             All = new ComponentType[] { typeof(SpeakerComponent), typeof(PoolingComponent), typeof(Translation) }
         };
 
-        EntityQueryDesc hostQueryDesc = new EntityQueryDesc
-        {
-            None = new ComponentType[] { typeof(DedicatedSpeakerTag) },
-            All = new ComponentType[] { typeof(EmitterHostComponent), typeof(Translation) }
-        };
-
         EntityQuery speakersQuery = GetEntityQuery(speakerQueryDesc);
-        EntityQuery hostQuery = GetEntityQuery(hostQueryDesc);
 
 
         //----    UPDATE HOST IN-RANGE STATUSES
@@ -40,28 +33,31 @@ public class AttachmentSystem : SystemBase
         JobHandle updateHostRangeJob = Entities.WithName("UpdateHostRange").ForEach
         (
             (ref EmitterHostComponent host, in Translation translation) =>
-            {
-                // Calculate if host is currently in-range
-                float listenerDistance = math.distance(translation.Value, activationRanges._ListenerPos);
-                bool inListenerRadiusNow = listenerDistance < activationRanges._ListenerRadius;
-
-                // Update in-range status of host from the listener.
-                if (!inListenerRadiusNow)
+            {        
+                if (!host._HasDedicatedSpeaker)
                 {
-                    host._Connected = false;
-                    host._InListenerRadius = false;
-                    host._SpeakerIndex = int.MaxValue;
-                }
-                else host._InListenerRadius = true;
+                    // Calculate if host is currently in-range
+                    float listenerDistance = math.distance(translation.Value, activationRanges._ListenerPos);
+                    bool inListenerRadiusNow = listenerDistance < activationRanges._ListenerRadius;
 
-                // Unlink hosts outside speaker attachment radius.
-                if (host._Connected)
-                {
-                    float emitterToSpeakerDist = math.distance(translation.Value, speakerTranslations[host._SpeakerIndex].Value);
-                    if (speakerPool[host._SpeakerIndex]._State == PooledState.Pooled || emitterToSpeakerDist > activationRanges._AttachmentRadius)
+                    // Update in-range status of host from the listener.
+                    if (!inListenerRadiusNow)
                     {
                         host._Connected = false;
+                        host._InListenerRadius = false;
                         host._SpeakerIndex = int.MaxValue;
+                    }
+                    else host._InListenerRadius = true;
+
+                    // Unlink hosts outside speaker attachment radius.
+                    if (host._Connected)
+                    {
+                        float emitterToSpeakerDist = math.distance(translation.Value, speakerTranslations[host._SpeakerIndex].Value);
+                        if (speakerPool[host._SpeakerIndex]._State == PooledState.Pooled || emitterToSpeakerDist > activationRanges._AttachmentRadius)
+                        {
+                            host._Connected = false;
+                            host._SpeakerIndex = int.MaxValue;
+                        }
                     }
                 }
             }
@@ -73,7 +69,7 @@ public class AttachmentSystem : SystemBase
 
 
         //----    DEACTIVATE SPEAKERS WITHOUT ATTACHED HOSTS
-        NativeArray<EmitterHostComponent> hostsWithSpeaker = hostQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
+        NativeArray<EmitterHostComponent> hostsWithSpeaker = GetEntityQuery(typeof(EmitterHostComponent)).ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
         JobHandle updateSpeakerPoolJob = Entities.WithName("UpdateSpeakerPool").ForEach
         (
             (ref PoolingComponent pooling, in SpeakerComponent speaker) =>
@@ -132,6 +128,7 @@ public class AttachmentSystem : SystemBase
 
 
         //----     SPAWN A POOLED SPEAKER ON A HOST IF NO NEARBY SPEAKERS WERE FOUND
+        EntityQuery hostQuery = GetEntityQuery(typeof(EmitterHostComponent));
         NativeArray<Entity> hostEntities = hostQuery.ToEntityArray(Allocator.TempJob);
         NativeArray<EmitterHostComponent> hosts = hostQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
         NativeArray<Entity> speakerEntities = speakersQuery.ToEntityArray(Allocator.TempJob);
@@ -181,8 +178,9 @@ public class AttachmentSystem : SystemBase
 
 
 
-        NativeArray<EmitterHostComponent> hostsToSitSpeakers = hostQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
-        NativeArray<Translation> hostTranslations = hostQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
+        EntityQuery hostSitQuery = GetEntityQuery(typeof(EmitterHostComponent),typeof(Translation));
+        NativeArray<EmitterHostComponent> hostsToSitSpeakers = hostSitQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
+        NativeArray<Translation> hostTranslations = hostSitQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
         JobHandle moveSpeakersJob = Entities.WithName("MoveSpeakers").ForEach
         (
             (ref Translation translation, in PoolingComponent pooling, in SpeakerComponent speaker) =>

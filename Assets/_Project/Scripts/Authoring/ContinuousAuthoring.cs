@@ -15,8 +15,19 @@ public class ContinuousAuthoring : EmitterAuthoring
 {
     public ContinuousProperties _Properties;
 
+    public override void Initialise()
+    {
+        _EmitterType = EmitterType.Continuous;
+    }
+
+    void Update()
+    {
+
+    }
+
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
+        Debug.Log(name + "    is being converted to entity.");
         _EmitterEntity = entity;
         _EmitterType = EmitterType.Continuous;
         int index = GrainSynth.Instance.RegisterEmitter(entity);
@@ -105,10 +116,18 @@ public class ContinuousAuthoring : EmitterAuthoring
         #endregion
 
         _Initialised = true;
+
+        Debug.Log(name + "    end of entity creation with initialised status:   " + _Initialised);
+
     }
 
     protected override void UpdateComponents()
     {
+        Debug.Log("Emitter volume input source: " + _Properties._Volume._InputSource.name);
+        Debug.Log("Emitter volume input value: " + _Properties._Volume._InputValue);
+        Debug.Log("Emitter volume input get value: " + _Properties._Volume.GetValue());
+        Debug.Log("");
+
         ContinuousComponent entityData = _EntityManager.GetComponentData<ContinuousComponent>(_EmitterEntity);
 
         #region UPDATE EMITTER COMPONENT DATA
@@ -184,6 +203,6 @@ public class ContinuousAuthoring : EmitterAuthoring
 
         #endregion
 
-        UpdateDSPEffectsChain();
+        UpdateDSPEffectsBuffer();
     }
 }

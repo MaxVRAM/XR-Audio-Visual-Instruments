@@ -5,6 +5,7 @@ using Unity.Entities;
 using Unity.Transforms;
 
 [DisallowMultipleComponent]
+[RequiresEntityConversion]
 [RequireComponent(typeof(ConvertToEntity))]
 public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
@@ -38,30 +39,6 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public List<GameObject> _CollidingObjects;
 
 
-    void Start()
-    {
-        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-        _HeadTransform = FindObjectOfType<Camera>().transform;
-
-        _HostedEmitters = GetComponentsInChildren<EmitterAuthoring>();
-        _InputValues = GetComponentsInChildren<InputValueClass>();
-
-        if (_LocalObject == null) SetLocalObject(gameObject);
-        if (_RemoteObject != null) SetRemoteObject(_RemoteObject);
-        if (_DedicatedSpeaker != null)
-        {
-            _DedicatedSpeaker.AddEmitterLink(gameObject);                
-            _SpeakerIndex = _DedicatedSpeaker.RegisterAndGetIndex();
-            _SpeakerTransform = _DedicatedSpeaker.transform;
-            _Connected = true;
-        }
-    }
-
-    void Awake()
-    {
-        GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
-    }
-
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         _HostEntity = entity;
@@ -83,17 +60,34 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _Initialised = true;
     }
 
+    void Awake()
+    {
+        GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
+    }
+    
+    void Start()
+    {
+        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        _HeadTransform = FindObjectOfType<Camera>().transform;
+
+        _HostedEmitters = GetComponentsInChildren<EmitterAuthoring>();
+        _InputValues = GetComponentsInChildren<InputValueClass>();
+
+        if (_LocalObject == null) SetLocalObject(gameObject);
+        if (_RemoteObject != null) SetRemoteObject(_RemoteObject);
+        if (_DedicatedSpeaker != null)
+        {
+            _DedicatedSpeaker.AddEmitterLink(gameObject);                
+            _SpeakerIndex = _DedicatedSpeaker.RegisterAndGetIndex();
+            _SpeakerTransform = _DedicatedSpeaker.transform;
+            _Connected = true;
+        }
+    }
+
     void Update()
     {
         if (!_Initialised)
             return;
-
-
-        foreach (InputValueClass input in _InputValues)
-        {
-            Debug.Log("Input Value:    " + input.name + "      GetValue = " + input.GetValue());
-            
-        }
 
         // Update host range status.
         _ListenerDistance = Mathf.Abs((_LocalObject.transform.position - _HeadTransform.position).magnitude);

@@ -9,7 +9,6 @@ using Random = UnityEngine.Random;
 
 [DisallowMultipleComponent]
 [RequiresEntityConversion]
-[RequireComponent(typeof(ConvertToEntity))]
 public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
     public enum EmitterType {Continuous, Burst}
@@ -54,19 +53,23 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public DSP_Class[] _DSPChainParams;
 
-
     public virtual void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem) { }
 
-    public void Awake()
+    void Awake()
     {
+        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        Debug.Log(name + "    is awake and checking ConvertToEntity component....");
         GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
+        Debug.Log(name + "    convert active and enabled?   " + GetComponent<ConvertToEntity>().isActiveAndEnabled);
+        
+        Initialise();
     }
+
+    public virtual void Initialise() {}
 
     void Start()
     {
-        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _SamplesPerMS = AudioSettings.outputSampleRate * 0.001f;
-
         _PerlinSeedArray = new float[10];
         for (int i = 0; i < _PerlinSeedArray.Length; i++)
         {
@@ -75,12 +78,12 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         }
     }
 
-    private void Update() { }
-
     public void ManualUpdate()
     {
         if (!_Initialised)
             return;
+
+        Debug.Log(name + "    is executing manual update.");
 
         _TimeExisted += Time.deltaTime;
 
@@ -93,18 +96,21 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _EntityManager.SetComponentData(_EmitterEntity, new Translation { Value = transform.position });
 
         if (_IsPlaying && _InListenerRadius && _Connected)
+        {
             UpdateComponents();
+            Debug.Log(name + "    is updating components.");
+        }
     }
 
     protected virtual void UpdateComponents() { }
 
-    protected void UpdateDSPEffectsChain(bool clear = true)
+    protected void UpdateDSPEffectsBuffer(bool clear = true)
     {
         //--- TODO not sure if clearing and adding again is the best way to do this.
-        DynamicBuffer<DSPParametersElement> dstManager = _EntityManager.GetBuffer<DSPParametersElement>(_EmitterEntity);
-        if (clear) dstManager.Clear();
+        DynamicBuffer<DSPParametersElement> dspBuffer = _EntityManager.GetBuffer<DSPParametersElement>(_EmitterEntity);
+        if (clear) dspBuffer.Clear();
         for (int i = 0; i < _DSPChainParams.Length; i++)
-            dstManager.Add(_DSPChainParams[i].GetDSPBufferElement());
+            dspBuffer.Add(_DSPChainParams[i].GetDSPBufferElement());
     }
 
     public void UpdateDistanceAmplitude(float distance, float speakerFactor)

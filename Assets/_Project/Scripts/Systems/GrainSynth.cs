@@ -157,8 +157,6 @@ public class GrainSynth :  MonoBehaviour
     {
         // Update DSP sample
         DSPTimerComponent dspTimer = _EntityManager.GetComponentData<DSPTimerComponent>(_DSPTimerEntity);
-
-        // BRAD - Should this be Time.deltaTime * sample rate, or would AudioSettings.dspTime be better? Not sure
         _EntityManager.SetComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample + (int)(Time.deltaTime * AudioSettings.outputSampleRate), _GrainQueueDuration = _GrainQueueDurationInSamples });
 
         NativeArray<Entity> currentGrainProcessors = _GrainQuery.ToEntityArray(Allocator.TempJob);

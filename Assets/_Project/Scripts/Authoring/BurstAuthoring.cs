@@ -16,6 +16,11 @@ public class BurstAuthoring : EmitterAuthoring
 {
     public BurstParameters _Parameters;
 
+    public override void Initialise()
+    {
+        _EmitterType = EmitterType.Burst;
+    }
+
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         _EmitterEntity = entity;
@@ -232,7 +237,7 @@ public class BurstAuthoring : EmitterAuthoring
 
         #endregion
         
-        UpdateDSPEffectsChain();
+        UpdateDSPEffectsBuffer();
 
         // Burst emitters only need a single pass to generate grain data for its duration.
         _IsPlaying = false;
