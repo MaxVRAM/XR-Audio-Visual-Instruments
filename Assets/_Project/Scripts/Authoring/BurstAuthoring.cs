@@ -226,7 +226,7 @@ public class BurstAuthoring : EmitterAuthoring
             _Max = _Parameters._Volume._Max,
             _LockStartValue = false,
             _LockEndValue = _Parameters._Volume._LockEndValue,
-            _InteractionInput = _Parameters._Volume.GetValue() * _VolumeMultiply
+            _InteractionInput = _Parameters._Volume.GetValue() * _ContactSurfaceAttenuation
         };
         _EntityManager.SetComponentData(_EmitterEntity, entityData);
 
@@ -236,10 +236,5 @@ public class BurstAuthoring : EmitterAuthoring
 
         // Burst emitters only need a single pass to generate grain data for its duration.
         _IsPlaying = false;
-
-        // TODO hacky solution based on previous "dummy emitter" paradigm to kill stuck emitters
-        if (_ContactEmitter)
-            if (_TimeExisted > 3)
-                Destroy(gameObject);
     }
 }

@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Emitter
   - Speaker
+  - Input Values
   layers:
   - Default
   - TransparentFX

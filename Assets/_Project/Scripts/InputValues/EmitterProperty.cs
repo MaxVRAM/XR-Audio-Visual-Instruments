@@ -27,7 +27,7 @@ public class EmitterProperty
     
     public float GetValue()
     {
-        if (_InputSource == null)
+        if (_InputSource != null)
             _InputValue = _InputSource.GetValue();
         
         return _InputValue;

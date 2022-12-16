@@ -3,28 +3,20 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class AudioUtils
-{
-    /* Mel Scale convertions
-    
-     https://en.wikipedia.org/wiki/Mel_scale
-    
-    Outputs a value of 1000 Mels at 1000Hz, around 0 Mels at 0Hz and ~3800 at 20KHz.
-    This is a scale more in-tune with human hearing.
-
-    */
-    
+{    
     public static float FreqToMel(float freq)
     {
+        // ref: https://en.wikipedia.org/wiki/Mel_scale
         float mel = 2595 * Mathf.Log10(1 + freq / 700);
         return mel;
     }
 
     public static float MelToFreq(float mel)
     {
+        // ref: https://en.wikipedia.org/wiki/Mel_scale
         float freq= 700 * ( Mathf.Pow(10, mel / 2595) - 1);
         return freq;
     }
-
 
     public static float FreqToNorm(float freq)
     {
@@ -38,23 +30,29 @@ public class AudioUtils
         return Mathf.Clamp(freq, 20, 20000);
     }
 
-    public static float EmitterFromSpeakerVolumeAdjust(Vector3 listener, Vector3 speaker, Vector3 emitter)
+    // TODO: Check if this is proportionally correct
+    public static float SpeakerOffsetFactor(Vector3 target, Vector3 listener, Vector3 speaker)
     {
         float speakerDist = Mathf.Abs((listener - speaker).magnitude);
-        float emitterDist = Mathf.Abs((listener - emitter).magnitude);
-        float amplitude = speakerDist / emitterDist;
-        return Mathf.Clamp(amplitude, 0.0f, 2.0f);
+        float targetDist = Mathf.Abs((listener - target).magnitude);
+        return speakerDist / targetDist;
     }
 
-    // Inverse square attenuation for audio sources based on distance
-    public static float ListenerDistanceVolume(Vector3 listener, Vector3 emitter, float maxDistance)
+    // Inverse square attenuation for audio sources based on distance from the listener
+    public static float ListenerDistanceVolume(Vector3 source, Vector3 target, float maxDistance)
     {
-        float emitterDist = Mathf.Clamp(Mathf.Abs((listener - emitter).magnitude) / maxDistance, 0f, 1f);
-        return Mathf.Clamp(Mathf.Pow(500, -0.5f * emitterDist), 0f, 1f);
+        float sourceDistance = Mathf.Clamp(Mathf.Abs((source - target).magnitude) / maxDistance, 0f, 1f);
+        return Mathf.Clamp(Mathf.Pow(500, -0.5f * sourceDistance), 0f, 1f);
     }
+    
     public static float ListenerDistanceVolume(float distance, float maxDistance)
     {
-        float emitterDist = Mathf.Clamp(distance / maxDistance, 0f, 1f);
-        return Mathf.Clamp(Mathf.Pow(500, -0.5f * emitterDist), 0f, 1f);
+        float normalisedDistance = Mathf.Clamp(distance / maxDistance, 0f, 1f);
+        return Mathf.Clamp(Mathf.Pow(500, -0.5f * normalisedDistance), 0f, 1f);
+    }
+    public static float ListenerDistanceVolume(float distanceRatio)
+    {
+        float normalisedDistance = Mathf.Clamp(distanceRatio, 0f, 1f);
+        return Mathf.Clamp(Mathf.Pow(500, -0.5f * normalisedDistance), 0f, 1f);
     }
 }

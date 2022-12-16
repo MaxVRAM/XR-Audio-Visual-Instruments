@@ -16,30 +16,41 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     protected Entity _EmitterEntity;
     protected EntityManager _EntityManager;
-    protected float _VolumeMultiply = 1;
     protected float[] _PerlinSeedArray;
-    protected int _LastSampleIndex = 0;
-    protected float _SamplesPerMS = 0;
-    protected bool _Initialised = false;
 
     [Header("Emitter Configuration")]
     public EmitterType _EmitterType;
+    [Tooltip("Limit the emitter's playback to collision states.")]
     public bool _ContactEmitter = false;
+    [Tooltip("Audio clip used as the emitter's content source.")]
     public int _ClipIndex = 0;
 
+    // TODO: Create AudioClipSource and AudioClipLibrary objects to add properties to source
+    // content, making it much easier to create emitter configurations. Adding properties like
+    // tagging/grouping, custom names/descriptions, and per-clip processing; like volume,
+    // compression, and eq; are feasible and would drastically benefit workflow.
+
     [Header("Playback Config")]
-    [Range(0.1f, 50f)]
-    public float _MaxAudibleDistance = 10f;
+    [Range(0.001f, 1f)]
+    [Tooltip("Scaling factor applied to the global listener radius value. The result defines the emitter's distance-volume attenuation.")]
+    public float _DistanceAttenuationFactor = 1f;
+    [Tooltip("Reverses the playhead of an individual grain if it reaches the end of the clip during playback instead of outputting 0s.")]
     public bool _PingPongGrainPlayheads = true;
+    [Tooltip("Multiplies the emitter's output by the rigidity value of the colliding surface.")]
     public bool _ColliderRigidityVolumeScale = false;
 
     [Header("Runtime Dynamics")]
     public int _SpeakerIndex;
+    public bool _Connected = false;
     public bool _IsPlaying = true;
-    public float _TimeExisted = 0;
-    public float _CurrentDistance = 0;
-    public float _DistanceAmplitude = 0;
     public bool _InListenerRadius = false;
+    public float _TimeExisted = 0;
+    public float _AdjustedDistance = 0;
+    public float _DistanceAmplitude = 0;
+    protected float _ContactSurfaceAttenuation = 1;
+    protected int _LastSampleIndex = 0;
+    protected float _SamplesPerMS = 0;
+    protected bool _Initialised = false;
 
     public DSP_Class[] _DSPChainParams;
 
@@ -72,7 +83,6 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             return;
 
         _TimeExisted += Time.deltaTime;
-        _SamplesPerMS = AudioSettings.outputSampleRate * 0.001f;
 
         if (_InListenerRadius) _EntityManager.AddComponent<InListenerRadiusTag>(_EmitterEntity);
         else _EntityManager.RemoveComponent<InListenerRadiusTag>(_EmitterEntity);
@@ -82,7 +92,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         _EntityManager.SetComponentData(_EmitterEntity, new Translation { Value = transform.position });
 
-        if (_IsPlaying && _InListenerRadius)
+        if (_IsPlaying && _InListenerRadius && _Connected)
             UpdateComponents();
     }
 
@@ -97,18 +107,12 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             dstManager.Add(_DSPChainParams[i].GetDSPBufferElement());
     }
 
-    /// <summary>
-    //      Updates and returns "in-range" status of emitter.
-    //      Defined by the ratio between listener distance and emitter's maximum audible range.
-    /// <summary>
-    public bool ListenerDistance(float distance)
+    public void UpdateDistanceAmplitude(float distance, float speakerFactor)
     {
-        _CurrentDistance = distance;
-        _DistanceAmplitude = AudioUtils.ListenerDistanceVolume(distance, _MaxAudibleDistance);
-
-        _InListenerRadius = _CurrentDistance < _MaxAudibleDistance;
-        return _InListenerRadius;
+        _AdjustedDistance = distance / _DistanceAttenuationFactor;
+        _DistanceAmplitude = AudioUtils.ListenerDistanceVolume(_AdjustedDistance) * speakerFactor;
     }
+
 
     /// <summary>
     //      Removes continuous emitters' start offset.
@@ -135,9 +139,9 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             if (_EmitterType == EmitterType.Continuous)
                 _IsPlaying = collision != null;
             if (_ColliderRigidityVolumeScale && collision.collider.TryGetComponent(out SurfaceParameters surface))
-                _VolumeMultiply = surface._Rigidity;
+                _ContactSurfaceAttenuation = surface._Rigidity;
             else
-                _VolumeMultiply = 1;           
+                _ContactSurfaceAttenuation = 1;           
         }
     }
 

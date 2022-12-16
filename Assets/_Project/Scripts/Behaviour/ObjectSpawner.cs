@@ -7,89 +7,107 @@ using Random = UnityEngine.Random;
 /// <summary>
 public class ObjectSpawner : MonoBehaviour
 {
-    public GameObject _TetherObject;
-    public bool _EmittersUseSharedSpeaker = true;
-    public SpeakerAuthoring _SharedSpeaker;
-    public bool _RandomPrefab = false;
+    // TODO: Dedicated speaker assignment not implemented
+    [Header("Speaker Assignment")]
+    [Tooltip("Force spawned emitters to use this speaker. Leave null to use dynamic allocation.")]
+    public SpeakerAuthoring _DedicatedSpeaker;
+    [Header("Object Configuration")]
+    [Tooltip("Object to spawn the prefabs from.")]
+    public GameObject _SpawnSourceObject;
+    [Tooltip("Currently selected prefab to spawn.")]
+    public GameObject _PrefabToSpawn;
+    public List<GameObject> _SpawnablePrefabs;
+    public bool _SelectRandomPrefab = false;
+    public List<GameObject> _ActiveObjects = new List<GameObject>();
+    [Header("Spawn Configuration")]
     [Range(1, 200)]
-    public int _TargetNumber = 1;
+    public int _MaximumSpawnables = 1;
+    public bool _AutoSpawn = true;
+    public bool _AutoRemove = true;
     [Range(0f, 2f)]
     public float _SpawnFrequency = 1f;
-    public float _NextSpawnCountdown = 0;
+    public float _TimeSinceSpawn = 0;
     [Range(0f, 3f)]
     public float _SpawnRadius = 0.5f;
-    public GameObject _SelectedPrefab;
-    public List<GameObject> _SpawnablePrefabs;
-    public List<GameObject> _SpawnedObjects = new List<GameObject>();
     protected string _Name;
 
     void Start()
     {
-        _Name = transform.parent.name + " > " + this.name;
+        _Name = "Spawner | " + this.name;
 
-        if (_SharedSpeaker == null)
-            _SharedSpeaker = GetComponent<SpeakerAuthoring>();
-            if (_SharedSpeaker == null)
-                _SharedSpeaker = GetComponentInChildren<SpeakerAuthoring>();
+        if (_SpawnablePrefabs.Count == 0 && _PrefabToSpawn != null)
+            _SpawnablePrefabs.Add(_PrefabToSpawn);
 
-        if (_EmittersUseSharedSpeaker && _SharedSpeaker == null)
-            Debug.LogWarning("Emitter Spawner [" + _Name + "] has no speaker to provide spawned objects!");
-
-        if (_SpawnablePrefabs.Count == 0 && _SelectedPrefab != null)
-            _SpawnablePrefabs.Add(_SelectedPrefab);
-
-        if (_SpawnablePrefabs.Count > 1 && _SelectedPrefab == null)
-            _SelectedPrefab = _SpawnablePrefabs[0];
+        if (_SpawnablePrefabs.Count > 1 && _PrefabToSpawn == null)
+            _PrefabToSpawn = _SpawnablePrefabs[0];
 
         if (_SpawnablePrefabs.Count == 0)
-            Debug.LogWarning("Emitter Spawner [" + _Name + "] not assigned any prefabs!");
+            Debug.LogWarning("Spawner [" + _Name + "] not assigned any prefabs!");
     }
 
     void Update()
     {
-        _NextSpawnCountdown -= Time.deltaTime;
+        _TimeSinceSpawn += Time.deltaTime;
 
-        if (_TetherObject != null && _SelectedPrefab != null)
+        if (_SpawnSourceObject != null && _PrefabToSpawn != null && _ActiveObjects.Count != _MaximumSpawnables)
         {
-            SpawnObject();
-            RemoveObject();
+            int maxSpawnCount = GetSpawnNumber(_SpawnFrequency, ref _TimeSinceSpawn);
+            if (_ActiveObjects.Count < _MaximumSpawnables && _AutoSpawn)
+                SpawnObject(maxSpawnCount);
+            if (_ActiveObjects.Count > _MaximumSpawnables && _AutoRemove)
+                RemoveObject(maxSpawnCount);
         }
     }
 
-    private void SpawnObject()
+    public void SpawnObject(int maxToSpawn)
     {
-        if (_SpawnedObjects.Count < _TargetNumber && _NextSpawnCountdown <= 0)
-         {
+        while (_ActiveObjects.Count < _MaximumSpawnables && maxToSpawn > 0)
+        {
             GameObject objectToSpawn;
 
-            if (_RandomPrefab)
+            if (_SelectRandomPrefab)
                 objectToSpawn = _SpawnablePrefabs[Mathf.RoundToInt(Random.Range(0, _SpawnablePrefabs.Count))];
-            else objectToSpawn = _SelectedPrefab;
+            else objectToSpawn = _PrefabToSpawn;
 
-            if (objectToSpawn.GetComponent<HostAuthoring>() != null)
+            GameObject newObject = Instantiate(objectToSpawn,
+                _SpawnSourceObject.transform.position,
+                Quaternion.identity, gameObject.transform);
+            newObject.name = newObject.name + " (" + _ActiveObjects.Count + ")";
+            Debug.Log("Spawned object   " + newObject.name + "   at pos: " + _SpawnSourceObject.transform.position);
+            newObject.transform.localPosition = _SpawnSourceObject.transform.localPosition;
+
+            // Set emitter properties if spawned GameObject is an emitter host
+            if (objectToSpawn.TryGetComponent(out HostAuthoring host))
             {
-                GameObject newObject = Instantiate(objectToSpawn,
-                    _TetherObject.transform.position, Quaternion.identity, gameObject.transform);
-                newObject.name = newObject.name + " (" + _SpawnedObjects.Count + ")";
-
-                if (objectToSpawn.TryGetComponent(out HostAuthoring host))
-                {
-                    host.SetLocalObject(newObject);
-                    host.SetRemoteObject(_TetherObject);
-                }
-                _SpawnedObjects.Add(newObject);
-                _NextSpawnCountdown = _SpawnFrequency;
+                host.SetLocalObject(newObject);
+                host.SetRemoteObject(_SpawnSourceObject);
+                // Won't work without adding function on host to update it and its emitters during runtime
+                // if (_DedicatedSpeaker != null) host._DedicatedSpeaker = _DedicatedSpeaker;
             }
+
+            _ActiveObjects.Add(newObject);
+            maxToSpawn --;
+        }
+
+        // Zero time since value if 
+        if (_ActiveObjects.Count >= _MaximumSpawnables) _TimeSinceSpawn = 0;
+    }
+
+    public void RemoveObject(int maxToSpawn)
+    {
+        while (_ActiveObjects.Count > _MaximumSpawnables && maxToSpawn > 0)
+        {
+            Destroy(_ActiveObjects[_ActiveObjects.Count - 1]);
+            _ActiveObjects.RemoveAt(_ActiveObjects.Count - 1);
+            maxToSpawn --;
         }
     }
 
-    private void RemoveObject()
+    public int GetSpawnNumber(float frequency, ref float spawnClock)
     {
-        if (_SpawnedObjects.Count > _TargetNumber && _NextSpawnCountdown <= _SpawnFrequency)
-        {
-            Destroy(_SpawnedObjects[_SpawnedObjects.Count - 1]);
-            _SpawnedObjects.RemoveAt(_SpawnedObjects.Count - 1);
-            _NextSpawnCountdown = _SpawnFrequency;
-        }
+        int maxSpawnPerFrame = Mathf.CeilToInt(Time.deltaTime / frequency);
+        float numberToSpawn = spawnClock / frequency;
+        spawnClock = Time.deltaTime / (numberToSpawn % 1);
+        return Mathf.Min(maxSpawnPerFrame, Mathf.CeilToInt(numberToSpawn));
     }
 }

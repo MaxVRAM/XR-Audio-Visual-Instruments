@@ -48,17 +48,19 @@ public class AttachmentSystem : SystemBase
                 // Update in-range status of host from the listener.
                 if (!inListenerRadiusNow)
                 {
-                    host._SpeakerIndex = int.MaxValue;
+                    host._Connected = false;
                     host._InListenerRadius = false;
+                    host._SpeakerIndex = int.MaxValue;
                 }
                 else host._InListenerRadius = true;
 
                 // Unlink hosts outside speaker attachment radius.
-                if (host._SpeakerIndex != int.MaxValue)
+                if (host._Connected)
                 {
                     float emitterToSpeakerDist = math.distance(translation.Value, speakerTranslations[host._SpeakerIndex].Value);
                     if (speakerPool[host._SpeakerIndex]._State == PooledState.Pooled || emitterToSpeakerDist > activationRanges._AttachmentRadius)
                     {
+                        host._Connected = false;
                         host._SpeakerIndex = int.MaxValue;
                     }
                 }
@@ -98,7 +100,7 @@ public class AttachmentSystem : SystemBase
             (ref EmitterHostComponent host, in Translation translation) =>
             {
                 // Find hosts in listener radius not currently linked to a speaker
-                if (host._SpeakerIndex != int.MaxValue && host._InListenerRadius)
+                if (!host._Connected && host._InListenerRadius)
                 {
                     float closestDist = float.MaxValue;
                     int closestSpeakerIndex = int.MaxValue;
@@ -117,7 +119,10 @@ public class AttachmentSystem : SystemBase
                     }
                     // Attach the host to the nearest valid speaker
                     if (closestSpeakerIndex != int.MaxValue)
+                    {
+                        host._Connected = false;
                         host._SpeakerIndex = closestSpeakerIndex;
+                    }
                 }
             }
         ).WithDisposeOnCompletion(inRangeSpeaker)
@@ -143,7 +148,7 @@ public class AttachmentSystem : SystemBase
                     // Find an unlinked host to link with pooled speaker
                     for (int e = 0; e < hosts.Length; e++)
                     {
-                        if (hosts[e]._InListenerRadius && hosts[e]._SpeakerIndex == int.MaxValue)
+                        if (hosts[e]._InListenerRadius && !hosts[e]._Connected)
                         {
                             spawned = true;
                             float3 speakerPos = GetComponent<Translation>(hostEntities[e]).Value;
@@ -151,6 +156,7 @@ public class AttachmentSystem : SystemBase
                             // Update host component with speaker link
                             EmitterHostComponent host = GetComponent<EmitterHostComponent>(hostEntities[e]);
                             host._SpeakerIndex = GetComponent<SpeakerComponent>(speakerEntities[s])._SpeakerIndex;
+                            host._Connected = true;
                             SetComponent(hostEntities[e], host);
 
                             // Update speaker position
@@ -187,7 +193,7 @@ public class AttachmentSystem : SystemBase
                     int attachedHosts = 0;
                     // Check if any hosts are attached to this speaker
                     for (int e = 0; e < hostsToSitSpeakers.Length; e++)
-                        if (hostsToSitSpeakers[e]._SpeakerIndex == speaker._SpeakerIndex)
+                        if (hostsToSitSpeakers[e]._Connected && hostsToSitSpeakers[e]._SpeakerIndex == speaker._SpeakerIndex)
                         {
                             hostIndex = e;
                             attachedHosts++;

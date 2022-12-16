@@ -178,7 +178,7 @@ public class ContinuousAuthoring : EmitterAuthoring
             _PerlinValue = GeneratePerlinForParameter(4),
             _Min = _Properties._Volume._Min,
             _Max = _Properties._Volume._Max,
-            _InteractionInput = _Properties._Volume.GetValue() * _VolumeMultiply
+            _InteractionInput = _Properties._Volume.GetValue() * _ContactSurfaceAttenuation
         };
         _EntityManager.SetComponentData(_EmitterEntity, entityData);
 

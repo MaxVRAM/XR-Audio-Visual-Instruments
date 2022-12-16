@@ -67,7 +67,8 @@ public struct EmitterHostComponent : IComponentData
 {
     public int _HostIndex;
     public bool _InListenerRadius;
-    public bool _DedicatedSpeaker;
+    public bool _HasDedicatedSpeaker;
+    public bool _Connected;
     public int _SpeakerIndex;
 }
 
@@ -96,6 +97,7 @@ public struct ContinuousComponent : IComponentData
     public bool _PingPong;
     public float _DistanceAmplitude;
     public int _SpeakerIndex;
+    public bool _Connected;
     public int _LastSampleIndex;
     public int _PreviousGrainDuration;
     public int _OutputSampleRate;
@@ -114,6 +116,7 @@ public struct BurstComponent : IComponentData
     public bool _PingPong;
     public float _DistanceAmplitude;
     public int _SpeakerIndex;
+    public bool _Connected;
     public int _OutputSampleRate;
     public ModulationComponent _BurstDuration;
     public ModulationComponent _Density;

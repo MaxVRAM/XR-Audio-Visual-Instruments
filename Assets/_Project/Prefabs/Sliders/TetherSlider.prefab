@@ -47,15 +47,15 @@ MonoBehaviour:
   _EmitterType: 0
   _ContactEmitter: 0
   _ClipIndex: 41
-  _MaxAudibleDistance: 10
+  _DistanceAttenuationFactor: 1
   _PingPongGrainPlayheads: 1
   _ColliderRigidityVolumeScale: 0
   _SpeakerIndex: 0
   _IsPlaying: 1
-  _TimeExisted: 0
-  _CurrentDistance: 0
-  _DistanceAmplitude: 0
   _InListenerRadius: 0
+  _TimeExisted: 0
+  _AdjustedNormalisedDistance: 0
+  _DistanceAmplitude: 0
   _DSPChainParams: []
   _Properties:
     _Playhead:
@@ -138,7 +138,7 @@ GameObject:
   - component: {fileID: 2306625122942469269}
   m_Layer: 8
   m_Name: Deacceleration
-  m_TagString: Untagged
+  m_TagString: Input Values
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -169,10 +169,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ac38bc9eb0958540bae7a9593d81a97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _InteractionObject: {fileID: 0}
-  _InteractionRigidBody: {fileID: 0}
-  _RemoteObject: {fileID: 0}
-  _RemoteRigidBody: {fileID: 0}
+  _Inputs:
+    _LocalObject: {fileID: 0}
+    _LocalRigidbody: {fileID: 0}
+    _RemoteObject: {fileID: 0}
+    _RemoteRigidbody: {fileID: 0}
   _InputMin: 0
   _InputMax: 1
   _OutputValue: 0
@@ -225,15 +226,15 @@ MonoBehaviour:
   _EmitterType: 1
   _ContactEmitter: 1
   _ClipIndex: 45
-  _MaxAudibleDistance: 10
+  _DistanceAttenuationFactor: 1
   _PingPongGrainPlayheads: 1
   _ColliderRigidityVolumeScale: 0
   _SpeakerIndex: 0
   _IsPlaying: 0
-  _TimeExisted: 0
-  _CurrentDistance: 0
-  _DistanceAmplitude: 0
   _InListenerRadius: 0
+  _TimeExisted: 0
+  _AdjustedNormalisedDistance: 0
+  _DistanceAmplitude: 0
   _DSPChainParams: []
   _Parameters:
     _Playhead:
@@ -335,7 +336,7 @@ GameObject:
   - component: {fileID: 2306625123320307641}
   m_Layer: 8
   m_Name: Speed
-  m_TagString: Untagged
+  m_TagString: Input Values
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -366,10 +367,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ac38bc9eb0958540bae7a9593d81a97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _InteractionObject: {fileID: 0}
-  _InteractionRigidBody: {fileID: 0}
-  _RemoteObject: {fileID: 0}
-  _RemoteRigidBody: {fileID: 0}
+  _Inputs:
+    _LocalObject: {fileID: 0}
+    _LocalRigidbody: {fileID: 0}
+    _RemoteObject: {fileID: 0}
+    _RemoteRigidbody: {fileID: 0}
   _InputMin: 0
   _InputMax: 1.5
   _OutputValue: 0
@@ -387,7 +389,7 @@ GameObject:
   - component: {fileID: 2306625123323876118}
   m_Layer: 8
   m_Name: Impact
-  m_TagString: Untagged
+  m_TagString: Input Values
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -418,10 +420,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64847be3d40a91744bbbef99655446cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _InteractionObject: {fileID: 0}
-  _InteractionRigidBody: {fileID: 0}
-  _RemoteObject: {fileID: 0}
-  _RemoteRigidBody: {fileID: 0}
+  _Inputs:
+    _LocalObject: {fileID: 0}
+    _LocalRigidbody: {fileID: 0}
+    _RemoteObject: {fileID: 0}
+    _RemoteRigidbody: {fileID: 0}
   _InputMin: 0
   _InputMax: 1
   _OutputValue: 0
@@ -474,15 +477,15 @@ MonoBehaviour:
   _EmitterType: 0
   _ContactEmitter: 1
   _ClipIndex: 18
-  _MaxAudibleDistance: 10
+  _DistanceAttenuationFactor: 1
   _PingPongGrainPlayheads: 1
   _ColliderRigidityVolumeScale: 0
   _SpeakerIndex: 0
   _IsPlaying: 0
-  _TimeExisted: 0
-  _CurrentDistance: 0
-  _DistanceAmplitude: 0
   _InListenerRadius: 0
+  _TimeExisted: 0
+  _AdjustedNormalisedDistance: 0
+  _DistanceAmplitude: 0
   _DSPChainParams: []
   _Properties:
     _Playhead:
@@ -565,7 +568,7 @@ GameObject:
   - component: {fileID: 2306625123773013502}
   m_Layer: 8
   m_Name: Acceleration
-  m_TagString: Untagged
+  m_TagString: Input Values
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -596,10 +599,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ac38bc9eb0958540bae7a9593d81a97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _InteractionObject: {fileID: 0}
-  _InteractionRigidBody: {fileID: 0}
-  _RemoteObject: {fileID: 0}
-  _RemoteRigidBody: {fileID: 0}
+  _Inputs:
+    _LocalObject: {fileID: 0}
+    _LocalRigidbody: {fileID: 0}
+    _RemoteObject: {fileID: 0}
+    _RemoteRigidbody: {fileID: 0}
   _InputMin: 0
   _InputMax: 1
   _OutputValue: 0
@@ -617,7 +621,7 @@ GameObject:
   - component: {fileID: 2306625124145120892}
   m_Layer: 8
   m_Name: Scale
-  m_TagString: Untagged
+  m_TagString: Input Values
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -648,10 +652,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ac38bc9eb0958540bae7a9593d81a97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _InteractionObject: {fileID: 0}
-  _InteractionRigidBody: {fileID: 0}
-  _RemoteObject: {fileID: 0}
-  _RemoteRigidBody: {fileID: 0}
+  _Inputs:
+    _LocalObject: {fileID: 0}
+    _LocalRigidbody: {fileID: 0}
+    _RemoteObject: {fileID: 0}
+    _RemoteRigidbody: {fileID: 0}
   _InputMin: 0
   _InputMax: 1
   _OutputValue: 0
@@ -720,13 +725,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _DedicatedSpeaker: {fileID: 0}
   _SpeakerIndex: 2147483647
-  _InteractionObject: {fileID: 2306625124509221286}
+  _Connected: 0
+  _LocalObject: {fileID: 0}
   _RemoteObject: {fileID: 0}
   _HostedEmitters: []
   _InputValues: []
   _IsColliding: 0
   _InListenerRadius: 0
-  _CurrentDistance: 0
+  _NormalisedDistance: 0
   _CollidingObjects: []
 --- !u!33 &2306625124509222495
 MeshFilter:
@@ -942,7 +948,7 @@ GameObject:
   - component: {fileID: 2306625124520197429}
   m_Layer: 8
   m_Name: Roll Value
-  m_TagString: Untagged
+  m_TagString: Input Values
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -973,10 +979,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ac38bc9eb0958540bae7a9593d81a97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _InteractionObject: {fileID: 0}
-  _InteractionRigidBody: {fileID: 0}
-  _RemoteObject: {fileID: 0}
-  _RemoteRigidBody: {fileID: 0}
+  _Inputs:
+    _LocalObject: {fileID: 0}
+    _LocalRigidbody: {fileID: 0}
+    _RemoteObject: {fileID: 0}
+    _RemoteRigidbody: {fileID: 0}
   _InputMin: 0
   _InputMax: 1
   _OutputValue: 0
@@ -994,7 +1001,7 @@ GameObject:
   - component: {fileID: 9051353317025261681}
   m_Layer: 8
   m_Name: Directional Acceleration
-  m_TagString: Untagged
+  m_TagString: Input Values
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1025,10 +1032,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ac38bc9eb0958540bae7a9593d81a97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _InteractionObject: {fileID: 0}
-  _InteractionRigidBody: {fileID: 0}
-  _RemoteObject: {fileID: 0}
-  _RemoteRigidBody: {fileID: 0}
+  _Inputs:
+    _LocalObject: {fileID: 0}
+    _LocalRigidbody: {fileID: 0}
+    _RemoteObject: {fileID: 0}
+    _RemoteRigidbody: {fileID: 0}
   _InputMin: -1
   _InputMax: 1
   _OutputValue: 0

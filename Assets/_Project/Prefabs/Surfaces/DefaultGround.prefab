@@ -110,13 +110,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fede2376eb93c5408d3f8b75ff00ba4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _Speaker: {fileID: 0}
-  _SelfEmitters: []
-  _ContactEmitters: []
-  _Interactions: []
-  _HostContactEmitters: 0
-  _HostedContactEmitters: []
-  _CollidingObjects: []
 --- !u!114 &1115843163375070211
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -141,6 +134,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Speaker
+      objectReference: {fileID: 0}
+    - target: {fileID: 2519325204652697371, guid: b46de1e33c7c38647882c6d1451339fd,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2520372110442775027, guid: b46de1e33c7c38647882c6d1451339fd,
         type: 3}

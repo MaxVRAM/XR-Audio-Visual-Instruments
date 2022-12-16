@@ -11,33 +11,37 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     protected bool _Initialised = false;
     protected Entity _HostEntity;
     protected EntityManager _EntityManager;
-    protected Transform _HeadPosition;
+    protected Transform _HeadTransform;
 
+    [Header("Speaker assignment")]
     [Tooltip("If a dedicated speaker is set, the runtime attachment system will be disabled for this host.")]
     public SpeakerAuthoring _DedicatedSpeaker;
+    protected Transform _SpeakerTransform;
     public int _SpeakerIndex = int.MaxValue;
+    public bool _Connected = false;
 
-    [Header("Input Value configuration")]
-    [Tooltip("Objects to generate collision and modulation data with for the host's emitters. Defaults to this game object.")]
+    [Header("Emitter modulation inputs")]
+    [Tooltip("Object to generate collision and modulation data with for the host's emitters. Defaults to this game object.")]
     public GameObject _LocalObject;
-    [Tooltip("Additional object used to generate 'relative' values with, against the interaction object; 'distance from', etc.")]
+    [Tooltip("Additional object used to generate 'relative' values with against the interaction object. E.g. distance, relative speed, etc.")]
     public GameObject _RemoteObject;
     [Tooltip("Finds all emitter components in children to manage.")]
+
     public EmitterAuthoring[] _HostedEmitters;
-    [Tooltip("Finds all input value components in children to manage.")]
+    [Tooltip("Finds all modulation input components in children to manage.")]
     public InputValueClass[] _InputValues;
 
     [Header("Runtime dynamics")]
     public bool _IsColliding = false;
     public bool _InListenerRadius = false;
-    public float _CurrentDistance = 0;
+    public float _ListenerDistance = 0;
     public List<GameObject> _CollidingObjects;
 
 
     void Start()
     {
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-        _HeadPosition = FindObjectOfType<Camera>().transform;
+        _HeadTransform = FindObjectOfType<Camera>().transform;
 
         _HostedEmitters = GetComponentsInChildren<EmitterAuthoring>();
         _InputValues = GetComponentsInChildren<InputValueClass>();
@@ -45,7 +49,12 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (_LocalObject == null) SetLocalObject(gameObject);
         if (_RemoteObject != null) SetRemoteObject(_RemoteObject);
         if (_DedicatedSpeaker != null)
+        {
+            _DedicatedSpeaker.AddEmitterLink(gameObject);                
             _SpeakerIndex = _DedicatedSpeaker.RegisterAndGetIndex();
+            _SpeakerTransform = _DedicatedSpeaker.transform;
+            _Connected = true;
+        }
     }
 
     void Awake()
@@ -61,9 +70,10 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         dstManager.AddComponentData(_HostEntity, new EmitterHostComponent
         {
+            _Connected = _Connected,
             _InListenerRadius = false,
-            _DedicatedSpeaker = _DedicatedSpeaker != null,
-            _SpeakerIndex = _SpeakerIndex
+            _SpeakerIndex = _SpeakerIndex,
+            _HasDedicatedSpeaker = _DedicatedSpeaker != null
         });
 
         #if UNITY_EDITOR
@@ -78,48 +88,71 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (!_Initialised)
             return;
 
-        // Update emitter range status. Host will be "in-range" if at least one of its emitters return true.
-        _CurrentDistance = Mathf.Abs((_HeadPosition.position - _LocalObject.transform.position).magnitude);
-        _InListenerRadius = false;
-        foreach (EmitterAuthoring emitter in _HostedEmitters)
-            if (emitter.ListenerDistance(_CurrentDistance))
-                _InListenerRadius = true;
+
+        foreach (InputValueClass input in _InputValues)
+        {
+            Debug.Log("Input Value:    " + input.name + "      GetValue = " + input.GetValue());
+            
+        }
+
+        // Update host range status.
+        _ListenerDistance = Mathf.Abs((_LocalObject.transform.position - _HeadTransform.position).magnitude);
 
         // Update host translation component.
         Translation translation = _EntityManager.GetComponentData<Translation>(_HostEntity);
         _EntityManager.SetComponentData(_HostEntity, new Translation { Value = transform.position });
 
         // Update host component data.
-        EmitterHostComponent entity = _EntityManager.GetComponentData<EmitterHostComponent>(_HostEntity);        
+        EmitterHostComponent hostEntity = _EntityManager.GetComponentData<EmitterHostComponent>(_HostEntity);        
 
-        entity._InListenerRadius = _InListenerRadius;
-
-        if (_DedicatedSpeaker == null)
+        if (_DedicatedSpeaker != null)
         {
-            bool newSpeaker = false;
-            if (_SpeakerIndex != entity._SpeakerIndex)
-                newSpeaker = true;
-            _SpeakerIndex = entity._SpeakerIndex;
-
-            Debug.Log("Speaker index = " + _SpeakerIndex);
-
-            foreach (EmitterAuthoring emitter in _HostedEmitters)
-            {
-                if (newSpeaker) emitter.ResetLastSampleIndex();
-                emitter._SpeakerIndex = _SpeakerIndex;
+            hostEntity._Connected = true;
+            hostEntity._HasDedicatedSpeaker = true;
+            hostEntity._SpeakerIndex = _SpeakerIndex;
+            hostEntity._InListenerRadius = _ListenerDistance < GrainSynth.Instance._ListenerRadius;
+        }
+        else
+        {
+            _InListenerRadius = hostEntity._InListenerRadius;
+            hostEntity._HasDedicatedSpeaker = false;
+            _Connected = hostEntity._Connected;
+            if (hostEntity._SpeakerIndex < GrainSynth.Instance._Speakers.Count)
+            {               
+                _SpeakerIndex = hostEntity._SpeakerIndex; 
+                _SpeakerTransform = DynamicSpeaker.gameObject.transform;
+                if (_SpeakerIndex != hostEntity._SpeakerIndex)
+                {
+                    Debug.Log(name + "   assigned new speaker:   " + _SpeakerIndex);
+                    foreach (EmitterAuthoring emitter in _HostedEmitters)
+                        emitter.ResetLastSampleIndex();
+                }
             }
+            else _Connected = false;
+        }
+        _EntityManager.SetComponentData(_HostEntity, hostEntity);
+
+        float speakerFactor = 0;
+
+        if (_Connected)
+        {
+            speakerFactor = AudioUtils.SpeakerOffsetFactor(
+                _LocalObject.transform.position,
+                _HeadTransform.position,
+                _SpeakerTransform.position);
         }
 
-        // Manually call the hosted emitters' component update function.
         foreach (EmitterAuthoring emitter in _HostedEmitters)
-            emitter.ManualUpdate();
-
-        _EntityManager.SetComponentData(_HostEntity, entity);
-
-        foreach (InputValueClass input in _InputValues)
         {
+            emitter.UpdateDistanceAmplitude(_ListenerDistance, speakerFactor);
+            emitter._InListenerRadius = _InListenerRadius;
+            emitter._SpeakerIndex = _SpeakerIndex;
+            emitter._Connected = _Connected;
+            emitter.ManualUpdate();
         }
     }
+    
+    public SpeakerAuthoring DynamicSpeaker { get { return GrainSynth.Instance._Speakers[_SpeakerIndex]; } }
 
     public void SetLocalObject(GameObject go)
     {
