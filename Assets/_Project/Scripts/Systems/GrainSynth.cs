@@ -40,6 +40,7 @@ public class GrainSynth :  MonoBehaviour
     public float _AttachmentRadius = 1;
     [SerializeField]
     int _GrainProcessorCount = 0;
+    public InputValueClass _BlankInput;
 
     [Header("Speakers")]
     public SpeakerAuthoring _SpeakerPrefab;
@@ -81,6 +82,8 @@ public class GrainSynth :  MonoBehaviour
     {
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _SampleRate = AudioSettings.outputSampleRate;
+
+        _BlankInput = GetComponentInChildren<InputValueClass>();
 
         for (int i = 0; i < _MaxDynamicSpeakers; i++)
             CreateSpeaker(transform.position);

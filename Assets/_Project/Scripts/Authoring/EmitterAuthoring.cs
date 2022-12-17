@@ -1,10 +1,25 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Unity.Entities;
-using Unity.Mathematics;
 using UnityEngine;
 using Unity.Transforms;
 using Random = UnityEngine.Random;
+
+
+public class InputProperties
+{
+    public List<EmitterProperty> _PropertyList;
+
+    public void Initialise()
+    {
+        if (_PropertyList != null && _PropertyList.Count > 0)
+            foreach (EmitterProperty property in _PropertyList)
+                if (property._InputSource == null)
+                {
+                    Debug.Log("     FOUND BLANK PROPERTY:   " + property.ToString());
+                    property._InputSource = new BlankInput();
+                }
+    }
+}
 
 
 [DisallowMultipleComponent]
@@ -50,26 +65,15 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     protected int _LastSampleIndex = 0;
     protected float _SamplesPerMS = 0;
     protected bool _Initialised = false;
+    protected bool _InputValuesReady = false;
 
     public DSP_Class[] _DSPChainParams;
 
-    public virtual void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem) { }
-
-    void Awake()
-    {
-        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-        Debug.Log(name + "    is awake and checking ConvertToEntity component....");
-        GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
-        Debug.Log(name + "    convert active and enabled?   " + GetComponent<ConvertToEntity>().isActiveAndEnabled);
-        
-        Initialise();
-    }
-
-    public virtual void Initialise() {}
-
     void Start()
     {
+        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _SamplesPerMS = AudioSettings.outputSampleRate * 0.001f;
+
         _PerlinSeedArray = new float[10];
         for (int i = 0; i < _PerlinSeedArray.Length; i++)
         {
@@ -78,12 +82,33 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         }
     }
 
-    public void ManualUpdate()
+    void Awake()
+    {
+        GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
+    }
+
+    public virtual void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem) { }
+
+    private void OnDestroy()
+    {
+        Debug.Log(name + "     IS BEING DESTROYED!");
+        DestroyEntity();
+    }
+
+    public void DestroyEntity()
+    {
+        if (World.All.Count != 0 && _EmitterEntity != null)
+            _EntityManager.DestroyEntity(_EmitterEntity);
+            
+        Debug.Log(name + "     ENTITY IS DESTROYED!");
+    }
+
+    public virtual void Initialise() {}
+
+    public void UpdateTranslationAndTags()
     {
         if (!_Initialised)
             return;
-
-        Debug.Log(name + "    is executing manual update.");
 
         _TimeExisted += Time.deltaTime;
 
@@ -94,15 +119,9 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         else _EntityManager.RemoveComponent<PlayingTag>(_EmitterEntity);
 
         _EntityManager.SetComponentData(_EmitterEntity, new Translation { Value = transform.position });
-
-        if (_IsPlaying && _InListenerRadius && _Connected)
-        {
-            UpdateComponents();
-            Debug.Log(name + "    is updating components.");
-        }
     }
 
-    protected virtual void UpdateComponents() { }
+    public virtual void UpdateComponents() { }
 
     protected void UpdateDSPEffectsBuffer(bool clear = true)
     {
@@ -162,16 +181,5 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     {
         Gizmos.color = _InListenerRadius ? Color.yellow : Color.blue;
         Gizmos.DrawSphere(transform.position, .1f);
-    }
-
-    private void OnDestroy()
-    {
-        DestroyEntity();
-    }
-
-    public void DestroyEntity()
-    {
-        if (World.All.Count != 0 && _EmitterEntity != null)
-            _EntityManager.DestroyEntity(_EmitterEntity);
     }
 }

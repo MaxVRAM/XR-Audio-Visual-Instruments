@@ -72,6 +72,7 @@ public class InputValueClass : MonoBehaviour
     }
 }
 
-public class BlankInteraction : InputValueClass
+public class BlankInput : InputValueClass
 {
+
 }

@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [System.Serializable]
-public class BurstParameters
+public class BurstParameters : InputProperties
 {
     public BurstPlayhead _Playhead;
     public BurstDuration _BurstDuration;
@@ -14,17 +14,23 @@ public class BurstParameters
 
 public class BurstAuthoring : EmitterAuthoring
 {
-    public BurstParameters _Parameters;
+    public BurstParameters _Properties;
 
     public override void Initialise()
     {
         _EmitterType = EmitterType.Burst;
+        _Properties._PropertyList.Add(_Properties._Playhead);
+        _Properties._PropertyList.Add(_Properties._BurstDuration);
+        _Properties._PropertyList.Add(_Properties._Density);
+        _Properties._PropertyList.Add(_Properties._GrainDuration);
+        _Properties._PropertyList.Add(_Properties._Transpose);
+        _Properties._PropertyList.Add(_Properties._Volume);
     }
 
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         _EmitterEntity = entity;
-        _EmitterType = EmitterType.Burst;
+
         _IsPlaying = false;
         int index = GrainSynth.Instance.RegisterEmitter(entity);
 
@@ -41,80 +47,80 @@ public class BurstAuthoring : EmitterAuthoring
 
             _BurstDuration = new ModulationComponent
             {
-                _StartValue = _Parameters._BurstDuration._Default * _SamplesPerMS,
-                _InteractionAmount = _Parameters._BurstDuration._InteractionAmount * _SamplesPerMS,
-                _Shape = _Parameters._BurstDuration._InteractionShape,
-                _Noise = _Parameters._BurstDuration._Noise._Amount,
-                _LockNoise = _Parameters._BurstDuration._Noise._FreezeOnTrigger,
-                _Min = _Parameters._BurstDuration._Min * _SamplesPerMS,
-                _Max = _Parameters._BurstDuration._Max * _SamplesPerMS,
+                _StartValue = _Properties._BurstDuration._Default * _SamplesPerMS,
+                _InteractionAmount = _Properties._BurstDuration._InteractionAmount * _SamplesPerMS,
+                _Shape = _Properties._BurstDuration._InteractionShape,
+                _Noise = _Properties._BurstDuration._Noise._Amount,
+                _LockNoise = _Properties._BurstDuration._Noise._FreezeOnTrigger,
+                _Min = _Properties._BurstDuration._Min * _SamplesPerMS,
+                _Max = _Properties._BurstDuration._Max * _SamplesPerMS,
                 _LockStartValue = false,
                 _LockEndValue = false
             },
             _Playhead = new ModulationComponent
             {
-                _StartValue = _Parameters._Playhead._Start,
-                _EndValue = _Parameters._Playhead._End,                
-                _InteractionAmount = _Parameters._Playhead._InteractionAmount,
-                _Shape = _Parameters._Playhead._InteractionShape,
-                _Noise = _Parameters._Playhead._Noise._Amount,
-                _LockNoise = _Parameters._Playhead._Noise._FreezeOnTrigger,
-                _Min = _Parameters._Playhead._Min,
-                _Max = _Parameters._Playhead._Max,
-                _LockStartValue = _Parameters._Playhead._LockStartValue,
+                _StartValue = _Properties._Playhead._Start,
+                _EndValue = _Properties._Playhead._End,                
+                _InteractionAmount = _Properties._Playhead._InteractionAmount,
+                _Shape = _Properties._Playhead._InteractionShape,
+                _Noise = _Properties._Playhead._Noise._Amount,
+                _LockNoise = _Properties._Playhead._Noise._FreezeOnTrigger,
+                _Min = _Properties._Playhead._Min,
+                _Max = _Properties._Playhead._Max,
+                _LockStartValue = _Properties._Playhead._LockStartValue,
                 _LockEndValue = false
             },
             _Density = new ModulationComponent
             {
-                _StartValue = _Parameters._Density._Start,
-                _EndValue = _Parameters._Density._End,
-                _InteractionAmount = _Parameters._Density._InteractionAmount,
-                _Shape = _Parameters._Density._InteractionShape,
-                _Noise = _Parameters._Density._Noise._Amount,
-                _LockNoise = _Parameters._Density._Noise._FreezeOnTrigger,
-                _Min = _Parameters._Density._Min,
-                _Max = _Parameters._Density._Max,
+                _StartValue = _Properties._Density._Start,
+                _EndValue = _Properties._Density._End,
+                _InteractionAmount = _Properties._Density._InteractionAmount,
+                _Shape = _Properties._Density._InteractionShape,
+                _Noise = _Properties._Density._Noise._Amount,
+                _LockNoise = _Properties._Density._Noise._FreezeOnTrigger,
+                _Min = _Properties._Density._Min,
+                _Max = _Properties._Density._Max,
                 _LockStartValue = false,
                 _LockEndValue = false
             },
             _GrainDuration = new ModulationComponent
             {
-                _StartValue = _Parameters._GrainDuration._Start * _SamplesPerMS,
-                _EndValue = _Parameters._GrainDuration._End * _SamplesPerMS,                
-                _InteractionAmount = _Parameters._GrainDuration._InteractionAmount * _SamplesPerMS,
-                _Shape = _Parameters._GrainDuration._InteractionShape,
-                _Noise = _Parameters._GrainDuration._Noise._Amount,
-                _LockNoise = _Parameters._GrainDuration._Noise._FreezeOnTrigger,
-                _Min = _Parameters._GrainDuration._Min * _SamplesPerMS,
-                _Max = _Parameters._GrainDuration._Max * _SamplesPerMS,
+                _StartValue = _Properties._GrainDuration._Start * _SamplesPerMS,
+                _EndValue = _Properties._GrainDuration._End * _SamplesPerMS,                
+                _InteractionAmount = _Properties._GrainDuration._InteractionAmount * _SamplesPerMS,
+                _Shape = _Properties._GrainDuration._InteractionShape,
+                _Noise = _Properties._GrainDuration._Noise._Amount,
+                _LockNoise = _Properties._GrainDuration._Noise._FreezeOnTrigger,
+                _Min = _Properties._GrainDuration._Min * _SamplesPerMS,
+                _Max = _Properties._GrainDuration._Max * _SamplesPerMS,
                 _LockStartValue = false,
                 _LockEndValue = false
             },
             _Transpose = new ModulationComponent
             {
-                _StartValue = _Parameters._Transpose._Start,
-                _EndValue = _Parameters._Transpose._End,
-                _InteractionAmount = _Parameters._Transpose._InteractionAmount,
-                _Shape = _Parameters._Transpose._InteractionShape,
-                _Noise = _Parameters._Transpose._Noise._Amount,
-                _LockNoise = _Parameters._Transpose._Noise._FreezeOnTrigger,
-                _Min = _Parameters._Transpose._Min,
-                _Max = _Parameters._Transpose._Max,
+                _StartValue = _Properties._Transpose._Start,
+                _EndValue = _Properties._Transpose._End,
+                _InteractionAmount = _Properties._Transpose._InteractionAmount,
+                _Shape = _Properties._Transpose._InteractionShape,
+                _Noise = _Properties._Transpose._Noise._Amount,
+                _LockNoise = _Properties._Transpose._Noise._FreezeOnTrigger,
+                _Min = _Properties._Transpose._Min,
+                _Max = _Properties._Transpose._Max,
                 _LockStartValue = false,
-                _LockEndValue = _Parameters._Transpose._LockEndValue
+                _LockEndValue = _Properties._Transpose._LockEndValue
             },
             _Volume = new ModulationComponent
             {
-                _StartValue = _Parameters._Volume._Start,
-                _EndValue = _Parameters._Volume._End,
-                _Shape = _Parameters._Volume._InteractionShape,
-                _InteractionAmount = _Parameters._Volume._InteractionAmount,
-                _Noise = _Parameters._Volume._Noise._Amount,
-                _LockNoise = _Parameters._Volume._Noise._FreezeOnTrigger,
-                _Min = _Parameters._Volume._Min,
-                _Max = _Parameters._Volume._Max,
+                _StartValue = _Properties._Volume._Start,
+                _EndValue = _Properties._Volume._End,
+                _Shape = _Properties._Volume._InteractionShape,
+                _InteractionAmount = _Properties._Volume._InteractionAmount,
+                _Noise = _Properties._Volume._Noise._Amount,
+                _LockNoise = _Properties._Volume._Noise._FreezeOnTrigger,
+                _Min = _Properties._Volume._Min,
+                _Max = _Properties._Volume._Max,
                 _LockStartValue = false,
-                _LockEndValue = _Parameters._Volume._LockEndValue
+                _LockEndValue = _Properties._Volume._LockEndValue
             }
         });
 
@@ -124,8 +130,6 @@ public class BurstAuthoring : EmitterAuthoring
 
         #endregion
 
-
-        #region ADD DSP EFFECT COMPONENT DATA
         dstManager.AddBuffer<DSPParametersElement>(_EmitterEntity);
         DynamicBuffer<DSPParametersElement> dspParams = dstManager.GetBuffer<DSPParametersElement>(_EmitterEntity);
         for (int i = 0; i < _DSPChainParams.Length; i++)
@@ -133,113 +137,117 @@ public class BurstAuthoring : EmitterAuthoring
             dspParams.Add(_DSPChainParams[i].GetDSPBufferElement());
         }
         dstManager.AddComponentData(entity, new QuadEntityType { _Type = QuadEntityType.QuadEntityTypeEnum.Emitter });
-        #endregion
 
         _Initialised = true;
     }
 
-    protected override void UpdateComponents()
+    public override void UpdateComponents()
     {
-        BurstComponent entityData = _EntityManager.GetComponentData<BurstComponent>(_EmitterEntity);
+        if (_IsPlaying && _InListenerRadius && _Connected)
+        {
+            _Properties.Initialise();
 
-        #region UPDATE EMITTER COMPONENT DATA
-        entityData._IsPlaying = true;
-        entityData._AudioClipIndex = _ClipIndex;
-        entityData._SpeakerIndex = _SpeakerIndex;
-        entityData._PingPong = _PingPongGrainPlayheads;
-        entityData._DistanceAmplitude = _DistanceAmplitude;
-        entityData._OutputSampleRate = AudioSettings.outputSampleRate;
+            BurstComponent burstData = _EntityManager.GetComponentData<BurstComponent>(_EmitterEntity);
+
+            #region UPDATE EMITTER COMPONENT DATA
+            burstData._IsPlaying = true;
+            burstData._AudioClipIndex = _ClipIndex;
+            burstData._SpeakerIndex = _SpeakerIndex;
+            burstData._PingPong = _PingPongGrainPlayheads;
+            burstData._DistanceAmplitude = _DistanceAmplitude;
+            burstData._OutputSampleRate = AudioSettings.outputSampleRate;
+                
+            burstData._BurstDuration = new ModulationComponent
+            {
+                _StartValue = _Properties._BurstDuration._Default * _SamplesPerMS,
+                _InteractionAmount = _Properties._BurstDuration._InteractionAmount * _SamplesPerMS,
+                _Shape = _Properties._BurstDuration._InteractionShape,
+                _Noise = _Properties._BurstDuration._Noise._Amount,
+                _LockNoise = _Properties._BurstDuration._Noise._FreezeOnTrigger,
+                _Min = _Properties._BurstDuration._Min * _SamplesPerMS,
+                _Max = _Properties._BurstDuration._Max * _SamplesPerMS,
+                _LockStartValue = false,
+                _LockEndValue = false,
+                _InteractionInput = _Properties._BurstDuration.GetValue()
+            };
+            burstData._Playhead = new ModulationComponent
+            {
+                _StartValue = _Properties._Playhead._Start,
+                _EndValue = _Properties._Playhead._End,
+                _InteractionAmount = _Properties._Playhead._InteractionAmount,
+                _Shape = _Properties._Playhead._InteractionShape,
+                _Noise = _Properties._Playhead._Noise._Amount,
+                _LockNoise = _Properties._Playhead._Noise._FreezeOnTrigger,
+                _Min = _Properties._Playhead._Min,
+                _Max = _Properties._Playhead._Max,
+                _LockStartValue = _Properties._Playhead._LockStartValue,
+                _LockEndValue = false,
+                _InteractionInput = _Properties._Playhead.GetValue()
+            };
+            burstData._Density = new ModulationComponent
+            {
+                _StartValue = _Properties._Density._Start,
+                _EndValue = _Properties._Density._End,
+                _InteractionAmount = _Properties._Density._InteractionAmount,
+                _Shape = _Properties._Density._InteractionShape,
+                _Noise = _Properties._Density._Noise._Amount,
+                _LockNoise = _Properties._Density._Noise._FreezeOnTrigger,
+                _Min = _Properties._Density._Min,
+                _Max = _Properties._Density._Max,
+                _LockStartValue = false,
+                _LockEndValue = false,
+                _InteractionInput = _Properties._Density.GetValue()
+            };
+            burstData._GrainDuration = new ModulationComponent
+            {
+                _StartValue = _Properties._GrainDuration._Start * _SamplesPerMS,
+                _EndValue = _Properties._GrainDuration._End * _SamplesPerMS,
+                _InteractionAmount = _Properties._GrainDuration._InteractionAmount * _SamplesPerMS,
+                _Shape = _Properties._GrainDuration._InteractionShape,
+                _Noise = _Properties._GrainDuration._Noise._Amount,
+                _LockNoise = _Properties._GrainDuration._Noise._FreezeOnTrigger,
+                _Min = _Properties._GrainDuration._Min * _SamplesPerMS,
+                _Max = _Properties._GrainDuration._Max * _SamplesPerMS,
+                _LockStartValue = false,
+                _LockEndValue = false,
+                _InteractionInput = _Properties._GrainDuration.GetValue()
+            };
+            burstData._Transpose = new ModulationComponent
+            {
+                _StartValue = _Properties._Transpose._Start,
+                _EndValue = _Properties._Transpose._End,
+                _InteractionAmount = _Properties._Transpose._InteractionAmount,
+                _Shape = _Properties._Transpose._InteractionShape,
+                _Noise = _Properties._Transpose._Noise._Amount,
+                _LockNoise = _Properties._Transpose._Noise._FreezeOnTrigger,
+                _Min = _Properties._Transpose._Min,
+                _Max = _Properties._Transpose._Max,
+                _LockStartValue = false,
+                _LockEndValue = _Properties._Transpose._LockEndValue,
+                _InteractionInput = _Properties._Transpose.GetValue()
+            };
+            burstData._Volume = new ModulationComponent
+            {
+                _StartValue = _Properties._Volume._Start,
+                _EndValue = _Properties._Volume._End,
+                _InteractionAmount = _Properties._Volume._InteractionAmount,
+                _Shape = _Properties._Volume._InteractionShape,
+                _Noise = _Properties._Volume._Noise._Amount,
+                _LockNoise = _Properties._Volume._Noise._FreezeOnTrigger,
+                _Min = _Properties._Volume._Min,
+                _Max = _Properties._Volume._Max,
+                _LockStartValue = false,
+                _LockEndValue = _Properties._Volume._LockEndValue,
+                _InteractionInput = _Properties._Volume.GetValue() * _ContactSurfaceAttenuation
+            };
+            _EntityManager.SetComponentData(_EmitterEntity, burstData);
+
+            #endregion
             
-        entityData._BurstDuration = new ModulationComponent
-        {
-            _StartValue = _Parameters._BurstDuration._Default * _SamplesPerMS,
-            _InteractionAmount = _Parameters._BurstDuration._InteractionAmount * _SamplesPerMS,
-            _Shape = _Parameters._BurstDuration._InteractionShape,
-            _Noise = _Parameters._BurstDuration._Noise._Amount,
-            _LockNoise = _Parameters._BurstDuration._Noise._FreezeOnTrigger,
-            _Min = _Parameters._BurstDuration._Min * _SamplesPerMS,
-            _Max = _Parameters._BurstDuration._Max * _SamplesPerMS,
-            _LockStartValue = false,
-            _LockEndValue = false,
-            _InteractionInput = _Parameters._BurstDuration.GetValue()
-        };
-        entityData._Playhead = new ModulationComponent
-        {
-            _StartValue = _Parameters._Playhead._Start,
-            _EndValue = _Parameters._Playhead._End,
-            _InteractionAmount = _Parameters._Playhead._InteractionAmount,
-            _Shape = _Parameters._Playhead._InteractionShape,
-            _Noise = _Parameters._Playhead._Noise._Amount,
-            _LockNoise = _Parameters._Playhead._Noise._FreezeOnTrigger,
-            _Min = _Parameters._Playhead._Min,
-            _Max = _Parameters._Playhead._Max,
-            _LockStartValue = _Parameters._Playhead._LockStartValue,
-            _LockEndValue = false,
-            _InteractionInput = _Parameters._Playhead.GetValue()
-        };
-        entityData._Density = new ModulationComponent
-        {
-            _StartValue = _Parameters._Density._Start,
-            _EndValue = _Parameters._Density._End,
-            _InteractionAmount = _Parameters._Density._InteractionAmount,
-            _Shape = _Parameters._Density._InteractionShape,
-            _Noise = _Parameters._Density._Noise._Amount,
-            _LockNoise = _Parameters._Density._Noise._FreezeOnTrigger,
-            _Min = _Parameters._Density._Min,
-            _Max = _Parameters._Density._Max,
-            _LockStartValue = false,
-            _LockEndValue = false,
-            _InteractionInput = _Parameters._Density.GetValue()
-        };
-        entityData._GrainDuration = new ModulationComponent
-        {
-            _StartValue = _Parameters._GrainDuration._Start * _SamplesPerMS,
-            _EndValue = _Parameters._GrainDuration._End * _SamplesPerMS,
-            _InteractionAmount = _Parameters._GrainDuration._InteractionAmount * _SamplesPerMS,
-            _Shape = _Parameters._GrainDuration._InteractionShape,
-            _Noise = _Parameters._GrainDuration._Noise._Amount,
-            _LockNoise = _Parameters._GrainDuration._Noise._FreezeOnTrigger,
-            _Min = _Parameters._GrainDuration._Min * _SamplesPerMS,
-            _Max = _Parameters._GrainDuration._Max * _SamplesPerMS,
-            _LockStartValue = false,
-            _LockEndValue = false,
-            _InteractionInput = _Parameters._GrainDuration.GetValue()
-        };
-        entityData._Transpose = new ModulationComponent
-        {
-            _StartValue = _Parameters._Transpose._Start,
-            _EndValue = _Parameters._Transpose._End,
-            _InteractionAmount = _Parameters._Transpose._InteractionAmount,
-            _Shape = _Parameters._Transpose._InteractionShape,
-            _Noise = _Parameters._Transpose._Noise._Amount,
-            _LockNoise = _Parameters._Transpose._Noise._FreezeOnTrigger,
-            _Min = _Parameters._Transpose._Min,
-            _Max = _Parameters._Transpose._Max,
-            _LockStartValue = false,
-            _LockEndValue = _Parameters._Transpose._LockEndValue,
-            _InteractionInput = _Parameters._Transpose.GetValue()
-        };
-        entityData._Volume = new ModulationComponent
-        {
-            _StartValue = _Parameters._Volume._Start,
-            _EndValue = _Parameters._Volume._End,
-            _InteractionAmount = _Parameters._Volume._InteractionAmount,
-            _Shape = _Parameters._Volume._InteractionShape,
-            _Noise = _Parameters._Volume._Noise._Amount,
-            _LockNoise = _Parameters._Volume._Noise._FreezeOnTrigger,
-            _Min = _Parameters._Volume._Min,
-            _Max = _Parameters._Volume._Max,
-            _LockStartValue = false,
-            _LockEndValue = _Parameters._Volume._LockEndValue,
-            _InteractionInput = _Parameters._Volume.GetValue() * _ContactSurfaceAttenuation
-        };
-        _EntityManager.SetComponentData(_EmitterEntity, entityData);
+            UpdateDSPEffectsBuffer();
 
-        #endregion
-        
-        UpdateDSPEffectsBuffer();
-
-        // Burst emitters only need a single pass to generate grain data for its duration.
-        _IsPlaying = false;
+            // Burst emitters only need a single pass to generate grain data for its duration.
+            _IsPlaying = false;
+        }
     }
 }

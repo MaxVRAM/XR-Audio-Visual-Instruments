@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [System.Serializable]
-public class ContinuousProperties
+public class ContinuousProperties : InputProperties
 {
     public ContinuousPlayhead _Playhead;
     public ContinuousDensity _Density;
@@ -18,18 +18,17 @@ public class ContinuousAuthoring : EmitterAuthoring
     public override void Initialise()
     {
         _EmitterType = EmitterType.Continuous;
-    }
-
-    void Update()
-    {
-
+        _Properties._PropertyList.Add(_Properties._Playhead);
+        _Properties._PropertyList.Add(_Properties._Density);
+        _Properties._PropertyList.Add(_Properties._GrainDuration);
+        _Properties._PropertyList.Add(_Properties._Transpose);
+        _Properties._PropertyList.Add(_Properties._Volume);
     }
 
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
-        Debug.Log(name + "    is being converted to entity.");
         _EmitterEntity = entity;
-        _EmitterType = EmitterType.Continuous;
+        Debug.Log(name + "    is being converted to entity.");
         int index = GrainSynth.Instance.RegisterEmitter(entity);
 
         #region ADD EMITTER COMPONENT DATA
@@ -121,88 +120,95 @@ public class ContinuousAuthoring : EmitterAuthoring
 
     }
 
-    protected override void UpdateComponents()
+    public override void UpdateComponents()
     {
-        Debug.Log("Emitter volume input source: " + _Properties._Volume._InputSource.name);
-        Debug.Log("Emitter volume input value: " + _Properties._Volume._InputValue);
-        Debug.Log("Emitter volume input get value: " + _Properties._Volume.GetValue());
-        Debug.Log("");
+        Debug.Log(name + "     Trying to update components from virtual method.   Playing: " + _IsPlaying + "   InRadius: " + _InListenerRadius + "    Connected: " + _Connected + "    Initialised: " + _Initialised);
+        Debug.Log(name + "     EmitterEntity: " + _EmitterEntity.Index);
 
-        ContinuousComponent entityData = _EntityManager.GetComponentData<ContinuousComponent>(_EmitterEntity);
+        _Properties.Initialise();
 
-        #region UPDATE EMITTER COMPONENT DATA
-        entityData._IsPlaying = _IsPlaying;
-        entityData._AudioClipIndex = _ClipIndex;
-        entityData._SpeakerIndex = _SpeakerIndex;
-        entityData._PingPong = _PingPongGrainPlayheads;
-        entityData._LastSampleIndex = _LastSampleIndex;
-        entityData._DistanceAmplitude = _DistanceAmplitude;
-        entityData._OutputSampleRate = AudioSettings.outputSampleRate;
+        if (_IsPlaying && _InListenerRadius && _Connected && _Initialised)
+        {
+            Debug.Log(name + "     Emitter volume input source: " + _Properties._Volume._InputSource.name);
+            Debug.Log(name + "     Emitter volume input value: " + _Properties._Volume._InputValue);
+            Debug.Log(name + "     Emitter volume input get value: " + _Properties._Volume.GetValue());
 
-        entityData._Playhead = new ModulationComponent
-        {
-            _StartValue = _Properties._Playhead._Idle,
-            _InteractionAmount = _Properties._Playhead._InteractionAmount,
-            _Shape = _Properties._Playhead._InteractionShape,
-            _Noise = _Properties._Playhead._Noise._Amount,
-            _PerlinNoise = _Properties._Playhead._Noise._Perlin,
-            _PerlinValue = GeneratePerlinForParameter(0),
-            _Min = _Properties._Playhead._Min,
-            _Max = _Properties._Playhead._Max,
-            _InteractionInput = _Properties._Playhead.GetValue()
-        };
-        entityData._Density = new ModulationComponent
-        {
-            _StartValue = _Properties._Density._Idle,
-            _InteractionAmount = _Properties._Density._InteractionAmount,
-            _Shape = _Properties._Density._InteractionShape,
-            _Noise = _Properties._Density._Noise._Amount,
-            _PerlinNoise = _Properties._Density._Noise._Perlin,
-            _PerlinValue = GeneratePerlinForParameter(1),
-            _Min = _Properties._Density._Min,
-            _Max = _Properties._Density._Max,
-            _InteractionInput = _Properties._Density.GetValue()
-        };
-        entityData._Duration = new ModulationComponent
-        {
-            _StartValue = _Properties._GrainDuration._Idle * _SamplesPerMS,
-            _InteractionAmount = _Properties._GrainDuration._InteractionAmount * _SamplesPerMS,
-            _Shape = _Properties._GrainDuration._InteractionShape,
-            _Noise = _Properties._GrainDuration._Noise._Amount,
-            _PerlinNoise = _Properties._GrainDuration._Noise._Perlin,
-            _PerlinValue = GeneratePerlinForParameter(2),
-            _Min = _Properties._GrainDuration._Min * _SamplesPerMS,
-            _Max = _Properties._GrainDuration._Max * _SamplesPerMS,
-            _InteractionInput = _Properties._GrainDuration.GetValue()
-        };
-        entityData._Transpose = new ModulationComponent
-        {
-            _StartValue = _Properties._Transpose._Idle,
-            _InteractionAmount = _Properties._Transpose._InteractionAmount,
-            _Shape = _Properties._Transpose._InteractionShape,
-            _Noise = _Properties._Transpose._Noise._Amount,
-            _PerlinNoise = _Properties._Transpose._Noise._Perlin,
-            _PerlinValue = GeneratePerlinForParameter(3),
-            _Min = _Properties._Transpose._Min,
-            _Max = _Properties._Transpose._Max,
-            _InteractionInput = _Properties._Transpose.GetValue()
-        };
-        entityData._Volume = new ModulationComponent
-        {
-            _StartValue = _Properties._Volume._Idle,
-            _InteractionAmount = _Properties._Volume._InteractionAmount,
-            _Shape = _Properties._Volume._InteractionShape,
-            _Noise = _Properties._Volume._Noise._Amount,
-            _PerlinNoise = _Properties._Volume._Noise._Perlin,
-            _PerlinValue = GeneratePerlinForParameter(4),
-            _Min = _Properties._Volume._Min,
-            _Max = _Properties._Volume._Max,
-            _InteractionInput = _Properties._Volume.GetValue() * _ContactSurfaceAttenuation
-        };
-        _EntityManager.SetComponentData(_EmitterEntity, entityData);
+            ContinuousComponent continuousData = _EntityManager.GetComponentData<ContinuousComponent>(_EmitterEntity);
 
-        #endregion
+            #region UPDATE EMITTER COMPONENT DATA
+            continuousData._IsPlaying = _IsPlaying;
+            continuousData._AudioClipIndex = _ClipIndex;
+            continuousData._SpeakerIndex = _SpeakerIndex;
+            continuousData._PingPong = _PingPongGrainPlayheads;
+            continuousData._LastSampleIndex = _LastSampleIndex;
+            continuousData._DistanceAmplitude = _DistanceAmplitude;
+            continuousData._OutputSampleRate = AudioSettings.outputSampleRate;
 
-        UpdateDSPEffectsBuffer();
+            continuousData._Playhead = new ModulationComponent
+            {
+                _StartValue = _Properties._Playhead._Idle,
+                _InteractionAmount = _Properties._Playhead._InteractionAmount,
+                _Shape = _Properties._Playhead._InteractionShape,
+                _Noise = _Properties._Playhead._Noise._Amount,
+                _PerlinNoise = _Properties._Playhead._Noise._Perlin,
+                _PerlinValue = GeneratePerlinForParameter(0),
+                _Min = _Properties._Playhead._Min,
+                _Max = _Properties._Playhead._Max,
+                _InteractionInput = _Properties._Playhead.GetValue()
+            };
+            continuousData._Density = new ModulationComponent
+            {
+                _StartValue = _Properties._Density._Idle,
+                _InteractionAmount = _Properties._Density._InteractionAmount,
+                _Shape = _Properties._Density._InteractionShape,
+                _Noise = _Properties._Density._Noise._Amount,
+                _PerlinNoise = _Properties._Density._Noise._Perlin,
+                _PerlinValue = GeneratePerlinForParameter(1),
+                _Min = _Properties._Density._Min,
+                _Max = _Properties._Density._Max,
+                _InteractionInput = _Properties._Density.GetValue()
+            };
+            continuousData._Duration = new ModulationComponent
+            {
+                _StartValue = _Properties._GrainDuration._Idle * _SamplesPerMS,
+                _InteractionAmount = _Properties._GrainDuration._InteractionAmount * _SamplesPerMS,
+                _Shape = _Properties._GrainDuration._InteractionShape,
+                _Noise = _Properties._GrainDuration._Noise._Amount,
+                _PerlinNoise = _Properties._GrainDuration._Noise._Perlin,
+                _PerlinValue = GeneratePerlinForParameter(2),
+                _Min = _Properties._GrainDuration._Min * _SamplesPerMS,
+                _Max = _Properties._GrainDuration._Max * _SamplesPerMS,
+                _InteractionInput = _Properties._GrainDuration.GetValue()
+            };
+            continuousData._Transpose = new ModulationComponent
+            {
+                _StartValue = _Properties._Transpose._Idle,
+                _InteractionAmount = _Properties._Transpose._InteractionAmount,
+                _Shape = _Properties._Transpose._InteractionShape,
+                _Noise = _Properties._Transpose._Noise._Amount,
+                _PerlinNoise = _Properties._Transpose._Noise._Perlin,
+                _PerlinValue = GeneratePerlinForParameter(3),
+                _Min = _Properties._Transpose._Min,
+                _Max = _Properties._Transpose._Max,
+                _InteractionInput = _Properties._Transpose.GetValue()
+            };
+            continuousData._Volume = new ModulationComponent
+            {
+                _StartValue = _Properties._Volume._Idle,
+                _InteractionAmount = _Properties._Volume._InteractionAmount,
+                _Shape = _Properties._Volume._InteractionShape,
+                _Noise = _Properties._Volume._Noise._Amount,
+                _PerlinNoise = _Properties._Volume._Noise._Perlin,
+                _PerlinValue = GeneratePerlinForParameter(4),
+                _Min = _Properties._Volume._Min,
+                _Max = _Properties._Volume._Max,
+                _InteractionInput = _Properties._Volume.GetValue() * _ContactSurfaceAttenuation
+            };
+            _EntityManager.SetComponentData(_EmitterEntity, continuousData);
+
+            #endregion
+
+            UpdateDSPEffectsBuffer();
+        }
     }
 }

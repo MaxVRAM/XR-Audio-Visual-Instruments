@@ -77,10 +77,11 @@ public class ObjectSpawner : MonoBehaviour
             newObject.transform.localPosition = _SpawnSourceObject.transform.localPosition;
 
             // Set emitter properties if spawned GameObject is an emitter host
-            if (objectToSpawn.TryGetComponent(out HostAuthoring host))
+            HostAuthoring newHost = objectToSpawn.GetComponentInChildren<HostAuthoring>();
+            if (newHost)
             {
-                host.SetLocalObject(newObject);
-                host.SetRemoteObject(_SpawnSourceObject);
+                newHost.SetLocalObject(newObject);
+                newHost.SetRemoteObject(_SpawnSourceObject);
                 // Won't work without adding function on host to update it and its emitters during runtime
                 // if (_DedicatedSpeaker != null) host._DedicatedSpeaker = _DedicatedSpeaker;
             }
