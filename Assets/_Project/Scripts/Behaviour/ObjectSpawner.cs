@@ -33,7 +33,7 @@ public class ObjectSpawner : MonoBehaviour
 
     void Start()
     {
-        _Name = "Spawner | " + this.name;
+        _Name = "Spawner | " + name;
 
         if (_SpawnablePrefabs.Count == 0 && _PrefabToSpawn != null)
             _SpawnablePrefabs.Add(_PrefabToSpawn);

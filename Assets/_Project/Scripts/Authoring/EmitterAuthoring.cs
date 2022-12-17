@@ -99,7 +99,8 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (_IsPlaying) _EntityManager.AddComponent<PlayingTag>(_EmitterEntity);
         else _EntityManager.RemoveComponent<PlayingTag>(_EmitterEntity);
 
-        _EntityManager.SetComponentData(_EmitterEntity, new Translation { Value = transform.position });
+        if (_PingPongGrainPlayheads) _EntityManager.AddComponent<PingPongTag>(_EmitterEntity);
+        else _EntityManager.RemoveComponent<PingPongTag>(_EmitterEntity);
     }
 
     public virtual void UpdateComponents() { }
@@ -119,20 +120,10 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _DistanceAmplitude = AudioUtils.ListenerDistanceVolume(_AdjustedDistance) * speakerFactor;
     }
 
-
-    /// <summary>
-    //      Removes continuous emitters' start offset.
-    /// <summary>
-    public void ResetLastSampleIndex()
-    {
-        _LastSampleIndex = GrainSynth.Instance._CurrentDSPSample;
-    }
-
     public void NewCollision(Collision collision)
     {
         if (_EmitterType == EmitterType.Burst && _ContactEmitter)
             _IsPlaying = true;
-
         UpdateContactStatus(collision);
     }
 
@@ -156,11 +147,5 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         return Mathf.PerlinNoise(
             Time.time + _PerlinSeedArray[parameterIndex],
             (Time.time + _PerlinSeedArray[parameterIndex]) * 0.5f);
-    }
-
-    protected void OnDrawGizmos()
-    {
-        Gizmos.color = _InListenerRadius ? Color.yellow : Color.blue;
-        Gizmos.DrawSphere(transform.position, .1f);
     }
 }

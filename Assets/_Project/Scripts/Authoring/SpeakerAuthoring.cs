@@ -64,8 +64,10 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public bool DedicatedToHost { get { return _StaticallyPairedEmitters.Count > 0; } }
     public List<GameObject> _StaticallyPairedEmitters = new List<GameObject>();
 
+    [SerializeField]
     private bool _IsActive = false;
     public bool _DebugLog = false;
+    [SerializeField]
     private bool _Initialized = false;
 
     #endregion
@@ -132,13 +134,15 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (_DebugLog)
             ReportGrainsDebug("");
 
-        //---   Pool playback data if it has reached the end of its playhead
+        //---   Pool playback finished playback data for re-use.
         for (int i = 0; i < _GrainDataArray.Length; i++)
+        {
             if (!_GrainDataArray[i]._IsPlaying && _GrainDataArray[i]._PlayheadIndex >= _GrainDataArray[i]._SizeInSamples && _GrainDataArray[i]._Pooled == false)
             {
                 _GrainDataArray[i]._Pooled = true;
                 _PooledGrainCount++;
             }
+        }
 
         #region ---   DYNAMIC EMITTER HOST ATTACHMENT
         if (!DedicatedToHost)
@@ -146,16 +150,17 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             transform.position = _EntityManager.GetComponentData<Translation>(_SpeakerEntity).Value;
             _SpeakerComponent = _EntityManager.GetComponentData<SpeakerComponent>(_SpeakerEntity);
             bool currentlyActive = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._State == PooledState.Active;
-
-            //---   IF PREVIOUSLY CONNECTED AND NOW DISCONNECTED
+            //---   Reset playback grain data pool when the speaker disconnects
             if (_IsActive && !currentlyActive)
+            {
+                Debug.Log(name + "       resetting data pool after disconnecting!");
                 for (int i = 0; i < _GrainDataArray.Length; i++)
                 {
                     _GrainDataArray[i]._Pooled = true;
                     _GrainDataArray[i]._IsPlaying = false;
                 }
                 _PooledGrainCount = _GrainDataArray.Length;
-
+            }
             //---   SET MESH VISIBILITY AND VOLUME BASED ON CONNECTION TO EMITTER
             _TargetVolume = currentlyActive ? 1 : 0;
             _AudioSource.volume = Mathf.Lerp(_AudioSource.volume, _TargetVolume, Time.deltaTime * _VolumeSmoothing);
@@ -174,7 +179,9 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public GrainData GetGrainDataFromPool()
     {
         if (!_Initialized)
-            return null;
+        {
+            return null;            
+        }
         // If pooled grains exist then find the first one
         if (_PooledGrainCount > 0)
             for (int i = 0; i < _GrainDataArray.Length; i++)
@@ -186,12 +193,10 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
                     return _GrainDataArray[i];
                 }
             }
-        else
-            return null;
         return null;
     }
 
-    //---   ADDS GRAIN PLAYBACK DATA BACK TO THE POOL  
+    //---   (FOR VISUALISATION?) ADDS GRAIN PLAYBACK DATA BACK TO THE POOL  
     public void AddGrainPlaybackDataToPool(GrainData playbackData)
     {
         if (!_Initialized)
@@ -230,6 +235,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     // Best latency - 11.60998
 
     int _CurrentDSPSample;
+    
     void OnAudioFilterRead(float[] data, int channels)
     {
         if (!_Initialized || _PooledGrainCount == _GrainPlaybackDataToPool)

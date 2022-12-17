@@ -50,9 +50,9 @@ public class AudioUtils
         float normalisedDistance = Mathf.Clamp(distance / maxDistance, 0f, 1f);
         return Mathf.Clamp(Mathf.Pow(500, -0.5f * normalisedDistance), 0f, 1f);
     }
-    public static float ListenerDistanceVolume(float distanceRatio)
+    public static float ListenerDistanceVolume(float normalisedDistance)
     {
-        float normalisedDistance = Mathf.Clamp(distanceRatio, 0f, 1f);
+        normalisedDistance = Mathf.Clamp(normalisedDistance, 0f, 1f);
         return Mathf.Clamp(Mathf.Pow(500, -0.5f * normalisedDistance), 0f, 1f);
     }
 }

@@ -145,6 +145,7 @@ public class BurstAuthoring : EmitterAuthoring
 
             #region UPDATE EMITTER COMPONENT DATA
             burstData._IsPlaying = true;
+            burstData._Connected = _Connected;
             burstData._AudioClipIndex = _ClipIndex;
             burstData._SpeakerIndex = _SpeakerIndex;
             burstData._PingPong = _PingPongGrainPlayheads;

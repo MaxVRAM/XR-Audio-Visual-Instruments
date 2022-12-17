@@ -118,11 +118,15 @@ public class ContinuousAuthoring : EmitterAuthoring
             ContinuousComponent continuousData = _EntityManager.GetComponentData<ContinuousComponent>(_EmitterEntity);
 
             #region UPDATE EMITTER COMPONENT DATA
+            if (_SpeakerIndex != continuousData._SpeakerIndex)
+                continuousData._LastSampleIndex = GrainSynth.Instance._CurrentDSPSample;
+            else _LastSampleIndex = continuousData._LastSampleIndex;
             continuousData._IsPlaying = _IsPlaying;
+            continuousData._Connected = _Connected;
             continuousData._AudioClipIndex = _ClipIndex;
+            continuousData._LastSampleIndex = _LastSampleIndex;
             continuousData._SpeakerIndex = _SpeakerIndex;
             continuousData._PingPong = _PingPongGrainPlayheads;
-            continuousData._LastSampleIndex = _LastSampleIndex;
             continuousData._DistanceAmplitude = _DistanceAmplitude;
             continuousData._OutputSampleRate = AudioSettings.outputSampleRate;
 

@@ -33,6 +33,7 @@ public class ModulationSource : MonoBehaviour
     public float _OutputValue = 0;
     protected float _PreviousValue = 0;
     protected bool _HoldTempValue = false;
+    [SerializeField]
     protected bool _Colliding = false;
     protected PhysicMaterial _ColliderMaterial;
 

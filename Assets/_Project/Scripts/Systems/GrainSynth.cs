@@ -40,7 +40,6 @@ public class GrainSynth :  MonoBehaviour
     public float _AttachmentRadius = 1;
     [SerializeField]
     int _GrainProcessorCount = 0;
-    public ModulationSource _BlankInput;
 
     [Header("Speakers")]
     public SpeakerAuthoring _SpeakerPrefab;
@@ -82,8 +81,6 @@ public class GrainSynth :  MonoBehaviour
     {
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _SampleRate = AudioSettings.outputSampleRate;
-
-        _BlankInput = GetComponentInChildren<ModulationSource>();
 
         for (int i = 0; i < _MaxDynamicSpeakers; i++)
             CreateSpeaker(transform.position);
@@ -160,7 +157,7 @@ public class GrainSynth :  MonoBehaviour
     {
         // Update DSP sample
         DSPTimerComponent dspTimer = _EntityManager.GetComponentData<DSPTimerComponent>(_DSPTimerEntity);
-        _EntityManager.SetComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample + (int)(Time.deltaTime * AudioSettings.outputSampleRate), _GrainQueueDuration = _GrainQueueDurationInSamples });
+        _EntityManager.SetComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample + (int)(Time.deltaTime * _SampleRate), _GrainQueueDuration = _GrainQueueDurationInSamples });
 
         NativeArray<Entity> currentGrainProcessors = _GrainQuery.ToEntityArray(Allocator.TempJob);
 
@@ -172,6 +169,7 @@ public class GrainSynth :  MonoBehaviour
             _AttachmentRadius = _AttachmentRadius
         });
 
+
         _GrainProcessorCount = (int)Mathf.Lerp(_GrainProcessorCount, currentGrainProcessors.Length, Time.deltaTime * 10f);
 
         //---- Loop through all grain processors and fill its speaker's audio buffer
@@ -179,12 +177,20 @@ public class GrainSynth :  MonoBehaviour
         {
             GrainProcessorComponent grainProcessor = _EntityManager.GetComponentData<GrainProcessorComponent>(currentGrainProcessors[i]);
 
+            //----  Remove grain processor if start time is one grain queue length in the past
+            if (grainProcessor._StartSampleIndex < _CurrentDSPSample - _GrainQueueDurationInSamples)
+            {
+                _EntityManager.DestroyEntity(currentGrainProcessors[i]);
+                Debug.Log("WARNING: Destroying grain processor with DSP start time   (" + (grainProcessor._StartSampleIndex - _CurrentDSPSample) + ")   samples in the past!");
+                continue;
+            }
+
             if (grainProcessor._SamplePopulated)
             {
                 GrainData playbackData = _Speakers[grainProcessor._SpeakerIndex].GetGrainDataFromPool();
 
                 if (playbackData == null)
-                    break;
+                    continue;
 
                 NativeArray<float> processedSamples = _EntityManager.GetBuffer<GrainSampleBufferElement>(currentGrainProcessors[i]).Reinterpret<float>().ToNativeArray(Allocator.Temp);
 
@@ -200,7 +206,7 @@ public class GrainSynth :  MonoBehaviour
                 _EntityManager.DestroyEntity(currentGrainProcessors[i]);
                 _Speakers[grainProcessor._SpeakerIndex].AddGrainPlaybackDataToPool(playbackData);
             }
-        }       
+        }
         currentGrainProcessors.Dispose();
     }
 

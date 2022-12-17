@@ -58,22 +58,16 @@ public class ContinuousInput : ModulationSource
                     value = _Objects._LocalObject.transform.localScale.magnitude;
                     break;
                 case ContinuousProperty.Roll:
-                    if (_Colliding)
-                        value = rb.angularVelocity.magnitude;
-                    else
-                        value = 0;
+                    if (_Colliding) value = rb.angularVelocity.magnitude;
+                    else value = 0;
                     break;
                 case ContinuousProperty.RollTimesMass:
-                    if (_Colliding)
-                        value = rb.angularVelocity.magnitude * (rb.mass / 2 + 0.5f);
-                    else
-                        value = 0;
+                    if (_Colliding) value = rb.angularVelocity.magnitude * (rb.mass / 2 + 0.5f);
+                    else value = 0;
                     break;
                 case ContinuousProperty.Slide:
-                    if (_Colliding)
-                        value = rb.velocity.magnitude / rb.angularVelocity.magnitude;
-                    else
-                        value = 0;
+                    if (_Colliding) value = rb.velocity.magnitude / rb.angularVelocity.magnitude;
+                    else value = 0;
                     break;
                 default:
                     break;

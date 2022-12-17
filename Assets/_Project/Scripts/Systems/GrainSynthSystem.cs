@@ -71,9 +71,9 @@ public class GrainSynthSystem : SystemBase
 
         JobHandle emitGrains = Entities.WithNativeDisableParallelForRestriction(randomArray).ForEach
         (
-            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref ContinuousComponent emitter, ref InListenerRadiusTag earshot, ref PlayingTag playing) =>
+            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref ContinuousComponent emitter, ref InListenerRadiusTag listenerRadius, ref PlayingTag playing) =>
             {
-                if (emitter._SpeakerIndex != int.MaxValue)
+                if (emitter._Connected)
                 {
                     // Max grains to stop it getting stuck in a while loop
                     int maxGrains = 50;
@@ -194,13 +194,13 @@ public class GrainSynthSystem : SystemBase
         #region BURST GRAINS
         JobHandle emitBurst = Entities.WithNativeDisableParallelForRestriction(randomArray).ForEach
         (
-            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref BurstComponent burst, ref InListenerRadiusTag earshot, ref PlayingTag playing) =>
+            (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref BurstComponent burst, ref InListenerRadiusTag listenerRadius, ref PlayingTag playing) =>
             {
-                if (burst._SpeakerIndex != int.MaxValue)
+                if (burst._Connected)
                 {
                     int grainsCreated = 0;
 
-                    // TODO - CHECK IF THIS NEEDS TO HAVE GRAIN QUEUE DURATION ADDED, POSSIBLE CAUSE OF UNESSESSARY LATENCY ON BURST TRIGGER
+                    // TODO - CHECK IF THIS NEEDS TO HAVE GRAIN QUEUE DURATION ADDED, POSSIBLE CAUSE OF UNNECESSARY LATENCY ON BURST TRIGGER
                     int currentDSPTime = dspTimer._CurrentSampleIndex + dspTimer._GrainQueueDuration;
                     int dspTailLength = 0;
                     var randomGen = randomArray[nativeThreadIndex];
