@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [System.Serializable]
-public class BurstParameters : InputProperties
+public class BurstParameters
 {
     public BurstPlayhead _Playhead;
     public BurstDuration _BurstDuration;
@@ -18,23 +18,17 @@ public class BurstAuthoring : EmitterAuthoring
 
     public override void Initialise()
     {
+        _IsPlaying = false;
         _EmitterType = EmitterType.Burst;
-        _Properties._PropertyList.Add(_Properties._Playhead);
-        _Properties._PropertyList.Add(_Properties._BurstDuration);
-        _Properties._PropertyList.Add(_Properties._Density);
-        _Properties._PropertyList.Add(_Properties._GrainDuration);
-        _Properties._PropertyList.Add(_Properties._Transpose);
-        _Properties._PropertyList.Add(_Properties._Volume);
     }
 
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         _EmitterEntity = entity;
-
-        _IsPlaying = false;
         int index = GrainSynth.Instance.RegisterEmitter(entity);
 
         #region ADD EMITTER COMPONENT DATA
+
         dstManager.AddComponentData(_EmitterEntity, new BurstComponent
         {
             _IsPlaying = false,
@@ -145,7 +139,7 @@ public class BurstAuthoring : EmitterAuthoring
     {
         if (_IsPlaying && _InListenerRadius && _Connected)
         {
-            _Properties.Initialise();
+            // _Properties.Initialise();
 
             BurstComponent burstData = _EntityManager.GetComponentData<BurstComponent>(_EmitterEntity);
 

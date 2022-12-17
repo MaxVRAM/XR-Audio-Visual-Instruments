@@ -5,23 +5,6 @@ using Unity.Transforms;
 using Random = UnityEngine.Random;
 
 
-public class InputProperties
-{
-    public List<EmitterProperty> _PropertyList;
-
-    public void Initialise()
-    {
-        if (_PropertyList != null && _PropertyList.Count > 0)
-            foreach (EmitterProperty property in _PropertyList)
-                if (property._InputSource == null)
-                {
-                    Debug.Log("     FOUND BLANK PROPERTY:   " + property.ToString());
-                    property._InputSource = new BlankInput();
-                }
-    }
-}
-
-
 [DisallowMultipleComponent]
 [RequiresEntityConversion]
 public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
@@ -84,6 +67,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     void Awake()
     {
+        Initialise();
         GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
     }
 
@@ -91,7 +75,6 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     private void OnDestroy()
     {
-        Debug.Log(name + "     IS BEING DESTROYED!");
         DestroyEntity();
     }
 
@@ -99,8 +82,6 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     {
         if (World.All.Count != 0 && _EmitterEntity != null)
             _EntityManager.DestroyEntity(_EmitterEntity);
-            
-        Debug.Log(name + "     ENTITY IS DESTROYED!");
     }
 
     public virtual void Initialise() {}

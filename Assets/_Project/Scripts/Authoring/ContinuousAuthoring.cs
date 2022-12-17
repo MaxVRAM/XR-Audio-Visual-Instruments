@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [System.Serializable]
-public class ContinuousProperties : InputProperties
+public class ContinuousProperties
 {
     public ContinuousPlayhead _Playhead;
     public ContinuousDensity _Density;
@@ -18,17 +18,11 @@ public class ContinuousAuthoring : EmitterAuthoring
     public override void Initialise()
     {
         _EmitterType = EmitterType.Continuous;
-        _Properties._PropertyList.Add(_Properties._Playhead);
-        _Properties._PropertyList.Add(_Properties._Density);
-        _Properties._PropertyList.Add(_Properties._GrainDuration);
-        _Properties._PropertyList.Add(_Properties._Transpose);
-        _Properties._PropertyList.Add(_Properties._Volume);
     }
 
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         _EmitterEntity = entity;
-        Debug.Log(name + "    is being converted to entity.");
         int index = GrainSynth.Instance.RegisterEmitter(entity);
 
         #region ADD EMITTER COMPONENT DATA
@@ -115,24 +109,12 @@ public class ContinuousAuthoring : EmitterAuthoring
         #endregion
 
         _Initialised = true;
-
-        Debug.Log(name + "    end of entity creation with initialised status:   " + _Initialised);
-
     }
 
     public override void UpdateComponents()
     {
-        Debug.Log(name + "     Trying to update components from virtual method.   Playing: " + _IsPlaying + "   InRadius: " + _InListenerRadius + "    Connected: " + _Connected + "    Initialised: " + _Initialised);
-        Debug.Log(name + "     EmitterEntity: " + _EmitterEntity.Index);
-
-        _Properties.Initialise();
-
         if (_IsPlaying && _InListenerRadius && _Connected && _Initialised)
         {
-            Debug.Log(name + "     Emitter volume input source: " + _Properties._Volume._InputSource.name);
-            Debug.Log(name + "     Emitter volume input value: " + _Properties._Volume._InputValue);
-            Debug.Log(name + "     Emitter volume input get value: " + _Properties._Volume.GetValue());
-
             ContinuousComponent continuousData = _EntityManager.GetComponentData<ContinuousComponent>(_EmitterEntity);
 
             #region UPDATE EMITTER COMPONENT DATA

@@ -22,14 +22,13 @@ public class BurstNoiseInput
 [System.Serializable]
 public class EmitterProperty
 {
-    public InputValueClass _InputSource;
+    public ModulationSource _InputSource;
     public float _InputValue = 0f;
-    
+
     public float GetValue()
     {
         if (_InputSource != null)
             _InputValue = _InputSource.GetValue();
-        
         return _InputValue;
     }
 }

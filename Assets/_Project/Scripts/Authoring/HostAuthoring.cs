@@ -11,6 +11,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     protected Entity _HostEntity;
     protected EntityManager _EntityManager;
     protected Transform _HeadTransform;
+    protected BlankModulation _BlankInputComponent;
 
     [Header("Speaker assignment")]
     [Tooltip("If a dedicated speaker is set, the runtime attachment system will be disabled for this host.")]
@@ -28,7 +29,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public EmitterAuthoring[] _HostedEmitters;
     [Tooltip("Finds all sibling modulation input components to manage.")]
-    public InputValueClass[] _InputValues;
+    public ModulationSource[] _InputSources;
 
     [Header("Runtime dynamics")]
     public bool _IsColliding = false;
@@ -61,6 +62,9 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     void Awake()
     {
         GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
+        // Set up a blank input component for emitter properties that don't have one attached
+        if (!TryGetComponent(out _BlankInputComponent))
+            _BlankInputComponent = gameObject.AddComponent(typeof(BlankModulation)) as BlankModulation;
     }
     
     void Start()
@@ -69,10 +73,10 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _HeadTransform = FindObjectOfType<Camera>().transform;
 
         _HostedEmitters = gameObject.transform.parent.GetComponentsInChildren<EmitterAuthoring>();
-        _InputValues = gameObject.transform.parent.GetComponentsInChildren<InputValueClass>();
+        _InputSources = gameObject.transform.parent.GetComponentsInChildren<ModulationSource>();
 
-        if (_LocalObject == null) SetLocalObject(gameObject.transform.parent.gameObject);
-        if (_RemoteObject != null) SetRemoteObject(_RemoteObject);
+        if (_LocalObject == null) SetLocalInputSource(gameObject.transform.parent.gameObject);
+        if (_RemoteObject != null) SetRemoteInputSource(_RemoteObject);
         if (_DedicatedSpeaker != null)
         {
             _DedicatedSpeaker.AddEmitterLink(gameObject);                
@@ -146,25 +150,27 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     
     public SpeakerAuthoring DynamicSpeaker { get { return GrainSynth.Instance._Speakers[_SpeakerIndex]; } }
 
-    public void SetLocalObject(GameObject go)
+    public void SetLocalInputSource(GameObject go)
     {
         _LocalObject = go;
-        foreach (InputValueClass inputValue in _InputValues)
-            inputValue._Inputs.SetLocalObject(_LocalObject);
+        foreach (ModulationSource source in _InputSources)
+            if (!(source is BlankModulation))
+                source._Objects.SetLocalObject(_LocalObject);
     }
 
-    public void SetRemoteObject(GameObject go)
+    public void SetRemoteInputSource(GameObject go)
     {
         _RemoteObject = go;
-        foreach (InputValueClass inputValue in _InputValues)
-            inputValue._Inputs.SetRemoteObject(_RemoteObject);
+        foreach (ModulationSource source in _InputSources)
+            if (!(source is BlankModulation))
+                source._Objects.SetRemoteObject(_RemoteObject);
     }
     
     private void OnCollisionEnter(Collision collision)
     {
         _CollidingObjects.Add(collision.collider.gameObject);
 
-        foreach (InputValueClass interaction in _InputValues)
+        foreach (ModulationSource interaction in _InputSources)
             interaction.SetInputCollision(true, collision.collider.material);
 
         foreach (EmitterAuthoring emitter in _HostedEmitters)
@@ -174,7 +180,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     private void OnCollisionStay(Collision collision)
     {
         _IsColliding = true;
-        foreach (InputValueClass inputValue in _InputValues)
+        foreach (ModulationSource inputValue in _InputSources)
             inputValue.ProcessCollisionValue(collision);
 
         foreach (EmitterAuthoring emitter in _HostedEmitters)
@@ -185,7 +191,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     {
         _CollidingObjects.Remove(collision.collider.gameObject);
 
-        foreach (InputValueClass inputValue in _InputValues)
+        foreach (ModulationSource inputValue in _InputSources)
             inputValue.SetInputCollision(false, collision.collider.material);
 
         if (_CollidingObjects.Count == 0)

@@ -8,9 +8,9 @@ using UnityEngine;
 //     Provides an input value to use on a Grain Emitter, based on a physical interaction from the source rigid body.
 /// <summary>
 [System.Serializable]
-public class InputValueRelative : InputValueClass
+public class RelativeInput : ModulationSource
 {
-    public enum InputRelativeType
+    public enum RelativeProperty
     {
         DistanceX,
         DistanceY,
@@ -26,7 +26,7 @@ public class InputValueRelative : InputValueClass
         TangentialAccelerationAbsolute
     }
 
-    public InputRelativeType _InputProperty;
+    public RelativeProperty _InputProperty;
 
     [Range(0f, 1f)]
     public float _Smoothing = 0.2f;
@@ -35,47 +35,47 @@ public class InputValueRelative : InputValueClass
     {
         float currentValue = _PreviousValue;
 
-        if (_Inputs._LocalRigidbody != null && _Inputs._RemoteRigidbody != null)
+        if (_Objects._LocalRigidbody != null && _Objects._RemoteRigidbody != null)
         {
             switch (_InputProperty)
             {
-                case InputRelativeType.DistanceX:
+                case RelativeProperty.DistanceX:
                     currentValue = Mathf.Abs(RelativePosition().x);
                     break;
-                case InputRelativeType.DistanceY:
+                case RelativeProperty.DistanceY:
                     currentValue = Mathf.Abs(RelativePosition().y);
                     break;
-                case InputRelativeType.DistanceZ:
+                case RelativeProperty.DistanceZ:
                     currentValue = Mathf.Abs(RelativePosition().z);
                     break;
-                case InputRelativeType.Radius:
+                case RelativeProperty.Radius:
                     currentValue = Mathf.Abs(RelativePosition().magnitude);
                     break;
-                case InputRelativeType.PolarPos:
+                case RelativeProperty.PolarPos:
                     currentValue = CartToSpherical(RelativePosition()).x;
                     break;
-                case InputRelativeType.AzimuthPos:
+                case RelativeProperty.AzimuthPos:
                     currentValue = CartToSpherical(RelativePosition()).y;
                     break;
-                case InputRelativeType.LinearSpeed:
+                case RelativeProperty.LinearSpeed:
                     currentValue = Mathf.Abs(RelativeVelocity().magnitude);
                     break;
-                case InputRelativeType.LinearAccelerationAbsolute:
+                case RelativeProperty.LinearAccelerationAbsolute:
                     currentValue = Mathf.Abs((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime);
                     _PreviousValue = currentValue;
                     break;
-                case InputRelativeType.LinearAcceleration:
+                case RelativeProperty.LinearAcceleration:
                     currentValue = Mathf.Max((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime, 0f);
                     _PreviousValue = currentValue;
                     break;
-                case InputRelativeType.LinearDeceleration:
+                case RelativeProperty.LinearDeceleration:
                     currentValue = Mathf.Abs(Mathf.Min((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime, 0f));
                     _PreviousValue = currentValue;
                     break;
-                case InputRelativeType.TangentialSpeed:
+                case RelativeProperty.TangentialSpeed:
                     currentValue = CartToSpherical(RelativeVelocity()).magnitude;
                     break;
-                case InputRelativeType.TangentialAccelerationAbsolute:
+                case RelativeProperty.TangentialAccelerationAbsolute:
                     currentValue = Mathf.Abs((CartToSpherical(RelativeVelocity()).magnitude - _PreviousValue) / Time.deltaTime);
                     _PreviousValue = currentValue;
                     break;
@@ -94,11 +94,11 @@ public class InputValueRelative : InputValueClass
 
     public Vector3 RelativePosition()
     {
-        return _Inputs._LocalObject.transform.position - _Inputs._RemoteObject.transform.position;
+        return _Objects._LocalObject.transform.position - _Objects._RemoteObject.transform.position;
     }
     public Vector3 RelativeVelocity()
     {
-        return _Inputs._LocalRigidbody.velocity - _Inputs._RemoteRigidbody.velocity;
+        return _Objects._LocalRigidbody.velocity - _Objects._RemoteRigidbody.velocity;
     }
 
     // TODO Add to global static utility

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class InputValueForce : MonoBehaviour
+public class ForceInput : MonoBehaviour
 {
     private const float _SmoothToZeroRate = 8f;
     public float _DistanceFromForceSource;
@@ -10,8 +10,8 @@ public class InputValueForce : MonoBehaviour
     public Vector3 _ForceDirection;
     bool _InForceVolume = false;
 
-    public InputValueParameter _InteractionParam_DistFromSource;
-    public InputValueParameter _InteractionParam_InVolume;
+    public ContinuousInput _InteractionParam_DistFromSource;
+    public ContinuousInput _InteractionParam_InVolume;
 
     Rigidbody _RigidBody;
 

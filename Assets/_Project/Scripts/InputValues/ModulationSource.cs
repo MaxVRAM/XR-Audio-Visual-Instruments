@@ -25,9 +25,9 @@ public class InputObjects
     }
 }
 
-public class InputValueClass : MonoBehaviour
+public class ModulationSource : MonoBehaviour
 {
-    public InputObjects _Inputs;
+    public InputObjects _Objects;
     public float _InputMin = 0f;
     public float _InputMax = 1f;
     public float _OutputValue = 0;
@@ -72,7 +72,7 @@ public class InputValueClass : MonoBehaviour
     }
 }
 
-public class BlankInput : InputValueClass
+public class BlankModulation : ModulationSource
 {
 
 }
