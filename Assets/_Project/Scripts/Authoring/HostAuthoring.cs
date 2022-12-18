@@ -76,7 +76,10 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _HostedEmitters = gameObject.transform.parent.GetComponentsInChildren<EmitterAuthoring>();
         _ModulationSources = gameObject.transform.parent.GetComponentsInChildren<ModulationSource>();
 
-        if (_LocalObject == null) SetLocalInputSource(gameObject.transform.parent.gameObject);
+        if (_LocalObject == null)
+            _LocalObject = gameObject.transform.parent.gameObject;
+        SetLocalInputSource(_LocalObject);
+
         if (_RemoteObject != null) SetRemoteInputSource(_RemoteObject);
         if (_DedicatedSpeaker != null)
         {

@@ -153,7 +153,6 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             //---   Reset playback grain data pool when the speaker disconnects
             if (_IsActive && !currentlyActive)
             {
-                Debug.Log(name + "       resetting data pool after disconnecting!");
                 for (int i = 0; i < _GrainDataArray.Length; i++)
                 {
                     _GrainDataArray[i]._Pooled = true;

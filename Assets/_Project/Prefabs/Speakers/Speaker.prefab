@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 4513045899119229682}
   - component: {fileID: 1731420856360394368}
   m_Layer: 0
-  m_Name: Grain Speaker
+  m_Name: Speaker
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -53,7 +53,9 @@ MonoBehaviour:
   _PooledGrainCount: 0
   _Registered: 0
   _StaticallyPairedEmitters: []
+  _IsActive: 0
   _DebugLog: 0
+  _Initialized: 0
 --- !u!82 &4563112762925737388
 AudioSource:
   m_ObjectHideFlags: 0
@@ -200,13 +202,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enableSpatialization: 1
-  gain: 0
+  gain: 0.5
   useInvSqr: 1
   near: 0.2
   far: 200
   volumetricRadius: 0
   reverbSend: 0
-  enableRfl: 0
+  enableRfl: 1
 --- !u!114 &2519325204652697372
 MonoBehaviour:
   m_ObjectHideFlags: 0

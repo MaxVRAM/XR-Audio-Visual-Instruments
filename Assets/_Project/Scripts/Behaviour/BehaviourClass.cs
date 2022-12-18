@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class BehaviourClass : MonoBehaviour
 {
-    public InputObjects _Objects;
+    public List<GameObject> _Sliders;
 
     void Start()
     {
@@ -14,5 +14,10 @@ public class BehaviourClass : MonoBehaviour
     void Update()
     {
         
+    }
+
+    public void AddSlider(GameObject go)
+    {
+        _Sliders.Add(go);
     }
 }

@@ -36,14 +36,16 @@ public class GrainSynth :  MonoBehaviour
 
 
     [Header("Emitters")]
-    public float _ListenerRadius = 3;
+    public float _ListenerRadius = 10;
     public float _AttachmentRadius = 1;
     [SerializeField]
-    int _GrainProcessorCount = 0;
+    protected int _GrainProcessorCount = 0;
+    [SerializeField]
+    protected int _UnplayedProcessorsDestroyed = 0;
 
     [Header("Speakers")]
     public SpeakerAuthoring _SpeakerPrefab;
-    public int _MaxDynamicSpeakers = 5;
+    public int _MaxDynamicSpeakers = 50;
     public List<SpeakerAuthoring> _Speakers = new List<SpeakerAuthoring>();
 
     // TODO: Implement system to reduce dynamic speakers if additional dedicated speakers are spawned at runtime.
@@ -181,7 +183,7 @@ public class GrainSynth :  MonoBehaviour
             if (grainProcessor._StartSampleIndex < _CurrentDSPSample - _GrainQueueDurationInSamples)
             {
                 _EntityManager.DestroyEntity(currentGrainProcessors[i]);
-                Debug.Log("WARNING: Destroying grain processor with DSP start time   (" + (grainProcessor._StartSampleIndex - _CurrentDSPSample) + ")   samples in the past!");
+                _UnplayedProcessorsDestroyed ++;
                 continue;
             }
 

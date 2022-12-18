@@ -12,8 +12,8 @@ public class ObjectSpawner : MonoBehaviour
     [Tooltip("Force spawned emitters to use this speaker. Leave null to use dynamic allocation.")]
     public SpeakerAuthoring _DedicatedSpeaker;
     [Header("Object Configuration")]
-    [Tooltip("Object to spawn the prefabs from.")]
-    public GameObject _SpawnSourceObject;
+    [Tooltip("Object providing the spawn location and controller behaviour.")]
+    public GameObject _ControllerObject;
     [Tooltip("Currently selected prefab to spawn.")]
     public GameObject _PrefabToSpawn;
     public List<GameObject> _SpawnablePrefabs;
@@ -21,12 +21,17 @@ public class ObjectSpawner : MonoBehaviour
     public List<GameObject> _ActiveObjects = new List<GameObject>();
     [Header("Spawn Configuration")]
     [Range(1, 200)]
-    public int _MaximumSpawnables = 1;
+    public int _MaxSpawnables = 1;
     public bool _AutoSpawn = true;
     public bool _AutoRemove = true;
     [Range(0f, 2f)]
     public float _SpawnFrequency = 1f;
-    public float _TimeSinceSpawn = 0;
+    [SerializeField]
+    protected float _TimeSinceSpawn = 0;
+    [SerializeField]
+    protected int _MaxSpawnsPerFrame;
+    [Header("Object Behaviour")]
+    public BehaviourClass _BehaviourPrefab;
     [Range(0f, 3f)]
     public float _SpawnRadius = 0.5f;
     protected string _Name;
@@ -49,19 +54,19 @@ public class ObjectSpawner : MonoBehaviour
     {
         _TimeSinceSpawn += Time.deltaTime;
 
-        if (_SpawnSourceObject != null && _PrefabToSpawn != null && _ActiveObjects.Count != _MaximumSpawnables)
+        if (_ControllerObject != null && _PrefabToSpawn != null && _ActiveObjects.Count != _MaxSpawnables && _TimeSinceSpawn > _SpawnFrequency)
         {
-            int maxSpawnCount = GetSpawnNumber(_SpawnFrequency, ref _TimeSinceSpawn);
-            if (_ActiveObjects.Count < _MaximumSpawnables && _AutoSpawn)
-                SpawnObject(maxSpawnCount);
-            if (_ActiveObjects.Count > _MaximumSpawnables && _AutoRemove)
-                RemoveObject(maxSpawnCount);
+            _MaxSpawnsPerFrame = GetSpawnNumber(_SpawnFrequency, ref _TimeSinceSpawn);
+            if (_ActiveObjects.Count < _MaxSpawnables && _AutoSpawn)
+                SpawnObject(_MaxSpawnsPerFrame);
+            if (_ActiveObjects.Count > _MaxSpawnables && _AutoRemove)
+                RemoveObject(_MaxSpawnsPerFrame);
         }
     }
 
     public void SpawnObject(int maxToSpawn)
     {
-        while (_ActiveObjects.Count < _MaximumSpawnables && maxToSpawn > 0)
+        while (_ActiveObjects.Count < _MaxSpawnables && maxToSpawn > 0)
         {
             GameObject objectToSpawn;
 
@@ -70,31 +75,31 @@ public class ObjectSpawner : MonoBehaviour
             else objectToSpawn = _PrefabToSpawn;
 
             GameObject newObject = Instantiate(objectToSpawn,
-                _SpawnSourceObject.transform.position,
+                _ControllerObject.transform.position,
                 Quaternion.identity, gameObject.transform);
             newObject.name = newObject.name + " (" + _ActiveObjects.Count + ")";
-            Debug.Log("Spawned object   " + newObject.name + "   at pos: " + _SpawnSourceObject.transform.position);
-            newObject.transform.localPosition = _SpawnSourceObject.transform.localPosition;
+            newObject.transform.localPosition = _ControllerObject.transform.localPosition;
 
             // Set emitter properties if spawned GameObject is an emitter host
-            HostAuthoring newHost = objectToSpawn.GetComponentInChildren<HostAuthoring>();
+            HostAuthoring newHost = newObject.GetComponentInChildren(typeof(HostAuthoring), true) as HostAuthoring;
             if (newHost != null)
             {
                 newHost._LocalObject = newObject;
-                newHost._RemoteObject = _SpawnSourceObject;
+                newHost._RemoteObject = _ControllerObject;
             }
 
             _ActiveObjects.Add(newObject);
+            _TimeSinceSpawn = 0;
             maxToSpawn --;
         }
 
         // Zero time since value if 
-        if (_ActiveObjects.Count >= _MaximumSpawnables) _TimeSinceSpawn = 0;
+        //if (_ActiveObjects.Count >= _MaxSpawnables) _TimeSinceSpawn = 0;
     }
 
     public void RemoveObject(int maxToSpawn)
     {
-        while (_ActiveObjects.Count > _MaximumSpawnables && maxToSpawn > 0)
+        while (_ActiveObjects.Count > _MaxSpawnables && maxToSpawn > 0)
         {
             Destroy(_ActiveObjects[_ActiveObjects.Count - 1]);
             _ActiveObjects.RemoveAt(_ActiveObjects.Count - 1);
