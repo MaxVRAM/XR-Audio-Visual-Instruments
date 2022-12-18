@@ -496,16 +496,17 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 5d31d7d3f3b07f64eb090bfdd69c1846, type: 3}
   - {fileID: 8300000, guid: 73c2d133b8ac5be47abe67f3f5b41bb2, type: 3}
   _ListenerRadius: 10
-  _AttachmentRadius: 1
-  _GrainProcessorCount: 0
-  _UnplayedProcessorsDestroyed: 0
-  _SpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
+  _SpeakerAttachRadius: 1
+  _DrawAttachmentLines: 0
+  _MaxDynamicSpeakers: 20
+  _DynamicSpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
     type: 3}
-  _MaxDynamicSpeakers: 100
   _Speakers: []
+  _GrainQueueInMS: 28.2
   _SampleRate: 0
   _CurrentDSPSample: 0
-  _GrainQueueInMS: 28.2
+  _GrainProcessorCount: 0
+  _UnplayedProcessorsDestroyed: 0
 --- !u!4 &24721014
 Transform:
   m_ObjectHideFlags: 0
@@ -569,6 +570,7 @@ GameObject:
   - component: {fileID: 99037940}
   - component: {fileID: 99037939}
   - component: {fileID: 99037934}
+  - component: {fileID: 99037936}
   m_Layer: 8
   m_Name: Anchor
   m_TagString: Untagged
@@ -602,7 +604,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 415cc941bc07c9c49b2c59db6c80e4e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _Sliders: []
+  _EmitterHosts: []
+  _TetherActive: 1
+  _TetherVisible: 1
 --- !u!114 &99037935
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -620,6 +624,104 @@ MonoBehaviour:
   _ForceDirection: {x: 0, y: 0, z: 0}
   _InteractionParam_DistFromSource: {fileID: 0}
   _InteractionParam_InVolume: {fileID: 0}
+--- !u!120 &99037936
+LineRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 99037932}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Positions:
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 1}
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 1
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 1, g: 1, b: 1, a: 1}
+      key1: {r: 1, g: 1, b: 1, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 0
+    numCapVertices: 0
+    alignment: 0
+    textureMode: 0
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 1
+  m_Loop: 0
 --- !u!114 &99037937
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3064,14 +3166,14 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _SelectRandomPrefab: 0
   _ActiveObjects: []
-  _MaxSpawnables: 50
+  _MaxSpawnables: 10
   _AutoSpawn: 1
   _AutoRemove: 1
   _SpawnFrequency: 0.2
+  _SpawnRadius: 1
+  _BehaviourPrefab: {fileID: 0}
   _TimeSinceSpawn: 0
   _MaxSpawnsPerFrame: 0
-  _BehaviourPrefab: {fileID: 0}
-  _SpawnRadius: 1
 --- !u!4 &1102653707 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1920882317727243603, guid: 5d7afc283b1571f4999ce7d45c25b12b,

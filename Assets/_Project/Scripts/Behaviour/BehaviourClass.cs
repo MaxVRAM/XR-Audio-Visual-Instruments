@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class BehaviourClass : MonoBehaviour
 {
-    public List<GameObject> _Sliders;
+    public List<GameObject> _EmitterHosts;
 
     void Start()
     {
@@ -16,8 +16,19 @@ public class BehaviourClass : MonoBehaviour
         
     }
 
-    public void AddSlider(GameObject go)
+    public void AddHost(GameObject go)
     {
-        _Sliders.Add(go);
+        if (!_EmitterHosts.Contains(go))
+            _EmitterHosts.Add(go);
+    }
+    public void RemoveHost(GameObject go)
+    {
+        if (_EmitterHosts.Contains(go))
+            _EmitterHosts.Remove(go);
+    }
+
+    public void ProcessNewHost()
+    {
+        
     }
 }

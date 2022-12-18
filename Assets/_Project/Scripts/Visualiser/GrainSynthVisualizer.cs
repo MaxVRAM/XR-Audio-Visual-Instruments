@@ -205,7 +205,7 @@ public class GrainSynthVisualizer : MonoBehaviour
                 _XAxisPivot.SetScaleX(_TimelineDistance);
 
             if (Application.isPlaying && _XAxisPivot_FrameTime != null)
-                _XAxisPivot_FrameTime.SetScaleX(-GrainSynth.Instance._GrainQueueInMS * .001f * (_TimelineDistance / _TimelineDuration));
+                _XAxisPivot_FrameTime.SetScaleX(-GrainSynth.Instance._QueueDurationMS * .001f * (_TimelineDistance / _TimelineDuration));
 
             for (int i = 0; i < _TimelineBlocks.Length; i++)
             {

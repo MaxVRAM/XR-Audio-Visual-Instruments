@@ -98,9 +98,6 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         if (_IsPlaying) _EntityManager.AddComponent<PlayingTag>(_EmitterEntity);
         else _EntityManager.RemoveComponent<PlayingTag>(_EmitterEntity);
-
-        if (_PingPongGrainPlayheads) _EntityManager.AddComponent<PingPongTag>(_EmitterEntity);
-        else _EntityManager.RemoveComponent<PingPongTag>(_EmitterEntity);
     }
 
     public virtual void UpdateComponents() { }

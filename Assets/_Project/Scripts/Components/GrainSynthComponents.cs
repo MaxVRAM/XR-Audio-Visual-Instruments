@@ -41,14 +41,13 @@ public struct ActivationRadiusComponent : IComponentData
     public float _AttachmentRadius;
 }
 
-public struct PlayingTag : IComponentData {}
-public struct PingPongTag : IComponentData {}
-
 public struct SpeakerComponent : IComponentData
 {
     public int _SpeakerIndex;
 }
 
+public struct HasEmitterTag : IComponentData {}
+public struct PooledTag : IComponentData {}
 public struct PoolingComponent : IComponentData
 {
     public PooledState _State;
@@ -60,6 +59,8 @@ public enum PooledState
     Active
 }
 
+public struct PlayingTag : IComponentData {}
+public struct PingPongTag : IComponentData {}
 public struct DedicatedSpeakerTag : IComponentData {}
 public struct InListenerRadiusTag : IComponentData {}
 

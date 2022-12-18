@@ -19,46 +19,51 @@ using System.Runtime.InteropServices;
 public class GrainSynth :  MonoBehaviour
 {
     public static GrainSynth Instance;
+    protected EntityManager _EntityManager;
+    protected EntityQuery _GrainQuery;
+    protected Entity _DSPTimerEntity;
+    protected Entity _SpeakerManagerEntity;
+    protected AudioListener _Listener;
 
-    // Entity manager ref for creating and updating entities
-    EntityManager _EntityManager;
 
-    EntityQuery _GrainQuery;
-    Entity _DSPTimerEntity;
-    Entity _SpeakerManagerEntity;
-
-    public List<Entity> _AllEmitters = new List<Entity>();
-
-    AudioListener _Listener;
-
+    [Header("Audio Clip Library")]
     public AudioClip[] _AudioClips;
-    List<AudioClip> _AudioClipList = new List<AudioClip>();
 
 
-    [Header("Emitters")]
+    [Header("Emitter Config")]
     public float _ListenerRadius = 10;
-    public float _AttachmentRadius = 1;
-    [SerializeField]
-    protected int _GrainProcessorCount = 0;
-    [SerializeField]
-    protected int _UnplayedProcessorsDestroyed = 0;
+    public float _SpeakerAttachRadius = 1;
+    public bool _DrawAttachmentLines = false;
 
     [Header("Speakers")]
-    public SpeakerAuthoring _SpeakerPrefab;
     public int _MaxDynamicSpeakers = 50;
-    public List<SpeakerAuthoring> _Speakers = new List<SpeakerAuthoring>();
+    public SpeakerAuthoring _DynamicSpeakerPrefab;
 
     // TODO: Implement system to reduce dynamic speakers if additional dedicated speakers are spawned at runtime.
     // Important to avoid audio voice limit.
     int _MaxSpeakers;
 
     [Header("DSP Config")]
-    [SerializeField]
-    int _SampleRate;
-    public int _CurrentDSPSample;
     [Range(0, 100)]
-    public float _GrainQueueInMS = 50;
-    public int _GrainQueueDurationInSamples { get { return (int)(_GrainQueueInMS * _SampleRate * .001f); } }
+    [Tooltip(@"Additional time to buffer processed grains. Set at 0, the grain buffer has a duration of previous frame, 
+        and will almost certainly create underrun (dead-spots). Additional time adds latency, but will help produce consistent playback.")]
+    public float _QueueDurationMS = 50;
+    public int QueueDurationSamples { get { return (int)(_QueueDurationMS * _SampleRate * .001f); } }
+
+    [Header("Registered Components")]
+    public List<Entity> _AllEmitters = new List<Entity>();
+    public List<SpeakerAuthoring> _Speakers = new List<SpeakerAuthoring>();
+    protected List<AudioClip> _AudioClipList = new List<AudioClip>();
+
+    [Header("Runtime Dynamics")]
+    [SerializeField]
+    public int _SampleRate;
+    [SerializeField]
+    public int _CurrentDSPSample;
+    [SerializeField]
+    protected int _GrainProcessorCount = 0;
+    [SerializeField]
+    protected int _UnplayedProcessorsDestroyed = 0;
 
 
     private void Awake()
@@ -88,7 +93,7 @@ public class GrainSynth :  MonoBehaviour
             CreateSpeaker(transform.position);
 
         _DSPTimerEntity = _EntityManager.CreateEntity();
-        _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample, _GrainQueueDuration = (int)(AudioSettings.outputSampleRate * _GrainQueueInMS) });
+        _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample, _GrainQueueDuration = (int)(AudioSettings.outputSampleRate * _QueueDurationMS) });
 
         _GrainQuery = _EntityManager.CreateEntityQuery(typeof(GrainProcessorComponent));
 
@@ -99,7 +104,7 @@ public class GrainSynth :  MonoBehaviour
         {
             _ListenerPos = _Listener.transform.position,
             _ListenerRadius = _ListenerRadius,
-            _AttachmentRadius = _AttachmentRadius
+            _AttachmentRadius = _SpeakerAttachRadius
         });
 
         // ----   CREATE AUDIO SOURCE BLOB ASSETS AND ASSIGN TO AudioClipDataComponent ENTITIES
@@ -159,7 +164,7 @@ public class GrainSynth :  MonoBehaviour
     {
         // Update DSP sample
         DSPTimerComponent dspTimer = _EntityManager.GetComponentData<DSPTimerComponent>(_DSPTimerEntity);
-        _EntityManager.SetComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample + (int)(Time.deltaTime * _SampleRate), _GrainQueueDuration = _GrainQueueDurationInSamples });
+        _EntityManager.SetComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample + (int)(Time.deltaTime * _SampleRate), _GrainQueueDuration = QueueDurationSamples });
 
         NativeArray<Entity> currentGrainProcessors = _GrainQuery.ToEntityArray(Allocator.TempJob);
 
@@ -168,7 +173,7 @@ public class GrainSynth :  MonoBehaviour
         {
             _ListenerPos = _Listener.transform.position,
             _ListenerRadius = _ListenerRadius,
-            _AttachmentRadius = _AttachmentRadius
+            _AttachmentRadius = _SpeakerAttachRadius
         });
 
 
@@ -180,7 +185,7 @@ public class GrainSynth :  MonoBehaviour
             GrainProcessorComponent grainProcessor = _EntityManager.GetComponentData<GrainProcessorComponent>(currentGrainProcessors[i]);
 
             //----  Remove grain processor if start time is one grain queue length in the past
-            if (grainProcessor._StartSampleIndex < _CurrentDSPSample - _GrainQueueDurationInSamples)
+            if (grainProcessor._StartSampleIndex < _CurrentDSPSample - QueueDurationSamples)
             {
                 _EntityManager.DestroyEntity(currentGrainProcessors[i]);
                 _UnplayedProcessorsDestroyed ++;
@@ -221,7 +226,7 @@ public class GrainSynth :  MonoBehaviour
 
     public void CreateSpeaker(Vector3 pos)
     {
-        SpeakerAuthoring speaker = Instantiate(_SpeakerPrefab, pos, quaternion.identity, transform);    
+        SpeakerAuthoring speaker = Instantiate(_DynamicSpeakerPrefab, pos, quaternion.identity, transform);    
     }
 
 

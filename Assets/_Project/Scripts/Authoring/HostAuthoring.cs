@@ -7,32 +7,35 @@ using Unity.Transforms;
 [RequiresEntityConversion]
 public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
+    [SerializeField]
     protected bool _Initialised = false;
     protected Entity _HostEntity;
     protected EntityManager _EntityManager;
     protected Transform _HeadTransform;
     protected BlankModulation _BlankInputComponent;
+    protected LineRenderer _LineRenderer;
 
     [Header("Speaker assignment")]
     [Tooltip("If a dedicated speaker is set, the runtime attachment system will be disabled for this host.")]
     public SpeakerAuthoring _DedicatedSpeaker;
+    [SerializeField]
+    protected bool _Connected = false;
     protected Transform _SpeakerTransform;
+    [SerializeField]
     public int _SpeakerIndex = int.MaxValue;
-    public bool _Connected = false;
 
-    [Header("Emitter objects")]
+    [Header("Emitters")]
     [Tooltip("Primary target for generating collision and modulation data for emitters. Defaults parent game object.")]
     public GameObject _LocalObject;
     [Tooltip("Additional object used to generate 'relative' values with against the interaction object. E.g. distance, relative speed, etc.")]
-    public CollisionPipe _LocalObjectCollisionPipe;
+    public CollisionPipe _CollisionPipeComponent;
     public GameObject _RemoteObject;
     [Tooltip("Finds all sibling emitter components to manage.")]
-
     public EmitterAuthoring[] _HostedEmitters;
-    [Tooltip("Finds all sibling modulation input components to manage.")]
+    [Tooltip("Finds all sibling modulation source components to manage.")]
     public ModulationSource[] _ModulationSources;
 
-    [Header("Runtime dynamics")]
+    [Header("Runtime Dynamics")]
     public bool _IsColliding = false;
     public bool _InListenerRadius = false;
     public float _ListenerDistance = 0;
@@ -73,14 +76,17 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _HeadTransform = FindObjectOfType<Camera>().transform;
 
+        if (!TryGetComponent(out _LineRenderer))
+            _LineRenderer = gameObject.AddComponent<LineRenderer>();
+
         _HostedEmitters = gameObject.transform.parent.GetComponentsInChildren<EmitterAuthoring>();
         _ModulationSources = gameObject.transform.parent.GetComponentsInChildren<ModulationSource>();
 
         if (_LocalObject == null)
             _LocalObject = gameObject.transform.parent.gameObject;
         SetLocalInputSource(_LocalObject);
-
         if (_RemoteObject != null) SetRemoteInputSource(_RemoteObject);
+
         if (_DedicatedSpeaker != null)
         {
             _DedicatedSpeaker.AddEmitterLink(gameObject);                
@@ -95,14 +101,15 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (!_Initialised)
             return;
 
-        // Update host range status.
-        _ListenerDistance = Mathf.Abs((transform.position - _HeadTransform.position).magnitude);
+        DrawSpeakerAttachmentLines();
 
         // Update host translation component.
         Translation translation = _EntityManager.GetComponentData<Translation>(_HostEntity);
         _EntityManager.SetComponentData(_HostEntity, new Translation { Value = transform.position });
+        
+        _ListenerDistance = Mathf.Abs((transform.position - _HeadTransform.position).magnitude);
 
-        // Update host component data.
+        // ---- START HOST COMPONENT
         EmitterHostComponent hostData = _EntityManager.GetComponentData<EmitterHostComponent>(_HostEntity);        
 
         if (_DedicatedSpeaker != null)
@@ -124,6 +131,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             }
         }
         _EntityManager.SetComponentData(_HostEntity, hostData);
+        // ---- END HOST COMPONENT
 
         float speakerFactor = 0;
 
@@ -148,13 +156,30 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     
     public SpeakerAuthoring DynamicSpeaker { get { return GrainSynth.Instance._Speakers[_SpeakerIndex]; } }
 
+
+    public void DrawSpeakerAttachmentLines()
+    {
+        if (_LineRenderer != null && _Connected && GrainSynth.Instance._DrawAttachmentLines)
+            if (Vector3.SqrMagnitude(transform.position - _SpeakerTransform.position) > .1f)
+            {
+                _LineRenderer.enabled = true;
+                _LineRenderer.SetPosition(0, transform.position);
+                _LineRenderer.SetPosition(1, _SpeakerTransform.position);
+            }
+            else
+                _LineRenderer.enabled = false;
+        else
+            _LineRenderer.enabled = false;
+    }
+
+
     public void SetLocalInputSource(GameObject go)
     {
         _LocalObject = go;
         // Set up a collision pipe to send collisions from the targeted object here
-        if (!_LocalObject.TryGetComponent(out _LocalObjectCollisionPipe))
-            _LocalObjectCollisionPipe = _LocalObject.AddComponent<CollisionPipe>();
-        if (_LocalObjectCollisionPipe != null) _LocalObjectCollisionPipe.AddHost(this);
+        if (!_LocalObject.TryGetComponent(out _CollisionPipeComponent))
+            _CollisionPipeComponent = _LocalObject.AddComponent<CollisionPipe>();
+        if (_CollisionPipeComponent != null) _CollisionPipeComponent.AddHost(this);
 
         foreach (ModulationSource source in _ModulationSources)
             if (!(source is BlankModulation))
@@ -213,8 +238,8 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     
     private void OnDestroy()
     {
-        if (_LocalObjectCollisionPipe != null)
-            _LocalObjectCollisionPipe.RemoveHost(this);
+        if (_CollisionPipeComponent != null)
+            _CollisionPipeComponent.RemoveHost(this);
         DestroyEntity();
     }
 

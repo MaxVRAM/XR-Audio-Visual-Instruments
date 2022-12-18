@@ -3,39 +3,32 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(LineRenderer))]
-public class EmitterAttachmentLine : MonoBehaviour
+public class AttachmentLine : MonoBehaviour
 {
     LineRenderer _Line;
-    public EmitterAuthoring _Emitter;
+    public bool _Active;
+    public GameObject _ObjectA;
+    public GameObject _ObjectB;
 
-    // Start is called before the first frame update
     void Start()
     {
         _Line = GetComponent<LineRenderer>();
         _Line.positionCount = 2;
-        _Line.SetPosition(0, _Emitter.transform.position);
+        _Line.SetPosition(0, _ObjectA.transform.position);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (_Emitter._SpeakerIndex != int.MaxValue)
-        {
-            Vector3 speakerPosition = GrainSynth.Instance._Speakers[_Emitter._SpeakerIndex].transform.position;
-            if (Vector3.SqrMagnitude(_Emitter.transform.position - speakerPosition) > .1f)
+        if (_Active)
+            if (Vector3.SqrMagnitude(_ObjectA.transform.position - _ObjectB.transform.position) > .1f)
             {
                 _Line.enabled = true;
-                _Line.SetPosition(0, _Emitter.transform.position);
-                _Line.SetPosition(1, speakerPosition);
+                _Line.SetPosition(0, _ObjectA.transform.position);
+                _Line.SetPosition(1, _ObjectB.transform.position);
             }
             else
-            {
                 _Line.enabled = false;
-            }
-        }
         else
-        {
             _Line.enabled = false;
-        }
     }
 }

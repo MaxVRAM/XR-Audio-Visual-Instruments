@@ -7,10 +7,10 @@ using Random = UnityEngine.Random;
 /// <summary>
 public class ObjectSpawner : MonoBehaviour
 {
-    // TODO: Dedicated speaker assignment not implemented
     [Header("Speaker Assignment")]
     [Tooltip("Force spawned emitters to use this speaker. Leave null to use dynamic allocation.")]
     public SpeakerAuthoring _DedicatedSpeaker;
+
     [Header("Object Configuration")]
     [Tooltip("Object providing the spawn location and controller behaviour.")]
     public GameObject _ControllerObject;
@@ -19,6 +19,7 @@ public class ObjectSpawner : MonoBehaviour
     public List<GameObject> _SpawnablePrefabs;
     public bool _SelectRandomPrefab = false;
     public List<GameObject> _ActiveObjects = new List<GameObject>();
+
     [Header("Spawn Configuration")]
     [Range(1, 200)]
     public int _MaxSpawnables = 1;
@@ -26,15 +27,17 @@ public class ObjectSpawner : MonoBehaviour
     public bool _AutoRemove = true;
     [Range(0f, 2f)]
     public float _SpawnFrequency = 1f;
+    [Range(0f, 3f)]
+    public float _SpawnRadius = 0.5f;
+    [Header("Object Behaviour")]
+    public BehaviourClass _BehaviourPrefab;
+    protected string _Name;
+
+    [Header("Runtime Dynamics")]
     [SerializeField]
     protected float _TimeSinceSpawn = 0;
     [SerializeField]
     protected int _MaxSpawnsPerFrame;
-    [Header("Object Behaviour")]
-    public BehaviourClass _BehaviourPrefab;
-    [Range(0f, 3f)]
-    public float _SpawnRadius = 0.5f;
-    protected string _Name;
 
     void Start()
     {
@@ -92,9 +95,6 @@ public class ObjectSpawner : MonoBehaviour
             _TimeSinceSpawn = 0;
             maxToSpawn --;
         }
-
-        // Zero time since value if 
-        //if (_ActiveObjects.Count >= _MaxSpawnables) _TimeSinceSpawn = 0;
     }
 
     public void RemoveObject(int maxToSpawn)

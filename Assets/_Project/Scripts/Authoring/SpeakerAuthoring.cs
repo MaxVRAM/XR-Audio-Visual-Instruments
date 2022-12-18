@@ -95,7 +95,10 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(entity, new SpeakerComponent { _SpeakerIndex = _SpeakerIndex });
 
         if (!DedicatedToHost)
+        {
             dstManager.AddComponentData(entity, new PoolingComponent { _State = PooledState.Pooled });
+            dstManager.AddComponentData(entity, new PooledTag {});
+        }
 
         //---   CREATE GRAIN DATA ARRAY - CURRENT MAXIMUM LENGTH SET TO ONE SECOND OF SAMPLES      
         _GrainDataArray = new GrainData[_GrainPlaybackDataToPool];
@@ -269,7 +272,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             else
                 Gizmos.color = Color.yellow;
 
-            Gizmos.DrawWireSphere(transform.position, _GrainSynth._AttachmentRadius);
+            Gizmos.DrawWireSphere(transform.position, _GrainSynth._SpeakerAttachRadius);
         }
     }
 }
