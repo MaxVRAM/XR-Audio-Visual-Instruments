@@ -78,7 +78,7 @@ public class AttachmentSystem : SystemBase
                 {
                     for (int e = 0; e < hostsWithSpeaker.Length; e++)
                         if (hostsWithSpeaker[e]._SpeakerIndex == speaker._SpeakerIndex)
-                            // Exit job iteration before ending loop / pooling speaker
+                            // Exit iteration before applying pooled state if attached speaker matches
                             return;
                     pooling._State = PooledState.Pooled;
                 }

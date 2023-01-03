@@ -9,11 +9,16 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
     [SerializeField]
     protected bool _Initialised = false;
+    
     protected Entity _HostEntity;
     protected EntityManager _EntityManager;
     protected Transform _HeadTransform;
     protected BlankModulation _BlankInputComponent;
-    protected LineRenderer _LineRenderer;
+    
+    [Header("Runtime Dynamics")]
+    public bool _IsColliding = false;
+    public bool _InListenerRadius = false;
+    public float _ListenerDistance = 0;
 
     [Header("Speaker assignment")]
     [Tooltip("If a dedicated speaker is set, the runtime attachment system will be disabled for this host.")]
@@ -23,22 +28,22 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     protected Transform _SpeakerTransform;
     [SerializeField]
     public int _SpeakerIndex = int.MaxValue;
+    [SerializeField]
+    protected LineRenderer _LineRenderer;
 
-    [Header("Emitters")]
+    [Header("Interaction Sources")]
     [Tooltip("Primary target for generating collision and modulation data for emitters. Defaults parent game object.")]
     public GameObject _LocalObject;
     [Tooltip("Additional object used to generate 'relative' values with against the interaction object. E.g. distance, relative speed, etc.")]
-    public CollisionPipe _CollisionPipeComponent;
     public GameObject _RemoteObject;
-    [Tooltip("Finds all sibling emitter components to manage.")]
-    public EmitterAuthoring[] _HostedEmitters;
-    [Tooltip("Finds all sibling modulation source components to manage.")]
-    public ModulationSource[] _ModulationSources;
+    [Tooltip("(generated) Paired component that pipes collision data from the local object target to this host.")]
+    public CollisionPipe _CollisionPipeComponent;
 
-    [Header("Runtime Dynamics")]
-    public bool _IsColliding = false;
-    public bool _InListenerRadius = false;
-    public float _ListenerDistance = 0;
+    [Tooltip("(generated) Sibling emitters components for this host to manage.")]
+    public EmitterAuthoring[] _HostedEmitters;
+    [Tooltip("(generated) Sibling modulation input source components this host provides to its emitters.")]
+    public ModulationSource[] _ModulationSources;
+    [Tooltip("(generated) List of objects currently in-contact with the host's local object target.")]
     public List<GameObject> _CollidingObjects;
 
 
@@ -159,17 +164,18 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void DrawSpeakerAttachmentLines()
     {
-        if (_LineRenderer != null && _Connected && GrainSynth.Instance._DrawAttachmentLines)
-            if (Vector3.SqrMagnitude(transform.position - _SpeakerTransform.position) > .1f)
-            {
-                _LineRenderer.enabled = true;
-                _LineRenderer.SetPosition(0, transform.position);
-                _LineRenderer.SetPosition(1, _SpeakerTransform.position);
-            }
+        if (_LineRenderer != null)
+            if (_Connected && GrainSynth.Instance._DrawAttachmentLines)
+                if (Vector3.SqrMagnitude(transform.position - _SpeakerTransform.position) > .1f)
+                {
+                    _LineRenderer.enabled = true;
+                    _LineRenderer.SetPosition(0, transform.position);
+                    _LineRenderer.SetPosition(1, _SpeakerTransform.position);
+                }
+                else
+                    _LineRenderer.enabled = false;
             else
                 _LineRenderer.enabled = false;
-        else
-            _LineRenderer.enabled = false;
     }
 
 
