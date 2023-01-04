@@ -16,6 +16,7 @@ public class EmitterAttachmentLine : MonoBehaviour
         {
             _Line = gameObject.AddComponent<LineRenderer>();
             _Line.widthMultiplier = GrainSynth.Instance._AttachmentLineWidth;
+            _Line.enabled = false;
         }
         if (_Line.material == null)
             _Line.material = GrainSynth.Instance._AttachmentLineMat;
