@@ -499,6 +499,7 @@ MonoBehaviour:
   _SpeakerAttachRadius: 2
   _DrawAttachmentLines: 1
   _AttachmentLineMat: {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
+  _AttachmentLineWidth: 0.02
   _MaxDynamicSpeakers: 1
   _DynamicSpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
     type: 3}
@@ -676,7 +677,7 @@ LineRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 1
+        value: 0.04166603
         inSlope: 0
         outSlope: 0
         tangentMode: 0

@@ -50,11 +50,13 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         _HostEntity = entity;
+        int index = GrainSynth.Instance.RegisterEmitterHost(this);
 
         if (_DedicatedSpeaker != null) dstManager.AddComponentData(_HostEntity, new DedicatedSpeakerTag { });
 
         dstManager.AddComponentData(_HostEntity, new EmitterHostComponent
         {
+            _HostIndex = index,
             _Connected = _Connected,
             _InListenerRadius = false,
             _SpeakerIndex = _SpeakerIndex,
@@ -140,11 +142,11 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _EntityManager.SetComponentData(_HostEntity, hostData);
         // ---- END HOST COMPONENT
 
-        float speakerFactor = 0;
+        float speakerAmplitudeFactor = 0;
 
         if (_Connected)
         {
-            speakerFactor = AudioUtils.SpeakerOffsetFactor(
+            speakerAmplitudeFactor = AudioUtils.SpeakerOffsetFactor(
                 transform.position,
                 _HeadTransform.position,
                 _SpeakerTransform.position);
@@ -152,7 +154,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         foreach (EmitterAuthoring emitter in _HostedEmitters)
         {
-            emitter.UpdateDistanceAmplitude(_ListenerDistance / GrainSynth.Instance._ListenerRadius, speakerFactor);
+            emitter.UpdateDistanceAmplitude(_ListenerDistance / GrainSynth.Instance._ListenerRadius, speakerAmplitudeFactor);
             emitter._InListenerRadius = _InListenerRadius;
             emitter._SpeakerIndex = _SpeakerIndex;
             emitter._Connected = _Connected;

@@ -25,7 +25,7 @@ public class BurstAuthoring : EmitterAuthoring
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         _EmitterEntity = entity;
-        int index = GrainSynth.Instance.RegisterEmitter(entity);
+        int index = GrainSynth.Instance.RegisterEmitter(this);
 
         #region ADD EMITTER COMPONENT DATA
 
@@ -119,7 +119,7 @@ public class BurstAuthoring : EmitterAuthoring
         });
 
         #if UNITY_EDITOR
-                dstManager.SetName(entity, "Burst Emitter:   " + transform.parent.name + " " + gameObject.name);
+                dstManager.SetName(entity, "Burst Emitter:   " + transform.parent.name + " " + name);
         #endif
 
         #endregion

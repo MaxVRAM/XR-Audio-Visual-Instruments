@@ -30,11 +30,13 @@ public class GrainSynth :  MonoBehaviour
     public AudioClip[] _AudioClips;
 
 
-    [Header("Emitter Config")]
+    [Header("Attachment Settings")]
     public float _ListenerRadius = 10;
     public float _SpeakerAttachRadius = 1;
     public bool _DrawAttachmentLines = false;
     public Material _AttachmentLineMat;
+    [Range(0, 0.05f)]
+    public float _AttachmentLineWidth = 0.002f;
 
     [Header("Speakers")]
     public int _MaxDynamicSpeakers = 50;
@@ -52,7 +54,8 @@ public class GrainSynth :  MonoBehaviour
     public int QueueDurationSamples { get { return (int)(_QueueDurationMS * _SampleRate * .001f); } }
 
     [Header("Registered Components")]
-    public List<Entity> _AllEmitters = new List<Entity>();
+    public List<HostAuthoring> _Hosts = new List<HostAuthoring>();
+    public List<EmitterAuthoring> _Emitters = new List<EmitterAuthoring>();
     public List<SpeakerAuthoring> _Speakers = new List<SpeakerAuthoring>();
     protected List<AudioClip> _AudioClipList = new List<AudioClip>();
 
@@ -241,10 +244,17 @@ public class GrainSynth :  MonoBehaviour
         _Speakers.Add(speaker);
     }
 
-    public int RegisterEmitter(Entity emitterEntity)
+    public int RegisterEmitterHost(HostAuthoring host)
     {
-        int index = _AllEmitters.Count;
-        _AllEmitters.Add(emitterEntity);
+        int index = _Hosts.Count;
+        _Hosts.Add(host);
+        return index;
+    }
+
+    public int RegisterEmitter(EmitterAuthoring emitter)
+    {
+        int index = _Emitters.Count;
+        _Emitters.Add(emitter);
         return index;
     }
 
