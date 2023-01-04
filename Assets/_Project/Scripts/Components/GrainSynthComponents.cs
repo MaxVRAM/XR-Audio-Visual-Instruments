@@ -47,16 +47,15 @@ public struct SpeakerComponent : IComponentData
 }
 
 public struct HasEmitterTag : IComponentData {}
-public struct PooledTag : IComponentData {}
-public struct PoolingComponent : IComponentData
-{
-    public PooledState _State;
-}
 
 public enum PooledState
 {
     Pooled,
     Active
+}
+public struct PoolingComponent : IComponentData
+{
+    public PooledState _State;
 }
 
 public struct PlayingTag : IComponentData {}

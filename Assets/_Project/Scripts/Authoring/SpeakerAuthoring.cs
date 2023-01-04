@@ -97,7 +97,6 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (!DedicatedToHost)
         {
             dstManager.AddComponentData(entity, new PoolingComponent { _State = PooledState.Pooled });
-            dstManager.AddComponentData(entity, new PooledTag {});
         }
 
         //---   CREATE GRAIN DATA ARRAY - CURRENT MAXIMUM LENGTH SET TO ONE SECOND OF SAMPLES      
