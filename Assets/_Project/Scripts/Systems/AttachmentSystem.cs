@@ -116,7 +116,7 @@ public class AttachmentSystem : SystemBase
                     // Attach the host to the nearest valid speaker
                     if (closestSpeakerIndex != int.MaxValue)
                     {
-                        host._Connected = false;
+                        host._Connected = true;
                         host._SpeakerIndex = closestSpeakerIndex;
                     }
                 }
