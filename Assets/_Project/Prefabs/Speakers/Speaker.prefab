@@ -202,7 +202,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enableSpatialization: 1
-  gain: 0.5
+  gain: 2
   useInvSqr: 1
   near: 0.2
   far: 200
