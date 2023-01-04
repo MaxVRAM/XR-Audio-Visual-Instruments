@@ -14,8 +14,21 @@ using Substance.Game;
 [UpdateAfter(typeof(DOTS_QuadrantSystem))]
 public class AttachmentSystem : SystemBase
 {
+    private EndSimulationEntityCommandBufferSystem _CommandBufferSystem;
+
+    protected override void OnCreate()
+    {
+        base.OnCreate();
+        _CommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+    }
+
+
     protected override void OnUpdate()
     {
+        // Acquire an ECB and convert it to a concurrent one to be able to use it from a parallel job.
+        EntityCommandBuffer.ParallelWriter entityCommandBuffer = _CommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
+
+        
         DSPTimerComponent dspTimer = GetSingleton<DSPTimerComponent>();       
         ActivationRadiusComponent activationRanges = GetSingleton<ActivationRadiusComponent>();
 
@@ -68,7 +81,7 @@ public class AttachmentSystem : SystemBase
 
 
 
-        //----    DEACTIVATE SPEAKERS WITHOUT ATTACHED HOSTS
+        //----    DEACTIVATE/SET POOLED FOR SPEAKERS WITHOUT ATTACHED HOSTS
         NativeArray<EmitterHostComponent> hostsWithSpeaker = GetEntityQuery(typeof(EmitterHostComponent)).ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
         JobHandle updateSpeakerPoolJob = Entities.WithName("UpdateSpeakerPool").ForEach
         (
@@ -148,7 +161,6 @@ public class AttachmentSystem : SystemBase
                         if (hosts[e]._InListenerRadius && !hosts[e]._Connected)
                         {
                             spawned = true;
-                            float3 speakerPos = GetComponent<Translation>(hostEntities[e]).Value;
 
                             // Update host component with speaker link
                             EmitterHostComponent host = GetComponent<EmitterHostComponent>(hostEntities[e]);
@@ -178,28 +190,44 @@ public class AttachmentSystem : SystemBase
 
 
 
+        //----     SET SPEAKER POSITION TO AVERAGE POSITION OF ATTACHED HOSTS
         EntityQuery hostSitQuery = GetEntityQuery(typeof(EmitterHostComponent),typeof(Translation));
         NativeArray<EmitterHostComponent> hostsToSitSpeakers = hostSitQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
         NativeArray<Translation> hostTranslations = hostSitQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
         JobHandle moveSpeakersJob = Entities.WithName("MoveSpeakers").ForEach
         (
-            (ref Translation translation, in PoolingComponent pooling, in SpeakerComponent speaker) =>
+            (ref Translation translation, ref PoolingComponent pooling, in SpeakerComponent speaker) =>
             {
+                float xPos = 0;
+                float yPos = 0;
+                float zPos = 0;
+                int attachedHosts = 0;
+
                 if (pooling._State == PooledState.Active)
                 {
-                    int hostIndex = -1;
-                    int attachedHosts = 0;
-                    // Check if any hosts are attached to this speaker
                     for (int e = 0; e < hostsToSitSpeakers.Length; e++)
                         if (hostsToSitSpeakers[e]._Connected && hostsToSitSpeakers[e]._SpeakerIndex == speaker._SpeakerIndex)
                         {
-                            hostIndex = e;
+                            xPos += hostTranslations[e].Value.x;
+                            yPos += hostTranslations[e].Value.y;
+                            zPos += hostTranslations[e].Value.z;
                             attachedHosts++;
                         }
-                    // TODO ---- Find centre of all attached emitters
-                    if (attachedHosts == 1 && hostIndex != -1)
-                        translation = hostTranslations[hostIndex];
+                    
+                    if (attachedHosts > 0)
+                    {
+                        if (attachedHosts > 1)
+                        {
+                            xPos /= attachedHosts;
+                            yPos /= attachedHosts;
+                            zPos /= attachedHosts;
+                        }
+                        translation.Value.x = xPos;
+                        translation.Value.x = yPos;
+                        translation.Value.x = yPos;
+                    }
                 }
+                pooling._AttachedHostCount = attachedHosts;
             }
         ).WithDisposeOnCompletion(hostsToSitSpeakers)
         .WithDisposeOnCompletion(hostTranslations)

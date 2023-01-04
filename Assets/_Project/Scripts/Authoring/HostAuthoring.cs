@@ -24,7 +24,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     [Tooltip("If a dedicated speaker is set, the runtime attachment system will be disabled for this host.")]
     public SpeakerAuthoring _DedicatedSpeaker;
     [SerializeField]
-    protected bool _Connected = false;
+    public bool _Connected = false;
     protected Transform _SpeakerTransform;
     [SerializeField]
     public int _SpeakerIndex = int.MaxValue;
@@ -51,8 +51,6 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     {
         _HostEntity = entity;
         int index = GrainSynth.Instance.RegisterEmitterHost(this);
-
-        if (_DedicatedSpeaker != null) dstManager.AddComponentData(_HostEntity, new DedicatedSpeakerTag { });
 
         dstManager.AddComponentData(_HostEntity, new EmitterHostComponent
         {
@@ -85,14 +83,17 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         if (!TryGetComponent(out _AttachmentLine))
             _AttachmentLine = gameObject.AddComponent<EmitterAttachmentLine>();
-
         _AttachmentLine._TransformA = transform;
 
         _HostedEmitters = transform.parent.GetComponentsInChildren<EmitterAuthoring>();
         _ModulationSources = transform.parent.GetComponentsInChildren<ModulationSource>();
 
+        foreach (EmitterAuthoring emitter in _HostedEmitters)
+            emitter._Host = this;
+
         if (_LocalObject == null)
             _LocalObject = transform.parent.gameObject;
+
         SetLocalInputSource(_LocalObject);
         if (_RemoteObject != null) SetRemoteInputSource(_RemoteObject);
 
@@ -155,16 +156,15 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         foreach (EmitterAuthoring emitter in _HostedEmitters)
         {
             emitter.UpdateDistanceAmplitude(_ListenerDistance / GrainSynth.Instance._ListenerRadius, speakerAmplitudeFactor);
-            emitter._InListenerRadius = _InListenerRadius;
-            emitter._SpeakerIndex = _SpeakerIndex;
-            emitter._Connected = _Connected;
             emitter.UpdateTranslationAndTags();
-            emitter.UpdateComponents();
+            if (_Connected && _InListenerRadius)
+                emitter.UpdateEmitterComponents();
         }
     }
     
     public SpeakerAuthoring DynamicSpeaker { get { return GrainSynth.Instance._Speakers[_SpeakerIndex]; } }
 
+    public int EntityIndex { get { return _HostEntity.Index; } }
 
     public void UpdateSpeakerAttachmentLine()
     {
@@ -176,7 +176,6 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         else
             _AttachmentLine._Active = false;
     }
-
 
     public void SetLocalInputSource(GameObject go)
     {

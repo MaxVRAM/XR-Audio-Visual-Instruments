@@ -9,15 +9,19 @@ using Random = UnityEngine.Random;
 [RequiresEntityConversion]
 public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
+    [SerializeField]
+    protected bool _Initialised = false;
     public enum EmitterType {Continuous, Burst}
-
     protected Entity _EmitterEntity;
     protected EntityManager _EntityManager;
     protected float[] _PerlinSeedArray;
 
     [Header("Emitter Configuration")]
+    [Tooltip("(generated) Host component managing this emitter.")]
+    public HostAuthoring _Host;
+    [Tooltip("(generated) This emitter's subtype. Current subtypes are either 'Continuous' or 'Burst'.")]
     public EmitterType _EmitterType;
-    [Tooltip("Limit the emitter's playback to collision states.")]
+    [Tooltip("Limit the emitter's playback to collision/contact states.")]
     public bool _ContactEmitter = false;
     [Tooltip("Audio clip used as the emitter's content source.")]
     public int _ClipIndex = 0;
@@ -37,18 +41,13 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public bool _ColliderRigidityVolumeScale = false;
 
     [Header("Runtime Dynamics")]
-    public int _SpeakerIndex;
-    public bool _Connected = false;
     public bool _IsPlaying = true;
-    public bool _InListenerRadius = false;
     public float _TimeExisted = 0;
     public float _AdjustedDistance = 0;
     public float _DistanceAmplitude = 0;
     protected float _ContactSurfaceAttenuation = 1;
     protected int _LastSampleIndex = 0;
     protected float _SamplesPerMS = 0;
-    protected bool _Initialised = false;
-    protected bool _InputValuesReady = false;
 
     public DSP_Class[] _DSPChainParams;
 
@@ -93,14 +92,17 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         _TimeExisted += Time.deltaTime;
 
-        if (_InListenerRadius) _EntityManager.AddComponent<InListenerRadiusTag>(_EmitterEntity);
+        if (_Host._InListenerRadius) _EntityManager.AddComponent<InListenerRadiusTag>(_EmitterEntity);
         else _EntityManager.RemoveComponent<InListenerRadiusTag>(_EmitterEntity);
+
+        if (_Host._Connected) _EntityManager.AddComponent<ConnectedTag>(_EmitterEntity);
+        else _EntityManager.RemoveComponent<ConnectedTag>(_EmitterEntity);
 
         if (_IsPlaying) _EntityManager.AddComponent<PlayingTag>(_EmitterEntity);
         else _EntityManager.RemoveComponent<PlayingTag>(_EmitterEntity);
     }
 
-    public virtual void UpdateComponents() { }
+    public virtual void UpdateEmitterComponents() { }
 
     protected void UpdateDSPEffectsBuffer(bool clear = true)
     {

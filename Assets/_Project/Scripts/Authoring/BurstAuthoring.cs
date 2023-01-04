@@ -33,9 +33,10 @@ public class BurstAuthoring : EmitterAuthoring
         {
             _IsPlaying = false,
             _EmitterIndex = index,
-            _DistanceAmplitude = 1,
             _AudioClipIndex = _ClipIndex,
-            _SpeakerIndex = _SpeakerIndex,
+            _SpeakerIndex = _Host._SpeakerIndex,
+            _HostIndex = _Host.EntityIndex,
+            _DistanceAmplitude = 1,
             _PingPong = _PingPongGrainPlayheads,
             _OutputSampleRate = AudioSettings.outputSampleRate,
 
@@ -135,19 +136,17 @@ public class BurstAuthoring : EmitterAuthoring
         _Initialised = true;
     }
 
-    public override void UpdateComponents()
+    public override void UpdateEmitterComponents()
     {
-        if (_IsPlaying && _InListenerRadius && _Connected)
+        if (_IsPlaying && _Initialised)
         {
-            // _Properties.Initialise();
-
             BurstComponent burstData = _EntityManager.GetComponentData<BurstComponent>(_EmitterEntity);
 
             #region UPDATE EMITTER COMPONENT DATA
             burstData._IsPlaying = true;
-            burstData._Connected = _Connected;
             burstData._AudioClipIndex = _ClipIndex;
-            burstData._SpeakerIndex = _SpeakerIndex;
+            burstData._SpeakerIndex = _Host._SpeakerIndex;
+            burstData._HostIndex = _Host.EntityIndex;
             burstData._PingPong = _PingPongGrainPlayheads;
             burstData._DistanceAmplitude = _DistanceAmplitude;
             burstData._OutputSampleRate = AudioSettings.outputSampleRate;

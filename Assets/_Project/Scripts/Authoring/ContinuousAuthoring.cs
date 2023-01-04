@@ -31,10 +31,11 @@ public class ContinuousAuthoring : EmitterAuthoring
         {
             _IsPlaying = !_ContactEmitter,
             _EmitterIndex = index,
-            _DistanceAmplitude = 1,
             _AudioClipIndex = _ClipIndex,
+            _SpeakerIndex = _Host._SpeakerIndex,
+            _HostIndex = _Host.EntityIndex,
+            _DistanceAmplitude = 1,
             _PingPong = _PingPongGrainPlayheads,
-            _SpeakerIndex = _SpeakerIndex,
             _LastSampleIndex = GrainSynth.Instance._CurrentDSPSample,
             _OutputSampleRate = AudioSettings.outputSampleRate,
 
@@ -111,21 +112,24 @@ public class ContinuousAuthoring : EmitterAuthoring
         _Initialised = true;
     }
 
-    public override void UpdateComponents()
+    public override void UpdateEmitterComponents()
     {
-        if (_IsPlaying && _InListenerRadius && _Connected && _Initialised)
+        if (_IsPlaying && _Initialised)
         {
             ContinuousComponent continuousData = _EntityManager.GetComponentData<ContinuousComponent>(_EmitterEntity);
 
             #region UPDATE EMITTER COMPONENT DATA
-            if (_SpeakerIndex != continuousData._SpeakerIndex)
+            
+            // Reset grain offset if attached to a new speaker
+            if (_Host._SpeakerIndex != continuousData._SpeakerIndex)
                 continuousData._LastSampleIndex = GrainSynth.Instance._CurrentDSPSample;
             else _LastSampleIndex = continuousData._LastSampleIndex;
+
             continuousData._IsPlaying = _IsPlaying;
-            continuousData._Connected = _Connected;
             continuousData._AudioClipIndex = _ClipIndex;
+            continuousData._SpeakerIndex = _Host._SpeakerIndex;
+            continuousData._HostIndex = _Host.EntityIndex;
             continuousData._LastSampleIndex = _LastSampleIndex;
-            continuousData._SpeakerIndex = _SpeakerIndex;
             continuousData._PingPong = _PingPongGrainPlayheads;
             continuousData._DistanceAmplitude = _DistanceAmplitude;
             continuousData._OutputSampleRate = AudioSettings.outputSampleRate;

@@ -46,8 +46,6 @@ public struct SpeakerComponent : IComponentData
     public int _SpeakerIndex;
 }
 
-public struct HasEmitterTag : IComponentData {}
-
 public enum PooledState
 {
     Pooled,
@@ -56,9 +54,11 @@ public enum PooledState
 public struct PoolingComponent : IComponentData
 {
     public PooledState _State;
+    public int _AttachedHostCount;
 }
 
 public struct PlayingTag : IComponentData {}
+public struct ConnectedTag : IComponentData {}
 public struct PingPongTag : IComponentData {}
 public struct DedicatedSpeakerTag : IComponentData {}
 public struct InListenerRadiusTag : IComponentData {}
@@ -91,16 +91,16 @@ public struct ModulationComponent : IComponentData
 
 public struct ContinuousComponent : IComponentData
 {
+    public int _HostIndex;
     public int _EmitterIndex;
-    public int _AudioClipIndex;
-    public bool _IsPlaying;
-    public bool _PingPong;
-    public float _DistanceAmplitude;
     public int _SpeakerIndex;
-    public bool _Connected;
+    public int _AudioClipIndex;
+    public bool _PingPong;
+    public bool _IsPlaying;
+    public int _OutputSampleRate;
+    public float _DistanceAmplitude;
     public int _LastSampleIndex;
     public int _PreviousGrainDuration;
-    public int _OutputSampleRate;
     public ModulationComponent _Playhead;
     public ModulationComponent _Density;
     public ModulationComponent _Duration;
@@ -110,14 +110,14 @@ public struct ContinuousComponent : IComponentData
 
 public struct BurstComponent : IComponentData
 {
+    public int _HostIndex;
     public int _EmitterIndex;
-    public int _AudioClipIndex;
-    public bool _IsPlaying;
-    public bool _PingPong;
-    public float _DistanceAmplitude;
     public int _SpeakerIndex;
-    public bool _Connected;
+    public int _AudioClipIndex;
+    public bool _PingPong;
+    public bool _IsPlaying;
     public int _OutputSampleRate;
+    public float _DistanceAmplitude;
     public ModulationComponent _BurstDuration;
     public ModulationComponent _Density;
     public ModulationComponent _Playhead;
