@@ -34,6 +34,7 @@ public class GrainSynth :  MonoBehaviour
     public float _ListenerRadius = 10;
     public float _SpeakerAttachRadius = 1;
     public bool _DrawAttachmentLines = false;
+    public Material _AttachmentLineMat;
 
     [Header("Speakers")]
     public int _MaxDynamicSpeakers = 50;

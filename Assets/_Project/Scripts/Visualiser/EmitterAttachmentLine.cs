@@ -2,29 +2,33 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(LineRenderer))]
-public class AttachmentLine : MonoBehaviour
+
+public class EmitterAttachmentLine : MonoBehaviour
 {
-    LineRenderer _Line;
+    protected LineRenderer _Line;
     public bool _Active;
-    public GameObject _ObjectA;
-    public GameObject _ObjectB;
+    public Transform _TransformA;
+    public Transform _TransformB;
 
     void Start()
-    {
-        _Line = GetComponent<LineRenderer>();
+    {        
+        if (!TryGetComponent(out _Line))
+            _Line = gameObject.AddComponent<LineRenderer>();
+        if (_Line.material == null)
+            _Line.material = GrainSynth.Instance._AttachmentLineMat;
+
         _Line.positionCount = 2;
-        _Line.SetPosition(0, _ObjectA.transform.position);
+        _Line.SetPosition(0, _TransformA.transform.position);
     }
 
     void Update()
     {
         if (_Active)
-            if (Vector3.SqrMagnitude(_ObjectA.transform.position - _ObjectB.transform.position) > .1f)
+            if (Vector3.SqrMagnitude(_TransformA.position - _TransformB.position) > .1f)
             {
                 _Line.enabled = true;
-                _Line.SetPosition(0, _ObjectA.transform.position);
-                _Line.SetPosition(1, _ObjectB.transform.position);
+                _Line.SetPosition(0, _TransformA.position);
+                _Line.SetPosition(1, _TransformB.position);
             }
             else
                 _Line.enabled = false;

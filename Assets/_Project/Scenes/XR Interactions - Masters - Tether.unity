@@ -496,13 +496,14 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 5d31d7d3f3b07f64eb090bfdd69c1846, type: 3}
   - {fileID: 8300000, guid: 73c2d133b8ac5be47abe67f3f5b41bb2, type: 3}
   _ListenerRadius: 10
-  _SpeakerAttachRadius: 1
-  _DrawAttachmentLines: 0
-  _MaxDynamicSpeakers: 20
+  _SpeakerAttachRadius: 2
+  _DrawAttachmentLines: 1
+  _AttachmentLineMat: {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
+  _MaxDynamicSpeakers: 1
   _DynamicSpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
     type: 3}
+  _QueueDurationMS: 50
   _Speakers: []
-  _GrainQueueInMS: 28.2
   _SampleRate: 0
   _CurrentDSPSample: 0
   _GrainProcessorCount: 0
@@ -3166,10 +3167,10 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _SelectRandomPrefab: 0
   _ActiveObjects: []
-  _MaxSpawnables: 10
+  _MaxSpawnables: 2
   _AutoSpawn: 1
   _AutoRemove: 1
-  _SpawnFrequency: 0.2
+  _SpawnFrequency: 0.5
   _SpawnRadius: 1
   _BehaviourPrefab: {fileID: 0}
   _TimeSinceSpawn: 0

@@ -29,7 +29,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     [SerializeField]
     public int _SpeakerIndex = int.MaxValue;
     [SerializeField]
-    protected LineRenderer _LineRenderer;
+    protected EmitterAttachmentLine _AttachmentLine;
 
     [Header("Interaction Sources")]
     [Tooltip("Primary target for generating collision and modulation data for emitters. Defaults parent game object.")]
@@ -62,7 +62,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         });
 
         #if UNITY_EDITOR
-                dstManager.SetName(entity, "Emitter Host:   " + gameObject.name);
+                dstManager.SetName(entity, "Emitter Host:   " + name);
         #endif
 
         _Initialised = true;
@@ -81,14 +81,16 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _HeadTransform = FindObjectOfType<Camera>().transform;
 
-        if (!TryGetComponent(out _LineRenderer))
-            _LineRenderer = gameObject.AddComponent<LineRenderer>();
+        if (!TryGetComponent(out _AttachmentLine))
+            _AttachmentLine = gameObject.AddComponent<EmitterAttachmentLine>();
 
-        _HostedEmitters = gameObject.transform.parent.GetComponentsInChildren<EmitterAuthoring>();
-        _ModulationSources = gameObject.transform.parent.GetComponentsInChildren<ModulationSource>();
+        _AttachmentLine._TransformA = transform;
+
+        _HostedEmitters = transform.parent.GetComponentsInChildren<EmitterAuthoring>();
+        _ModulationSources = transform.parent.GetComponentsInChildren<ModulationSource>();
 
         if (_LocalObject == null)
-            _LocalObject = gameObject.transform.parent.gameObject;
+            _LocalObject = transform.parent.gameObject;
         SetLocalInputSource(_LocalObject);
         if (_RemoteObject != null) SetRemoteInputSource(_RemoteObject);
 
@@ -106,7 +108,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (!_Initialised)
             return;
 
-        DrawSpeakerAttachmentLines();
+        UpdateSpeakerAttachmentLine();
 
         // Update host translation component.
         Translation translation = _EntityManager.GetComponentData<Translation>(_HostEntity);
@@ -162,20 +164,15 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public SpeakerAuthoring DynamicSpeaker { get { return GrainSynth.Instance._Speakers[_SpeakerIndex]; } }
 
 
-    public void DrawSpeakerAttachmentLines()
+    public void UpdateSpeakerAttachmentLine()
     {
-        if (_LineRenderer != null)
-            if (_Connected && GrainSynth.Instance._DrawAttachmentLines)
-                if (Vector3.SqrMagnitude(transform.position - _SpeakerTransform.position) > .1f)
-                {
-                    _LineRenderer.enabled = true;
-                    _LineRenderer.SetPosition(0, transform.position);
-                    _LineRenderer.SetPosition(1, _SpeakerTransform.position);
-                }
-                else
-                    _LineRenderer.enabled = false;
-            else
-                _LineRenderer.enabled = false;
+        if (_AttachmentLine != null && _Connected && GrainSynth.Instance._DrawAttachmentLines)
+        {
+            _AttachmentLine._Active = true;
+            _AttachmentLine._TransformB = _SpeakerTransform;
+        }
+        else
+            _AttachmentLine._Active = false;
     }
 
 
