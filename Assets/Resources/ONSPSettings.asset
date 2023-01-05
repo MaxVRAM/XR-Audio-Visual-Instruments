@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad074644ff568a14187a3690cfbd7534, type: 3}
   m_Name: ONSPSettings
   m_EditorClassIdentifier: 
-  voiceLimit: 64
+  voiceLimit: 1024
