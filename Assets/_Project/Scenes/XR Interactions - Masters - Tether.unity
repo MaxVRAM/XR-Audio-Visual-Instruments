@@ -495,9 +495,9 @@ MonoBehaviour:
   - {fileID: 8300000, guid: a45b7a18716cf8942a2d659aad1bb28d, type: 3}
   - {fileID: 8300000, guid: 5d31d7d3f3b07f64eb090bfdd69c1846, type: 3}
   - {fileID: 8300000, guid: 73c2d133b8ac5be47abe67f3f5b41bb2, type: 3}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 8300000, guid: 308fa9beb3aa73943a5f407b8a5081c5, type: 3}
+  - {fileID: 8300000, guid: 498da90aba050804a9acbc57ef2a5a4f, type: 3}
+  - {fileID: 8300000, guid: b9c3d3d2da763fd488bacd296677499f, type: 3}
   _ListenerRadius: 10
   _SpeakerAttachRadius: 0.3
   _DrawAttachmentLines: 1
@@ -5059,6 +5059,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Bowl
+      objectReference: {fileID: 0}
+    - target: {fileID: 5470801384485235362, guid: 9f630c734eb8fd2498acba64d54c8ab5,
+        type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9f630c734eb8fd2498acba64d54c8ab5, type: 3}
