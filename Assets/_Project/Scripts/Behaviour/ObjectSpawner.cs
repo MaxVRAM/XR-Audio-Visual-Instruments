@@ -27,6 +27,12 @@ public class ObjectSpawner : MonoBehaviour
     public bool _AutoRemove = true;
     [Range(0f, 2f)]
     public float _SpawnFrequency = 1f;
+    [Tooltip("Duration in seconds before destroying spawned object (0 = do not destroy based on duration).")]
+    [Range(0, 60)]
+    public float _MaxObjectDuration = 0;
+    [Tooltip("Subtract a random amount from a spawned object's duration by this fraction of its max duration.")]
+    [Range(0, 1)]
+    public float _DurationVariance = 0;
     [Range(0f, 3f)]
     public float _SpawnRadius = 0.5f;
     [Header("Object Behaviour")]
@@ -61,13 +67,15 @@ public class ObjectSpawner : MonoBehaviour
         {
             _MaxSpawnsPerFrame = GetSpawnNumber(_SpawnFrequency, ref _TimeSinceSpawn);
             if (_ActiveObjects.Count < _MaxSpawnables && _AutoSpawn)
-                SpawnObject(_MaxSpawnsPerFrame);
+                SpawnNewObject(_MaxSpawnsPerFrame);
             if (_ActiveObjects.Count > _MaxSpawnables && _AutoRemove)
-                RemoveObject(_MaxSpawnsPerFrame);
+                RemoveOverSpawnTarget(_MaxSpawnsPerFrame);
         }
+
+        _ActiveObjects.RemoveAll(item => item == null);
     }
 
-    public void SpawnObject(int maxToSpawn)
+    public void SpawnNewObject(int maxToSpawn)
     {
         while (_ActiveObjects.Count < _MaxSpawnables && maxToSpawn > 0)
         {
@@ -91,18 +99,24 @@ public class ObjectSpawner : MonoBehaviour
                 newHost._RemoteObject = _ControllerObject;
             }
 
+            if (!newObject.TryGetComponent(out DestroyTimer timer))
+                timer = newObject.AddComponent<DestroyTimer>();
+            if (_MaxObjectDuration != 0)
+                timer._Duration = _MaxObjectDuration - _MaxObjectDuration * Random.Range(0, _DurationVariance);
+            
             _ActiveObjects.Add(newObject);
             _TimeSinceSpawn = 0;
             maxToSpawn --;
         }
     }
 
-    public void RemoveObject(int maxToSpawn)
+    public void RemoveOverSpawnTarget(int maxToSpawn)
     {
         while (_ActiveObjects.Count > _MaxSpawnables && maxToSpawn > 0)
         {
-            Destroy(_ActiveObjects[_ActiveObjects.Count - 1]);
-            _ActiveObjects.RemoveAt(_ActiveObjects.Count - 1);
+            if (_ActiveObjects[0] != null)
+                Destroy(_ActiveObjects[0]);
+            //_ActiveObjects.RemoveAt(0);
             maxToSpawn --;
         }
     }

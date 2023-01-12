@@ -3173,10 +3173,12 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _SelectRandomPrefab: 0
   _ActiveObjects: []
-  _MaxSpawnables: 1
+  _MaxSpawnables: 10
   _AutoSpawn: 1
   _AutoRemove: 1
-  _SpawnFrequency: 0.5
+  _SpawnFrequency: 0.3
+  _MaxObjectDuration: 3
+  _DurationVariance: 0.2
   _SpawnRadius: 1
   _BehaviourPrefab: {fileID: 0}
   _TimeSinceSpawn: 0
