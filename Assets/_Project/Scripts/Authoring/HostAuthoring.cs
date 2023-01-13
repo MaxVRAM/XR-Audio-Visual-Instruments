@@ -55,13 +55,13 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(_HostEntity, new EmitterHostComponent
         {
             _HostIndex = index,
-            _Connected = _Connected,
             _InListenerRadius = false,
             _SpeakerIndex = _SpeakerIndex,
+            _Connected = _DedicatedSpeaker != null,
             _HasDedicatedSpeaker = _DedicatedSpeaker != null
         });
 
-        name = "Host " + index + ": " + transform.parent.name;
+        name = $"Host {index}: ${transform.parent.name}";
 
         #if UNITY_EDITOR
                 dstManager.SetName(entity, name);
@@ -129,7 +129,8 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             hostData._Connected = true;
             hostData._HasDedicatedSpeaker = true;
             hostData._SpeakerIndex = _SpeakerIndex;
-            hostData._InListenerRadius = _ListenerDistance < GrainSynth.Instance._ListenerRadius;
+            _InListenerRadius = _ListenerDistance < GrainSynth.Instance._ListenerRadius;
+            hostData._InListenerRadius = _InListenerRadius;
         }
         else
         {
@@ -245,8 +246,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     private void OnDestroy()
     {
         GrainSynth.Instance.DeRegisterHost(this);
-        if (_CollisionPipeComponent != null)
-            _CollisionPipeComponent.RemoveHost(this);
+        if (_CollisionPipeComponent != null) _CollisionPipeComponent.RemoveHost(this);
         DestroyEntity();
     }
 
