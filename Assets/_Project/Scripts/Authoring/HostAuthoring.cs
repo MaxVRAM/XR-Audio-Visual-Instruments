@@ -61,7 +61,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             _HasDedicatedSpeaker = _DedicatedSpeaker != null
         });
 
-        name = $"Host {index}: ${transform.parent.name}";
+        name = $"Host {index}: {transform.parent.name}";
 
         #if UNITY_EDITOR
                 dstManager.SetName(entity, name);

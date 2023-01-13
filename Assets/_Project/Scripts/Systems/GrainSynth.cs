@@ -50,7 +50,7 @@ public class GrainSynth :  MonoBehaviour
     [Range(0, 100)]
     [Tooltip(@"Additional time to buffer processed grains. Set at 0, the grain buffer has a duration of previous frame, 
         and will almost certainly create underrun (dead-spots). Additional time adds latency, but will help produce consistent playback.")]
-    public float _QueueDurationMS = 50;
+    public float _QueueDurationMS = 30;
     public int QueueDurationSamples { get { return (int)(_QueueDurationMS * _SampleRate * .001f); } }
 
     [Header("Registered Components")]
@@ -104,7 +104,7 @@ public class GrainSynth :  MonoBehaviour
                     _EntityManager.SetName(_DSPTimerEntity, "_DSP Timer");
         #endif
 
-        _GrainQuery = _EntityManager.CreateEntityQuery(typeof(GrainProcessorComponent));
+        _GrainQuery = _EntityManager.CreateEntityQuery(typeof(GrainProcessorComponent),typeof(SamplesProcessedTag));
 
         // ---- CREATE SPEAKER MANAGER
         _Listener = FindObjectOfType<AudioListener>();
@@ -138,8 +138,6 @@ public class GrainSynth :  MonoBehaviour
                     _EntityManager.SetName(windowingBlobEntity, "_Grain Windowing Blob");
         #endif
 
-
-
         // ----   CREATE AUDIO SOURCE BLOB ASSETS AND ASSIGN TO AudioClipDataComponent ENTITIES
         for (int i = 0; i < _AudioClips.Length; i++)
         {
@@ -151,29 +149,27 @@ public class GrainSynth :  MonoBehaviour
 
             _AudioClips[i].GetData(clipData, 0);
 
-            using (BlobBuilder blobBuilder = new BlobBuilder(Allocator.Temp))
+            using BlobBuilder blobBuilder = new BlobBuilder(Allocator.Temp);
+            // ---- CREATE BLOB
+            ref FloatBlobAsset audioClipBlobAsset = ref blobBuilder.ConstructRoot<FloatBlobAsset>();
+            BlobBuilderArray<float> audioClipArray = blobBuilder.Allocate(ref audioClipBlobAsset.array, (clipData.Length / clipChannels));
+
+            for (int s = 0; s < clipData.Length - 1; s += clipChannels)
             {
-                // ---- CREATE BLOB
-                ref FloatBlobAsset audioClipBlobAsset = ref blobBuilder.ConstructRoot<FloatBlobAsset>();
-                BlobBuilderArray<float> audioClipArray = blobBuilder.Allocate(ref audioClipBlobAsset.array, (clipData.Length / clipChannels));
-
-                for (int s = 0; s < clipData.Length - 1; s += clipChannels)
-                {
-                    audioClipArray[s / clipChannels] = 0;
-                    // Mono-sum stereo audio files
-                    // TODO: Investigate if audio assets could provide benefit to the EmitterSynth framework. 
-                    for (int c = 0; c < clipChannels; c++)
-                        audioClipArray[s / clipChannels] += clipData[s + c];
-                }
-
-                // ---- CREATE REFERENCE AND ASSIGN TO ENTITY
-                BlobAssetReference<FloatBlobAsset> audioClipBlobAssetRef = blobBuilder.CreateBlobAssetReference<FloatBlobAsset>(Allocator.Persistent);
-                _EntityManager.AddComponentData(audioClipDataEntity, new AudioClipDataComponent { _ClipDataBlobAsset = audioClipBlobAssetRef, _ClipIndex = i });
-
-                #if UNITY_EDITOR
-                    _EntityManager.SetName(audioClipDataEntity, "Audio Clip " + i + ": " + _AudioClips[i].name );
-                #endif
+                audioClipArray[s / clipChannels] = 0;
+                // Mono-sum stereo audio files
+                // TODO: Investigate if audio assets could provide benefit to the EmitterSynth framework. 
+                for (int c = 0; c < clipChannels; c++)
+                    audioClipArray[s / clipChannels] += clipData[s + c];
             }
+
+            // ---- CREATE REFERENCE AND ASSIGN TO ENTITY
+            BlobAssetReference<FloatBlobAsset> audioClipBlobAssetRef = blobBuilder.CreateBlobAssetReference<FloatBlobAsset>(Allocator.Persistent);
+            _EntityManager.AddComponentData(audioClipDataEntity, new AudioClipDataComponent { _ClipDataBlobAsset = audioClipBlobAssetRef, _ClipIndex = i });
+
+#if UNITY_EDITOR
+            _EntityManager.SetName(audioClipDataEntity, "Audio Clip " + i + ": " + _AudioClips[i].name);
+#endif
         }
     }
 
@@ -182,9 +178,7 @@ public class GrainSynth :  MonoBehaviour
         // Update DSP sample
         DSPTimerComponent dspTimer = _EntityManager.GetComponentData<DSPTimerComponent>(_DSPTimerEntity);
         _EntityManager.SetComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample + (int)(Time.deltaTime * _SampleRate), _GrainQueueDuration = QueueDurationSamples });
-
-        NativeArray<Entity> currentGrainProcessors = _GrainQuery.ToEntityArray(Allocator.TempJob);
-
+        
         // Update audio listener position
         _EntityManager.SetComponentData(_ActivationRadiusEntity, new ActivationRadiusComponent
         {
@@ -193,10 +187,10 @@ public class GrainSynth :  MonoBehaviour
             _AttachmentRadius = _SpeakerAttachRadius
         });
 
-
+        NativeArray<Entity> currentGrainProcessors = _GrainQuery.ToEntityArray(Allocator.TempJob);
         _GrainProcessorCount = (int)Mathf.Lerp(_GrainProcessorCount, currentGrainProcessors.Length, Time.deltaTime * 10f);
 
-        //---- Loop through all grain processors and fill its speaker's audio buffer
+        //---- Push grain into associated speaker pooled data object
         for (int i = 0; i < currentGrainProcessors.Length; i++)
         {
             GrainProcessorComponent grainProcessor = _EntityManager.GetComponentData<GrainProcessorComponent>(currentGrainProcessors[i]);
@@ -208,28 +202,25 @@ public class GrainSynth :  MonoBehaviour
                 _UnplayedProcessorsDestroyed ++;
                 continue;
             }
+        
+            GrainData grainData = _Speakers[grainProcessor._SpeakerIndex].GetGrainDataFromPool();
 
-            if (grainProcessor._SamplePopulated)
-            {
-                GrainData grainData = _Speakers[grainProcessor._SpeakerIndex].GetGrainDataFromPool();
+            if (grainData == null)
+                continue;
 
-                if (grainData == null)
-                    continue;
+            NativeArray<float> grainSamples = _EntityManager.GetBuffer<GrainSampleBufferElement>(currentGrainProcessors[i]).Reinterpret<float>().ToNativeArray(Allocator.Temp);
 
-                NativeArray<float> processedSamples = _EntityManager.GetBuffer<GrainSampleBufferElement>(currentGrainProcessors[i]).Reinterpret<float>().ToNativeArray(Allocator.Temp);
+            grainData._IsPlaying = true;
+            grainData._PlayheadIndex = 0;
+            grainData._SizeInSamples = grainSamples.Length;
+            grainData._DSPStartTime = grainProcessor._StartSampleIndex;
+            grainData._PlayheadNormalised = grainProcessor._PlayheadNorm;
 
-                grainData._IsPlaying = true;
-                grainData._PlayheadIndex = 0;
-                grainData._SizeInSamples = processedSamples.Length;
-                grainData._DSPStartTime = grainProcessor._StartSampleIndex;
-                grainData._PlayheadNormalised = grainProcessor._PlayheadNorm;
+            NativeToManagedCopyMemory(grainData._SampleData, grainSamples);
 
-                NativeToManagedCopyMemory(grainData._SampleData, processedSamples);
-
-                // Destroy entity once we have sapped it of it's samply goodness and add playback data to speaker grain pool
-                _EntityManager.DestroyEntity(currentGrainProcessors[i]);
-                _Speakers[grainProcessor._SpeakerIndex].AddGrainPlaybackDataToPool(grainData);
-            }
+            // Destroy entity once we have sapped it of it's samply goodness and add playback data to speaker grain pool
+            _EntityManager.DestroyEntity(currentGrainProcessors[i]);
+            _Speakers[grainProcessor._SpeakerIndex].AddGrainPlaybackDataToPool(grainData);
         }
         currentGrainProcessors.Dispose();
     }
@@ -257,14 +248,17 @@ public class GrainSynth :  MonoBehaviour
         _Speakers.Add(speaker);
     }
 
+    public void DeRegisterSpeaker(SpeakerAuthoring speaker)
+    {
+        _Speakers.Remove(speaker);
+    }
+
     public int RegisterHost(HostAuthoring host)
     {
         _HostCounter++;
         _Hosts.Add(host);
         return _HostCounter - 1;
     }
-
-
     public void DeRegisterHost(HostAuthoring host)
     {
         _Hosts.Remove(host);
@@ -276,7 +270,6 @@ public class GrainSynth :  MonoBehaviour
         _Emitters.Add(emitter);
         return _EmitterCounter - 1;
     }
-
     public void DeRegisterEmitter(EmitterAuthoring emitter)
     {
         _Emitters.Remove(emitter);

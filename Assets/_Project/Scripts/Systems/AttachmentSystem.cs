@@ -80,26 +80,6 @@ public class AttachmentSystem : SystemBase
 
 
 
-
-        // //----    DEACTIVATE/SET POOLED FOR SPEAKERS WITHOUT ATTACHED HOSTS
-        // NativeArray<EmitterHostComponent> hostsWithSpeaker = GetEntityQuery(typeof(EmitterHostComponent)).ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
-        // JobHandle updateSpeakerPoolJob = Entities.WithName("UpdateSpeakerPool").ForEach
-        // (
-        //     (ref PoolingComponent pooling, in SpeakerComponent speaker) =>
-        //     {
-        //         if (pooling._State == PooledState.Active)
-        //         {
-        //             for (int e = 0; e < hostsWithSpeaker.Length; e++)
-        //                 if (hostsWithSpeaker[e]._SpeakerIndex == speaker._SpeakerIndex)
-        //                     // Exit iteration before applying pooled state if attached speaker matches
-        //                     return;
-        //             pooling._State = PooledState.Pooled;
-        //         }
-        //     }
-        // ).WithDisposeOnCompletion(hostsWithSpeaker)
-        // .ScheduleParallel(updateHostRangeJob);
-
-
         //----     SET SPEAKER POSITION TO AVERAGE POSITION OF ATTACHED HOSTS AND POOL DETACHED SPEAKERS
         EntityQuery hostSitQuery = GetEntityQuery(typeof(EmitterHostComponent),typeof(Translation));
         NativeArray<EmitterHostComponent> hostsToSitSpeakers = hostSitQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);

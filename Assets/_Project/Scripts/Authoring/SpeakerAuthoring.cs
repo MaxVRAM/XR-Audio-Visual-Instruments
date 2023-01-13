@@ -207,18 +207,6 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     }
     #endregion
 
-    private void OnDestroy()
-    {
-        DestroyEntity();
-    }
-
-    public void DestroyEntity()
-    {
-        //print("Speaker DestroyEntity");
-        if (World.All.Count != 0 && _SpeakerEntity != null)
-            _EntityManager.DestroyEntity(_SpeakerEntity);
-    }
-
     void ReportGrainsDebug(string action)
     {
         //if (!_DebugLog)
@@ -274,4 +262,18 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             Gizmos.DrawWireSphere(transform.position, _GrainSynth._SpeakerAttachRadius);
         }
     }
+
+    private void OnDestroy()
+    {
+        GrainSynth.Instance.DeRegisterSpeaker(this);
+        DestroyEntity();
+    }
+
+    public void DestroyEntity()
+    {
+        //print("Speaker DestroyEntity");
+        if (World.All.Count != 0 && _SpeakerEntity != null)
+            _EntityManager.DestroyEntity(_SpeakerEntity);
+    }
+
 }

@@ -30,9 +30,9 @@ public struct GrainProcessorComponent : IComponentData
     public float _Pitch;
     public float _Volume;
     public int _SpeakerIndex;
-    public bool _SamplePopulated;
     public int _EffectTailSampleLength;
 }
+public struct SamplesProcessedTag : IComponentData {}
 
 public struct ActivationRadiusComponent : IComponentData
 {
@@ -40,12 +40,10 @@ public struct ActivationRadiusComponent : IComponentData
     public float _ListenerRadius;
     public float _AttachmentRadius;
 }
-
 public struct SpeakerComponent : IComponentData
 {
     public int _SpeakerIndex;
 }
-
 public enum PooledState
 {
     Pooled,
@@ -57,10 +55,7 @@ public struct PoolingComponent : IComponentData
     public int _AttachedHostCount;
 }
 
-public struct PlayingTag : IComponentData {}
 public struct ConnectedTag : IComponentData {}
-public struct PingPongTag : IComponentData {}
-public struct DedicatedSpeakerTag : IComponentData {}
 public struct InListenerRadiusTag : IComponentData {}
 
 public struct EmitterHostComponent : IComponentData
@@ -88,6 +83,8 @@ public struct ModulationComponent : IComponentData
     public bool _LockEndValue;
     public float _InteractionInput;
 }
+public struct PlayingTag : IComponentData {}
+public struct PingPongTag : IComponentData {}
 
 public struct ContinuousComponent : IComponentData
 {
