@@ -18,6 +18,7 @@ public class ObjectSpawner : MonoBehaviour
     public GameObject _PrefabToSpawn;
     public List<GameObject> _SpawnablePrefabs;
     public bool _SelectRandomPrefab = false;
+    protected int _ObjectCounter = 0;
     public List<GameObject> _ActiveObjects = new List<GameObject>();
 
     [Header("Spawn Configuration")]
@@ -88,7 +89,9 @@ public class ObjectSpawner : MonoBehaviour
             GameObject newObject = Instantiate(objectToSpawn,
                 _ControllerObject.transform.position,
                 Quaternion.identity, gameObject.transform);
-            newObject.name = newObject.name + " (" + _ActiveObjects.Count + ")";
+
+            _ObjectCounter++;
+            newObject.name = newObject.name + " (" + _ObjectCounter + ")";
             newObject.transform.localPosition = _ControllerObject.transform.localPosition;
 
             // Set emitter properties if spawned GameObject is an emitter host

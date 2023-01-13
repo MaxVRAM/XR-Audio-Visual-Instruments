@@ -503,10 +503,10 @@ MonoBehaviour:
   _DrawAttachmentLines: 1
   _AttachmentLineMat: {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
   _AttachmentLineWidth: 0.02
-  _MaxDynamicSpeakers: 10
+  _MaxDynamicSpeakers: 0
   _DynamicSpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
     type: 3}
-  _QueueDurationMS: 50
+  _QueueDurationMS: 30
   _Hosts: []
   _Emitters: []
   _Speakers: []
@@ -3173,11 +3173,11 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _SelectRandomPrefab: 0
   _ActiveObjects: []
-  _MaxSpawnables: 10
+  _MaxSpawnables: 1
   _AutoSpawn: 1
   _AutoRemove: 1
-  _SpawnFrequency: 0.3
-  _MaxObjectDuration: 3
+  _SpawnFrequency: 0.5
+  _MaxObjectDuration: 5
   _DurationVariance: 0.2
   _SpawnRadius: 1
   _BehaviourPrefab: {fileID: 0}

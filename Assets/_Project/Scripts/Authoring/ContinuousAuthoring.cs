@@ -34,7 +34,7 @@ public class ContinuousAuthoring : EmitterAuthoring
             _AudioClipIndex = _ClipIndex,
             _SpeakerIndex = _Host._SpeakerIndex,
             _HostIndex = _Host.EntityIndex,
-            _DistanceAmplitude = 1,
+            _AmplitudeOffsetFactor = 1,
             _PingPong = _PingPongGrainPlayheads,
             _LastSampleIndex = GrainSynth.Instance._CurrentDSPSample,
             _OutputSampleRate = AudioSettings.outputSampleRate,
@@ -92,7 +92,7 @@ public class ContinuousAuthoring : EmitterAuthoring
         });
 
         #if UNITY_EDITOR
-                dstManager.SetName(entity, "Grain Emitter:   " + transform.parent.name + " " + name);
+                dstManager.SetName(entity, "Emitter " + index + " (Continuous): " + name + "     Parent: " + transform.parent.name);
         #endif
 
         #endregion
@@ -131,7 +131,7 @@ public class ContinuousAuthoring : EmitterAuthoring
             continuousData._HostIndex = _Host.EntityIndex;
             continuousData._LastSampleIndex = _LastSampleIndex;
             continuousData._PingPong = _PingPongGrainPlayheads;
-            continuousData._DistanceAmplitude = _DistanceAmplitude;
+            continuousData._AmplitudeOffsetFactor = _AmplitudeOffsetFactor;
             continuousData._OutputSampleRate = AudioSettings.outputSampleRate;
 
             continuousData._Playhead = new ModulationComponent

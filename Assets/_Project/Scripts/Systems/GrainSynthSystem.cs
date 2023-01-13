@@ -67,9 +67,9 @@ public class GrainSynthSystem : SystemBase
         var randomArray = World.GetExistingSystem<RandomSystem>().RandomArray;
 
         #region EMIT GRAINS
-        //---   CREATES ENTITIES W/ GRAIN PROCESSOR + GRAIN SAMPLE BUFFER + DSP SAMPLE BUFFER + DSP PARAMS BUFFER
 
-        JobHandle emitGrains = Entities.WithNativeDisableParallelForRestriction(randomArray).ForEach
+        //---   CREATES ENTITIES W/ GRAIN PROCESSOR + GRAIN SAMPLE BUFFER + DSP SAMPLE BUFFER + DSP PARAMS BUFFER
+        JobHandle emitContinuous = Entities.WithNativeDisableParallelForRestriction(randomArray).ForEach
         (
             (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref ContinuousComponent emitter, ref InListenerRadiusTag listenerRadius, ref PlayingTag playing, ref ConnectedTag connected) =>
             {
@@ -100,7 +100,7 @@ public class GrainSynthSystem : SystemBase
                 // Create new grain
                 while (sampleIndexNextGrainStart <= dspTimer._CurrentSampleIndex + dspTimer._GrainQueueDuration && grainCount < maxGrains)
                 {
-                    if (volume * emitter._DistanceAmplitude > 0.001f)
+                    if (volume * emitter._AmplitudeOffsetFactor > 0.001f)
                     {
                         // Prevent infinite loop if there's too many grains for some reason
                         grainCount++;
@@ -126,9 +126,9 @@ public class GrainSynthSystem : SystemBase
                             _PlayheadNorm = playhead,
                             _SampleCount = duration,
                             _Pitch = pitch,
-                            _Volume = volume * emitter._DistanceAmplitude,
+                            _Volume = volume * emitter._AmplitudeOffsetFactor,
                             _SpeakerIndex = emitter._SpeakerIndex,
-                            _StartSampleIndex = sampleIndexNextGrainStart,
+                            _StartTimeDSP = sampleIndexNextGrainStart,
                             _EffectTailSampleLength = dspTailLength,
                             _SamplePopulated = false
                         });
@@ -172,10 +172,12 @@ public class GrainSynthSystem : SystemBase
             }
         ).ScheduleParallel(Dependency);
         // Make sure that the ECB system knows about our job
-        _CommandBufferSystem.AddJobHandleForProducer(emitGrains);
+        _CommandBufferSystem.AddJobHandleForProducer(emitContinuous);
+        
         #endregion
 
         #region BURST GRAINS
+
         JobHandle emitBurst = Entities.WithNativeDisableParallelForRestriction(randomArray).ForEach
         (
             (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref BurstComponent burst, ref InListenerRadiusTag listenerRadius, ref PlayingTag playing, ref ConnectedTag connected) =>
@@ -212,7 +214,7 @@ public class GrainSynthSystem : SystemBase
 
                 while (offset < totalBurstSampleCount)
                 {
-                    if (volume * burst._DistanceAmplitude > 0.001f)
+                    if (volume * burst._AmplitudeOffsetFactor > 0.001f)
                     {
                         grainsCreated++;
 
@@ -246,10 +248,10 @@ public class GrainSynthSystem : SystemBase
                             _SampleCount = duration,
 
                             _Pitch = pitch,
-                            _Volume = volume * burst._DistanceAmplitude,
+                            _Volume = volume * burst._AmplitudeOffsetFactor,
 
                             _SpeakerIndex = burst._SpeakerIndex,
-                            _StartSampleIndex = offset + currentDSPTime,
+                            _StartTimeDSP = offset + currentDSPTime,
                             _SamplePopulated = false,
 
                             _EffectTailSampleLength = dspTailLength
@@ -296,7 +298,7 @@ public class GrainSynthSystem : SystemBase
                 burst._IsPlaying = false;
             }
         ).WithDisposeOnCompletion(audioClipData)
-        .ScheduleParallel(emitGrains);
+        .ScheduleParallel(emitContinuous);
 
         // Make sure that the ECB system knows about our job
         _CommandBufferSystem.AddJobHandleForProducer(emitBurst);

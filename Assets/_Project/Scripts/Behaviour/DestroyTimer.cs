@@ -8,7 +8,6 @@ public class DestroyTimer : MonoBehaviour
     protected float _SpawnTime;
     public float _Duration = -1;
 
-
     void Start()
     {
         _SpawnTime = Time.time;

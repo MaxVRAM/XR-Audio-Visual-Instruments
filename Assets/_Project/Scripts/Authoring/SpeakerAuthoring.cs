@@ -15,7 +15,7 @@ public class GrainData
     public int _PlayheadIndex = 0;
     public float _PlayheadNormalised = 0;
     public int _SizeInSamples = -1;
-    public int _DSPStartTime;
+    public int _StartTimeDSP;
 
     public GrainData(int maxGrainSize)
     {
@@ -51,7 +51,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public int _PooledGrainCount = 0;
     int ActiveGrainPlaybackDataCount { get { return _GrainDataArray.Length - _PooledGrainCount; } }
 
-    readonly int _GrainPlaybackDataToPool = 100;
+    readonly int _GrainPoolSize = 100;
     private int _DebugTotalGrainsCreated = 0;
 
     private AudioSource _AudioSource;
@@ -69,6 +69,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public bool _DebugLog = false;
     [SerializeField]
     private bool _Initialized = false;
+    protected int _CurrentDSPSample;
 
     #endregion
 
@@ -89,7 +90,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _GrainSynth.RegisterSpeaker(this);
 
         #if UNITY_EDITOR
-                dstManager.SetName(_SpeakerEntity, "Speaker " + _SpeakerIndex);
+                dstManager.SetName(_SpeakerEntity, "Speaker " + _SpeakerIndex + " (" + (DedicatedToHost ? "Dedicated" : "Dynamic") + ") ");
         #endif
 
         dstManager.AddComponentData(entity, new SpeakerComponent { _SpeakerIndex = _SpeakerIndex });
@@ -100,9 +101,9 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         }
 
         //---   CREATE GRAIN DATA ARRAY - CURRENT MAXIMUM LENGTH SET TO ONE SECOND OF SAMPLES      
-        _GrainDataArray = new GrainData[_GrainPlaybackDataToPool];
+        _GrainDataArray = new GrainData[_GrainPoolSize];
 
-        for (int i = 0; i < _GrainPlaybackDataToPool; i++)
+        for (int i = 0; i < _GrainPoolSize; i++)
             _GrainDataArray[i] = CreateNewGrain();
 
         _PooledGrainCount = _GrainDataArray.Length;
@@ -139,9 +140,11 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         //---   Pool playback finished playback data for re-use.
         for (int i = 0; i < _GrainDataArray.Length; i++)
         {
-            if (!_GrainDataArray[i]._IsPlaying && _GrainDataArray[i]._PlayheadIndex >= _GrainDataArray[i]._SizeInSamples && _GrainDataArray[i]._Pooled == false)
+            if (_GrainDataArray[i]._Pooled == false && _GrainDataArray[i]._IsPlaying == true && (
+                _GrainDataArray[i]._PlayheadIndex >= _GrainDataArray[i]._SizeInSamples ||
+                _GrainDataArray[i]._StartTimeDSP < _CurrentDSPSample))
             {
-                _GrainDataArray[i]._Pooled = true;
+                ClearGrainDataObject(i);
                 _PooledGrainCount++;
             }
         }
@@ -151,39 +154,41 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         {
             transform.position = _EntityManager.GetComponentData<Translation>(_SpeakerEntity).Value;
             _SpeakerComponent = _EntityManager.GetComponentData<SpeakerComponent>(_SpeakerEntity);
-            bool currentlyActive = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._State == PooledState.Active;
+            bool newActiveState = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._State == PooledState.Active;
             //---   Reset playback grain data pool when the speaker disconnects
-            if (_IsActive && !currentlyActive)
+            if (_IsActive && !newActiveState)
             {
                 for (int i = 0; i < _GrainDataArray.Length; i++)
-                {
-                    _GrainDataArray[i]._Pooled = true;
-                    _GrainDataArray[i]._IsPlaying = false;
-                }
+                    ClearGrainDataObject(i);
                 _PooledGrainCount = _GrainDataArray.Length;
             }
             //---   SET MESH VISIBILITY AND VOLUME BASED ON CONNECTION TO EMITTER
-            _TargetVolume = currentlyActive ? 1 : 0;
+            _TargetVolume = newActiveState ? 1 : 0;
             _AudioSource.volume = Mathf.Lerp(_AudioSource.volume, _TargetVolume, Time.deltaTime * _VolumeSmoothing);
             if (_TargetVolume == 0 && _AudioSource.volume < .005f)
                 _AudioSource.volume = 0;
             if (_MeshRenderer != null)
-                _MeshRenderer.enabled = currentlyActive;
-
-            _IsActive = currentlyActive;
+                _MeshRenderer.enabled = newActiveState;
+            _IsActive = newActiveState;
         }
         #endregion
     }
 
+    public void ClearGrainDataObject(int index)
+    {
+        _GrainDataArray[index]._StartTimeDSP = int.MaxValue;
+        _GrainDataArray[index]._IsPlaying = false;
+        _GrainDataArray[index]._Pooled = true;
+    }
+
 
     #region GRAIN PLAYBACK DATA POOLING
-    public GrainData GetGrainDataFromPool()
+    public GrainData GetPooledGrainDataObject()
     {
         if (!_Initialized)
         {
             return null;            
         }
-        // If pooled grains exist then find the first one
         if (_PooledGrainCount > 0)
             for (int i = 0; i < _GrainDataArray.Length; i++)
             {
@@ -207,18 +212,6 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     }
     #endregion
 
-    private void OnDestroy()
-    {
-        DestroyEntity();
-    }
-
-    public void DestroyEntity()
-    {
-        //print("Speaker DestroyEntity");
-        if (World.All.Count != 0 && _SpeakerEntity != null)
-            _EntityManager.DestroyEntity(_SpeakerEntity);
-    }
-
     void ReportGrainsDebug(string action)
     {
         //if (!_DebugLog)
@@ -228,37 +221,30 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     }
 
 
-
     // AUDIO BUFFER CALLS
     // DSP Buffer size in audio settings
     // Best performance - 46.43991
     // Good latency - 23.21995
     // Best latency - 11.60998
-
-    int _CurrentDSPSample;
     
     void OnAudioFilterRead(float[] data, int channels)
     {
-        if (!_Initialized || _PooledGrainCount == _GrainPlaybackDataToPool)
+        if (!_Initialized || _PooledGrainCount == _GrainPoolSize)
             return;
         
         _CurrentDSPSample = _GrainSynth._CurrentDSPSample;
-        // For length of audio buffer, populate with grain samples, maintaining index over successive buffers
+        // Populate current output buffer with grain samples, maintaining grain playhead index over successive buffers
         for (int dataIndex = 0; dataIndex < data.Length; dataIndex += channels)
             for (int i = 0; i < _GrainDataArray.Length; i++) 
             {
-                if (!_GrainDataArray[i]._IsPlaying)
-                    continue;
-
-                GrainData grainData = _GrainDataArray[i];
-                //---   GRAIN DSP START TIME HAS BEEN REACHED
-                if (_CurrentDSPSample >= grainData._DSPStartTime)
-                    if (grainData._PlayheadIndex >= grainData._SizeInSamples)
-                        grainData._IsPlaying = false;
+                GrainData grain = _GrainDataArray[i];
+                if (grain._IsPlaying && _CurrentDSPSample >= grain._StartTimeDSP)
+                    if (grain._PlayheadIndex >= grain._SizeInSamples)
+                        _GrainDataArray[i]._IsPlaying = false;
                     else
                         for (int chan = 0; chan < channels; chan++)
-                            data[dataIndex + chan] += grainData._SampleData[grainData._PlayheadIndex];
-                        grainData._PlayheadIndex++;
+                            data[dataIndex + chan] += grain._SampleData[grain._PlayheadIndex];
+                        _GrainDataArray[i]._PlayheadIndex++;
             }
     }
 
@@ -273,5 +259,18 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
             Gizmos.DrawWireSphere(transform.position, _GrainSynth._SpeakerAttachRadius);
         }
+    }
+
+    private void OnDestroy()
+    {
+        GrainSynth.Instance.DeregisterSpeaker(this);
+        DestroyEntity();
+    }
+
+    public void DestroyEntity()
+    {
+        //print("Speaker DestroyEntity");
+        if (World.All.Count != 0 && _SpeakerEntity != null)
+            _EntityManager.DestroyEntity(_SpeakerEntity);
     }
 }

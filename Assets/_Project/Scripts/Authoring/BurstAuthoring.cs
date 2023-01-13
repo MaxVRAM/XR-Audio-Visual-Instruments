@@ -36,7 +36,7 @@ public class BurstAuthoring : EmitterAuthoring
             _AudioClipIndex = _ClipIndex,
             _SpeakerIndex = _Host._SpeakerIndex,
             _HostIndex = _Host.EntityIndex,
-            _DistanceAmplitude = 1,
+            _AmplitudeOffsetFactor = 1,
             _PingPong = _PingPongGrainPlayheads,
             _OutputSampleRate = AudioSettings.outputSampleRate,
 
@@ -120,7 +120,7 @@ public class BurstAuthoring : EmitterAuthoring
         });
 
         #if UNITY_EDITOR
-                dstManager.SetName(entity, "Burst Emitter:   " + transform.parent.name + " " + name);
+                dstManager.SetName(entity, "Emitter " + index + " (Burst): " + name + "     Parent: " + transform.parent.name);
         #endif
 
         #endregion
@@ -148,7 +148,7 @@ public class BurstAuthoring : EmitterAuthoring
             burstData._SpeakerIndex = _Host._SpeakerIndex;
             burstData._HostIndex = _Host.EntityIndex;
             burstData._PingPong = _PingPongGrainPlayheads;
-            burstData._DistanceAmplitude = _DistanceAmplitude;
+            burstData._AmplitudeOffsetFactor = _AmplitudeOffsetFactor;
             burstData._OutputSampleRate = AudioSettings.outputSampleRate;
                 
             burstData._BurstDuration = new ModulationComponent

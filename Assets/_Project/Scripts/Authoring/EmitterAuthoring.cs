@@ -26,11 +26,6 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     [Tooltip("Audio clip used as the emitter's content source.")]
     public int _ClipIndex = 0;
 
-    // TODO: Create AudioClipSource and AudioClipLibrary objects to add properties to source
-    // content, making it much easier to create emitter configurations. Adding properties like
-    // tagging/grouping, custom names/descriptions, and per-clip processing; like volume,
-    // compression, and eq; are feasible and would drastically benefit workflow.
-
     [Header("Playback Config")]
     [Range(0.001f, 1f)]
     [Tooltip("Scaling factor applied to the global listener radius value. The result defines the emitter's distance-volume attenuation.")]
@@ -44,7 +39,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public bool _IsPlaying = true;
     public float _TimeExisted = 0;
     public float _AdjustedDistance = 0;
-    public float _DistanceAmplitude = 0;
+    public float _AmplitudeOffsetFactor = 0;
     protected float _ContactSurfaceAttenuation = 1;
     protected int _LastSampleIndex = 0;
     protected float _SamplesPerMS = 0;
@@ -71,17 +66,6 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     }
 
     public virtual void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem) { }
-
-    private void OnDestroy()
-    {
-        DestroyEntity();
-    }
-
-    public void DestroyEntity()
-    {
-        if (World.All.Count != 0 && _EmitterEntity != null)
-            _EntityManager.DestroyEntity(_EmitterEntity);
-    }
 
     public virtual void Initialise() {}
 
@@ -113,10 +97,9 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             dspBuffer.Add(_DSPChainParams[i].GetDSPBufferElement());
     }
 
-    public void UpdateDistanceAmplitude(float distance, float speakerFactor)
+    public void UpdateAdjustedAmplitude(float speakerFactor)
     {
-        _AdjustedDistance = distance / _DistanceAttenuationFactor;
-        _DistanceAmplitude = AudioUtils.ListenerDistanceVolume(_AdjustedDistance) * speakerFactor;
+        _AmplitudeOffsetFactor = speakerFactor * _DistanceAttenuationFactor;
     }
 
     public void NewCollision(Collision collision)
@@ -146,5 +129,17 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         return Mathf.PerlinNoise(
             Time.time + _PerlinSeedArray[parameterIndex],
             (Time.time + _PerlinSeedArray[parameterIndex]) * 0.5f);
+    }
+    
+    private void OnDestroy()
+    {
+        GrainSynth.Instance.DeregisterEmitter(this);
+        DestroyEntity();
+    }
+
+    public void DestroyEntity()
+    {
+        if (World.All.Count != 0 && _EmitterEntity != null)
+            _EntityManager.DestroyEntity(_EmitterEntity);
     }
 }

@@ -19,6 +19,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public bool _IsColliding = false;
     public bool _InListenerRadius = false;
     public float _ListenerDistance = 0;
+    public float _SpeakerOffsetFactor = 1;
 
     [Header("Speaker assignment")]
     [Tooltip("If a dedicated speaker is set, the runtime attachment system will be disabled for this host.")]
@@ -50,19 +51,21 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
         _HostEntity = entity;
-        int index = GrainSynth.Instance.RegisterEmitterHost(this);
+        int index = GrainSynth.Instance.RegisterHost(this);
 
         dstManager.AddComponentData(_HostEntity, new EmitterHostComponent
         {
             _HostIndex = index,
-            _Connected = _Connected,
             _InListenerRadius = false,
             _SpeakerIndex = _SpeakerIndex,
+            _Connected = _DedicatedSpeaker != null,
             _HasDedicatedSpeaker = _DedicatedSpeaker != null
         });
 
+        name = "Host " + index + ": " + transform.parent.name;
+
         #if UNITY_EDITOR
-                dstManager.SetName(entity, "Emitter Host:   " + name);
+                dstManager.SetName(entity, name);
         #endif
 
         _Initialised = true;
@@ -99,10 +102,10 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         if (_DedicatedSpeaker != null)
         {
+            _Connected = true;
             _DedicatedSpeaker.AddEmitterLink(gameObject);                
             _SpeakerIndex = _DedicatedSpeaker.RegisterAndGetIndex();
             _SpeakerTransform = _DedicatedSpeaker.transform;
-            _Connected = true;
         }
     }
 
@@ -116,8 +119,8 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         // Update host translation component.
         Translation translation = _EntityManager.GetComponentData<Translation>(_HostEntity);
         _EntityManager.SetComponentData(_HostEntity, new Translation { Value = transform.position });
-        
         _ListenerDistance = Mathf.Abs((transform.position - _HeadTransform.position).magnitude);
+        _InListenerRadius = _ListenerDistance < GrainSynth.Instance._ListenerRadius;
 
         // ---- START HOST COMPONENT
         EmitterHostComponent hostData = _EntityManager.GetComponentData<EmitterHostComponent>(_HostEntity);        
@@ -127,7 +130,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             hostData._Connected = true;
             hostData._HasDedicatedSpeaker = true;
             hostData._SpeakerIndex = _SpeakerIndex;
-            hostData._InListenerRadius = _ListenerDistance < GrainSynth.Instance._ListenerRadius;
+            hostData._InListenerRadius = _InListenerRadius;
         }
         else
         {
@@ -143,19 +146,15 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _EntityManager.SetComponentData(_HostEntity, hostData);
         // ---- END HOST COMPONENT
 
-        float speakerAmplitudeFactor = 0;
-
         if (_Connected)
-        {
-            speakerAmplitudeFactor = AudioUtils.SpeakerOffsetFactor(
-                transform.position,
+            _SpeakerOffsetFactor = AudioUtils.CalculateSpeakerOffset(
                 _HeadTransform.position,
-                _SpeakerTransform.position);
-        }
+                _SpeakerTransform.position,
+                transform.position);
 
         foreach (EmitterAuthoring emitter in _HostedEmitters)
         {
-            emitter.UpdateDistanceAmplitude(_ListenerDistance / GrainSynth.Instance._ListenerRadius, speakerAmplitudeFactor);
+            emitter.UpdateAdjustedAmplitude(_SpeakerOffsetFactor);
             emitter.UpdateTranslationAndTags();
             if (_Connected && _InListenerRadius)
                 emitter.UpdateEmitterComponents();
@@ -244,6 +243,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     {
         if (_CollisionPipeComponent != null)
             _CollisionPipeComponent.RemoveHost(this);
+        GrainSynth.Instance.DeregisterHost(this);
         DestroyEntity();
     }
 

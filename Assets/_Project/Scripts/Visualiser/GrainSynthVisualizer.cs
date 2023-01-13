@@ -279,9 +279,9 @@ public class GrainSynthVisualizer : MonoBehaviour
             Vector3 size = new Vector3(durationInSeconds, _TimelineScale, .001f);
 
             GrainSynthVisualizerBlock block = _TimelineBlocks[_BlockCounter];
-            block.transform.position = PosFromStartSampleIndex(grainData._DSPStartTime);
+            block.transform.position = PosFromStartSampleIndex(grainData._StartTimeDSP);
             block.transform.localScale = size;
-            block._StartIndex = grainData._DSPStartTime;
+            block._StartIndex = grainData._StartTimeDSP;
             block.gameObject.SetActive(true);
             _BlockCounter++;
             _BlockCounter %= _TimelineBlocks.Length;

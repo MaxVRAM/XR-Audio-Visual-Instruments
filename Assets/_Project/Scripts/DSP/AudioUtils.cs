@@ -31,11 +31,9 @@ public class AudioUtils
     }
 
     // TODO: Check if this is proportionally correct
-    public static float SpeakerOffsetFactor(Vector3 target, Vector3 listener, Vector3 speaker)
+    public static float CalculateSpeakerOffset(Vector3 listener, Vector3 speaker, Vector3 emitter)
     {
-        float speakerDist = Mathf.Abs((listener - speaker).magnitude);
-        float targetDist = Mathf.Abs((listener - target).magnitude);
-        return speakerDist / targetDist;
+        return Mathf.Abs((listener - speaker).magnitude) / Mathf.Abs((listener - emitter).magnitude);
     }
 
     // Inverse square attenuation for audio sources based on distance from the listener
@@ -50,9 +48,9 @@ public class AudioUtils
         float normalisedDistance = Mathf.Clamp(distance / maxDistance, 0f, 1f);
         return Mathf.Clamp(Mathf.Pow(500, -0.5f * normalisedDistance), 0f, 1f);
     }
-    public static float ListenerDistanceVolume(float normalisedDistance)
+    public static float ListenerDistanceVolume(float distanceNorm)
     {
-        normalisedDistance = Mathf.Clamp(normalisedDistance, 0f, 1f);
-        return Mathf.Clamp(Mathf.Pow(500, -0.5f * normalisedDistance), 0f, 1f);
+        distanceNorm = Mathf.Clamp(distanceNorm, 0f, 1f);
+        return Mathf.Clamp(Mathf.Pow(500, -0.5f * distanceNorm), 0f, 1f);
     }
 }

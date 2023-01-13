@@ -24,7 +24,7 @@ public struct WindowingDataComponent : IComponentData
 public struct GrainProcessorComponent : IComponentData
 {
     public AudioClipDataComponent _AudioClipDataComponent;
-    public int _StartSampleIndex;
+    public int _StartTimeDSP;
     public int _SampleCount;
     public float _PlayheadNorm;
     public float _Pitch;
@@ -98,7 +98,7 @@ public struct ContinuousComponent : IComponentData
     public bool _PingPong;
     public bool _IsPlaying;
     public int _OutputSampleRate;
-    public float _DistanceAmplitude;
+    public float _AmplitudeOffsetFactor;
     public int _LastSampleIndex;
     public int _PreviousGrainDuration;
     public ModulationComponent _Playhead;
@@ -117,7 +117,7 @@ public struct BurstComponent : IComponentData
     public bool _PingPong;
     public bool _IsPlaying;
     public int _OutputSampleRate;
-    public float _DistanceAmplitude;
+    public float _AmplitudeOffsetFactor;
     public ModulationComponent _BurstDuration;
     public ModulationComponent _Density;
     public ModulationComponent _Playhead;
