@@ -120,7 +120,7 @@ public class BurstAuthoring : EmitterAuthoring
         });
 
         #if UNITY_EDITOR
-                dstManager.SetName(entity, "Burst Emitter:   " + transform.parent.name + " " + name);
+                dstManager.SetName(entity, "Emitter " + index + " (Burst): " + name + "     Parent: " + transform.parent.name);
         #endif
 
         #endregion

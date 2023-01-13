@@ -72,17 +72,6 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public virtual void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem) { }
 
-    private void OnDestroy()
-    {
-        DestroyEntity();
-    }
-
-    public void DestroyEntity()
-    {
-        if (World.All.Count != 0 && _EmitterEntity != null)
-            _EntityManager.DestroyEntity(_EmitterEntity);
-    }
-
     public virtual void Initialise() {}
 
     public void UpdateTranslationAndTags()
@@ -147,4 +136,17 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             Time.time + _PerlinSeedArray[parameterIndex],
             (Time.time + _PerlinSeedArray[parameterIndex]) * 0.5f);
     }
+
+    private void OnDestroy()
+    {
+        GrainSynth.Instance.DeRegisterEmitter(this);
+        DestroyEntity();
+    }
+
+    public void DestroyEntity()
+    {
+        if (World.All.Count != 0 && _EmitterEntity != null)
+            _EntityManager.DestroyEntity(_EmitterEntity);
+    }
+
 }

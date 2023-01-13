@@ -89,7 +89,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _GrainSynth.RegisterSpeaker(this);
 
         #if UNITY_EDITOR
-                dstManager.SetName(_SpeakerEntity, "Speaker " + _SpeakerIndex);
+                dstManager.SetName(_SpeakerEntity, "Speaker " + _SpeakerIndex + " (" + (DedicatedToHost ? "Dedicated" : "Dynamic") + ") ");
         #endif
 
         dstManager.AddComponentData(entity, new SpeakerComponent { _SpeakerIndex = _SpeakerIndex });

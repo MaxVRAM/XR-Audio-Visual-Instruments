@@ -92,8 +92,9 @@ public class ContinuousAuthoring : EmitterAuthoring
         });
 
         #if UNITY_EDITOR
-                dstManager.SetName(entity, "Grain Emitter:   " + transform.parent.name + " " + name);
+                dstManager.SetName(entity, "Emitter " + index + " (Continuous): " + name + "     Parent: " + transform.parent.name);
         #endif
+
 
         #endregion
 

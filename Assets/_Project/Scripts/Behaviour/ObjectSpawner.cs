@@ -26,6 +26,8 @@ public class ObjectSpawner : MonoBehaviour
     public bool _AutoSpawn = true;
     public bool _AutoRemove = true;
     [Range(0f, 2f)]
+    [SerializeField]
+    protected int _ObjectCounter = 0;
     public float _SpawnFrequency = 1f;
     [Tooltip("Duration in seconds before destroying spawned object (0 = do not destroy based on duration).")]
     [Range(0, 60)]
@@ -88,7 +90,9 @@ public class ObjectSpawner : MonoBehaviour
             GameObject newObject = Instantiate(objectToSpawn,
                 _ControllerObject.transform.position,
                 Quaternion.identity, gameObject.transform);
-            newObject.name = newObject.name + " (" + _ActiveObjects.Count + ")";
+
+             _ObjectCounter++;
+            newObject.name = newObject.name + " (" + _ObjectCounter + ")";
             newObject.transform.localPosition = _ControllerObject.transform.localPosition;
 
             // Set emitter properties if spawned GameObject is an emitter host
