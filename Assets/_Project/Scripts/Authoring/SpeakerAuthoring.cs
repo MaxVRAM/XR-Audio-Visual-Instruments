@@ -83,21 +83,16 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _MeshRenderer = gameObject.GetComponentInChildren<MeshRenderer>();
         _AudioSource = gameObject.GetComponent<AudioSource>();
         _SampleRate = AudioSettings.outputSampleRate;
-
         _SpeakerEntity = entity;
         _GrainSynth = FindObjectOfType<GrainSynth>();
         _GrainSynth.RegisterSpeaker(this);
-
         #if UNITY_EDITOR
                 dstManager.SetName(_SpeakerEntity, "Speaker " + _SpeakerIndex + " (" + (DedicatedToHost ? "Dedicated" : "Dynamic") + ") ");
         #endif
-
         dstManager.AddComponentData(entity, new SpeakerComponent { _SpeakerIndex = _SpeakerIndex });
 
         if (!DedicatedToHost)
-        {
             dstManager.AddComponentData(entity, new PoolingComponent { _State = PooledState.Pooled });
-        }
 
         //---   CREATE GRAIN DATA ARRAY - CURRENT MAXIMUM LENGTH SET TO ONE SECOND OF SAMPLES      
         _GrainDataArray = new GrainData[_GrainPlaybackDataToPool];
@@ -186,24 +181,17 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         // If pooled grains exist then find the first one
         if (_PooledGrainCount > 0)
             for (int i = 0; i < _GrainDataArray.Length; i++)
-            {
                 if (_GrainDataArray[i]._Pooled)
-                {
-                    _GrainDataArray[i]._Pooled = false;
-                    _PooledGrainCount--;
                     return _GrainDataArray[i];
-                }
-            }
         return null;
     }
-
-    //---   (FOR VISUALISATION?) ADDS GRAIN PLAYBACK DATA BACK TO THE POOL  
-    public void AddGrainPlaybackDataToPool(GrainData playbackData)
+ 
+    public void AddGrainPlaybackDataToPool(GrainData grainData)
     {
         if (!_Initialized)
             return;
-
-        OnGrainEmitted?.Invoke(playbackData, _GrainSynth._CurrentDSPSample);
+        _PooledGrainCount--;
+        OnGrainEmitted?.Invoke(grainData, _GrainSynth._CurrentDSPSample);
     }
     #endregion
 

@@ -212,7 +212,7 @@ public class GrainSynth :  MonoBehaviour
             catch (ArgumentOutOfRangeException ex)
             {
                 // TODO - do something with leftover grains from destroyed speakers; assign to temp speaker and fade out, etc? 
-                // Debug.LogWarning($"Speaker ({grainProcessor._SpeakerIndex}) destroyed before playing grains from GrainProcessor: {ex}");
+                Debug.LogWarning($"Speaker ({grainProcessor._SpeakerIndex}) destroyed before playing grains from GrainProcessor: {ex}");
                 continue;
             }
 
@@ -223,17 +223,24 @@ public class GrainSynth :  MonoBehaviour
 
             NativeArray<float> grainSamples = _EntityManager.GetBuffer<GrainSampleBufferElement>(currentGrainProcessors[i]).Reinterpret<float>().ToNativeArray(Allocator.Temp);
 
-            grainData._IsPlaying = true;
-            grainData._PlayheadIndex = 0;
-            grainData._SizeInSamples = grainSamples.Length;
-            grainData._DSPStartTime = grainProcessor._StartSampleIndex;
-            grainData._PlayheadNormalised = grainProcessor._PlayheadNorm;
-
-            NativeToManagedCopyMemory(grainData._SampleData, grainSamples);
+            try
+            {
+                NativeToManagedCopyMemory(grainData._SampleData, grainSamples);
+                grainData._Pooled = false;
+                grainData._IsPlaying = true;
+                grainData._PlayheadIndex = 0;
+                grainData._SizeInSamples = grainSamples.Length;
+                grainData._DSPStartTime = grainProcessor._StartSampleIndex;
+                grainData._PlayheadNormalised = grainProcessor._PlayheadNorm;
+                _Speakers[grainProcessor._SpeakerIndex].AddGrainPlaybackDataToPool(grainData);
+            }
+            catch (ArgumentException ex)
+            {
+                Debug.LogWarning($"Error while copying grain data to managed array for speaker ({grainProcessor._SpeakerIndex}). Killing grain {i}.\n{ex}");
+            }
 
             // Destroy entity once we have sapped it of it's samply goodness and add playback data to speaker grain pool
             _EntityManager.DestroyEntity(currentGrainProcessors[i]);
-            _Speakers[grainProcessor._SpeakerIndex].AddGrainPlaybackDataToPool(grainData);
         }
         currentGrainProcessors.Dispose();
     }
