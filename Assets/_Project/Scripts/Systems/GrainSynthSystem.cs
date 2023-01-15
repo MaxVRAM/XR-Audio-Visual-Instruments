@@ -87,8 +87,13 @@ public class GrainSynthSystem : SystemBase
                 // Compute first grain value
                 int duration = (int)ComputeEmitterParameter(emitter._Duration, randomDuration);
                 float density = ComputeEmitterParameter(emitter._Density, randomDensity);
-                int offset = (int)(emitter._PreviousGrainDuration / density);
-                int sampleIndexNextGrainStart = emitter._LastSampleIndex + offset;
+                int offset = 0;
+                int sampleIndexNextGrainStart = dspTimer._CurrentSampleIndex;
+                if (emitter._LastSampleIndex > 0)
+                {
+                    offset = (int)(emitter._PreviousGrainDuration / density);
+                    sampleIndexNextGrainStart = emitter._LastSampleIndex + offset;
+                }
                 float playhead = ComputeEmitterParameter(emitter._Playhead, randomPlayhead);
                 float volume = ComputeEmitterParameter(emitter._Volume, randomVolume);
                 float transpose = ComputeEmitterParameter(emitter._Transpose, randomTranspose);

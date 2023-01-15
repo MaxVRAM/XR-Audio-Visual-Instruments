@@ -99,7 +99,7 @@ public class GrainSynth :  MonoBehaviour
             CreateSpeaker(transform.position);
 
         _DSPTimerEntity = _EntityManager.CreateEntity();
-        _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample, _GrainQueueDuration = QueueDurationSamples });
+        _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample + QueueDurationSamples, _GrainQueueDuration = QueueDurationSamples });
         #if UNITY_EDITOR
                     _EntityManager.SetName(_DSPTimerEntity, "_DSP Timer");
         #endif
@@ -195,9 +195,11 @@ public class GrainSynth :  MonoBehaviour
         {
             GrainProcessorComponent grainProcessor = _EntityManager.GetComponentData<GrainProcessorComponent>(currentGrainProcessors[i]);
 
-            //----  Remove grain processor if start time is one grain queue length in the past
+            //----  Remove grain processors with start time more than a grain queue length in the past
             if (grainProcessor._StartSampleIndex < _CurrentDSPSample - QueueDurationSamples)
-            {
+            {            
+                // TODO - tell emitter to reset its "LastSampleIndex"?    --- blocked until emitter index added to GrainProcessor component. 
+                // Debug.LogWarning($"KILLING OLD GRAIN.    Current DSP index {_CurrentDSPSample}.   Queue Length Samples {QueueDurationSamples}.    Grain Start Index {grainProcessor._StartSampleIndex}.");
                 _EntityManager.DestroyEntity(currentGrainProcessors[i]);
                 _UnplayedProcessorsDestroyed ++;
                 continue;
@@ -215,8 +217,6 @@ public class GrainSynth :  MonoBehaviour
                 Debug.LogWarning($"Speaker ({grainProcessor._SpeakerIndex}) destroyed before playing grains from GrainProcessor: {ex}");
                 continue;
             }
-
-            //GrainData grainData = _Speakers[grainProcessor._SpeakerIndex].GetGrainDataFromPool();
 
             if (grainData == null)
                 continue;
@@ -326,19 +326,15 @@ public class AudioClipLibrary
         for (int i = 0; i < _Clips.Length; i++)
         {
             AudioClip audioClip = _Clips[i];
-
             if (audioClip.channels > 1)
             {
                 Debug.LogError("Audio clip not mono");
             }
-
             float[] samples = new float[audioClip.samples];
             _Clips[i].GetData(samples, 0);
             _ClipsDataArray.Add(samples);
 
             Debug.Log(String.Format("Clip {0}      Samples: {1}        Time length: {2} ", _Clips[i].name, _ClipsDataArray[i].Length, _ClipsDataArray[i].Length / (float)_Clips[i].frequency));
         }
-
-
     }
 }

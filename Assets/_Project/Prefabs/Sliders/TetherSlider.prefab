@@ -17,7 +17,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2306625122888338322
 Transform:
   m_ObjectHideFlags: 0
@@ -105,8 +105,8 @@ MonoBehaviour:
     _Volume:
       _InputSource: {fileID: 2306625123320307641}
       _InputValue: 0
-      _Idle: 0
-      _InteractionAmount: 1
+      _Idle: 1
+      _InteractionAmount: 0
       _InteractionShape: 1
       _Noise:
         _Amount: 0
@@ -197,7 +197,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2306625123130947476
 Transform:
   m_ObjectHideFlags: 0
@@ -788,7 +788,7 @@ Rigidbody:
   m_Mass: 0.5
   m_Drag: 0.01
   m_AngularDrag: 0.01
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0

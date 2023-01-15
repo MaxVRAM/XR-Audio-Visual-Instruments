@@ -123,7 +123,10 @@ public class ContinuousAuthoring : EmitterAuthoring
             
             // Reset grain offset if attached to a new speaker
             if (_Host._SpeakerIndex != continuousData._SpeakerIndex)
-                continuousData._LastSampleIndex = GrainSynth.Instance._CurrentDSPSample;
+            {
+                //Debug.Log($"{transform.parent.name} has new speaker. Continuous emitter reset LastSampleIndex.");
+                continuousData._LastSampleIndex = -1;
+            }
             else _LastSampleIndex = continuousData._LastSampleIndex;
 
             continuousData._IsPlaying = _IsPlaying;
