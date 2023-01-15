@@ -2780,6 +2780,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
   m_RenderPostProcessing: 0
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
@@ -3173,9 +3174,10 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _SelectRandomPrefab: 0
   _ActiveObjects: []
-  _MaxSpawnables: 10
+  _MaxSpawnables: 1
   _AutoSpawn: 1
   _AutoRemove: 1
+  _ObjectCounter: 0
   _SpawnFrequency: 0.3
   _MaxObjectDuration: 3
   _DurationVariance: 0.2
@@ -3279,6 +3281,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
   m_RenderPostProcessing: 1
   m_Antialiasing: 2
   m_AntialiasingQuality: 2

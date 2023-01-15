@@ -2,6 +2,8 @@
 using Unity.Mathematics;
 using Unity.Transforms;
 
+// TODO - break up into separate scripts
+
 #region ---------- COMPONENTS
 
 public struct DSPTimerComponent : IComponentData
@@ -23,6 +25,7 @@ public struct WindowingDataComponent : IComponentData
 
 public struct GrainProcessorComponent : IComponentData
 {
+    // TODO - add record of emitter index. Could be useful for fading out grains of destroyed emitters, etc.
     public AudioClipDataComponent _AudioClipDataComponent;
     public int _StartSampleIndex;
     public int _SampleCount;

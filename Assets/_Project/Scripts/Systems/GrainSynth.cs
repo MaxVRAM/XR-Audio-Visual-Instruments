@@ -202,8 +202,21 @@ public class GrainSynth :  MonoBehaviour
                 _UnplayedProcessorsDestroyed ++;
                 continue;
             }
-        
-            GrainData grainData = _Speakers[grainProcessor._SpeakerIndex].GetGrainDataFromPool();
+
+            GrainData grainData = null;
+
+            try
+            {
+                grainData = _Speakers[grainProcessor._SpeakerIndex].GetEmptyGrainDataObject();
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                // TODO - do something with leftover grains from destroyed speakers; assign to temp speaker and fade out, etc? 
+                // Debug.LogWarning($"Speaker ({grainProcessor._SpeakerIndex}) destroyed before playing grains from GrainProcessor: {ex}");
+                continue;
+            }
+
+            //GrainData grainData = _Speakers[grainProcessor._SpeakerIndex].GetGrainDataFromPool();
 
             if (grainData == null)
                 continue;

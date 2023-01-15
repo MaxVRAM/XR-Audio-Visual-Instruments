@@ -177,7 +177,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
 
     #region GRAIN PLAYBACK DATA POOLING
-    public GrainData GetGrainDataFromPool()
+    public GrainData GetEmptyGrainDataObject()
     {
         if (!_Initialized)
         {
