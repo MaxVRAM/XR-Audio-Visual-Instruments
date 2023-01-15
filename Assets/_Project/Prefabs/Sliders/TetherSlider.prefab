@@ -255,7 +255,7 @@ MonoBehaviour:
       _InputSource: {fileID: 2306625123323876118}
       _InputValue: 0
       _Default: 100
-      _InteractionAmount: 250
+      _InteractionAmount: 0
       _InteractionShape: 1
       _Noise:
         _Amount: 0.042
@@ -266,7 +266,7 @@ MonoBehaviour:
       _InputSource: {fileID: 0}
       _InputValue: 0
       _Start: 2
-      _End: 5
+      _End: 2
       _InteractionAmount: 0
       _InteractionShape: 1
       _Noise:
@@ -277,8 +277,8 @@ MonoBehaviour:
     _GrainDuration:
       _InputSource: {fileID: 0}
       _InputValue: 0
-      _Start: 50
-      _End: 50
+      _Start: 100
+      _End: 100
       _InteractionAmount: 0
       _InteractionShape: 1
       _Noise:

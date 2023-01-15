@@ -99,7 +99,7 @@ public class GrainSynth :  MonoBehaviour
             CreateSpeaker(transform.position);
 
         _DSPTimerEntity = _EntityManager.CreateEntity();
-        _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample, _GrainQueueDuration = (int)(AudioSettings.outputSampleRate * _QueueDurationMS) });
+        _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample, _GrainQueueDuration = QueueDurationSamples });
         #if UNITY_EDITOR
                     _EntityManager.SetName(_DSPTimerEntity, "_DSP Timer");
         #endif
