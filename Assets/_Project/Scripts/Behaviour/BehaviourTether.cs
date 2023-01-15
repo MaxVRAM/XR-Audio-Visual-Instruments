@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(LineRenderer))]
 public class BehaviourTether : BehaviourClass
 {
-    LineRenderer _Line;
+    public ObjectSpawner _ObjectSpawner;
     public bool _TetherActive = true;
     public bool _TetherVisible = true;
+    public LineRenderer _LinePrototype;
 
     void Start()
     {

@@ -503,10 +503,11 @@ MonoBehaviour:
   _DrawAttachmentLines: 1
   _AttachmentLineMat: {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
   _AttachmentLineWidth: 0.02
-  _MaxDynamicSpeakers: 1
+  _MaxDynamicSpeakers: 10
   _DynamicSpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
     type: 3}
   _QueueDurationMS: 22
+  _AddPrevFramePercentOfSlack: 10
   _Hosts: []
   _Emitters: []
   _Speakers: []
@@ -611,8 +612,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 415cc941bc07c9c49b2c59db6c80e4e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _ObjectSpawner: {fileID: 0}
   _TetherActive: 1
   _TetherVisible: 1
+  _LinePrototype: {fileID: 0}
 --- !u!114 &99037935
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3173,14 +3176,16 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _SelectRandomPrefab: 0
   _ActiveObjects: []
-  _MaxSpawnables: 1
+  _MaxSpawnables: 5
   _AutoSpawn: 1
   _AutoRemove: 1
   _ObjectCounter: 0
-  _SpawnFrequency: 0.3
-  _MaxObjectDuration: 3
-  _DurationVariance: 0.2
+  _SpawnFrequency: 0.5
+  _MaxObjectLifespan: 5
+  _LifespanVariance: 0
   _SpawnRadius: 1
+  _RandomVelocity: 100
+  _RandomAngularVelocity: 100
   _BehaviourPrefab: {fileID: 0}
   _TimeSinceSpawn: 0
   _MaxSpawnsPerFrame: 0
@@ -5063,6 +5068,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Bowl
+      objectReference: {fileID: 0}
+    - target: {fileID: 5470801384485235362, guid: 9f630c734eb8fd2498acba64d54c8ab5,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5470801384485235362, guid: 9f630c734eb8fd2498acba64d54c8ab5,
         type: 3}

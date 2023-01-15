@@ -25,18 +25,25 @@ public class ObjectSpawner : MonoBehaviour
     public int _MaxSpawnables = 1;
     public bool _AutoSpawn = true;
     public bool _AutoRemove = true;
-    [Range(0f, 2f)]
     [SerializeField]
     protected int _ObjectCounter = 0;
+    [Range(0f, 2f)]
     public float _SpawnFrequency = 1f;
     [Tooltip("Duration in seconds before destroying spawned object (0 = do not destroy based on duration).")]
     [Range(0, 60)]
-    public float _MaxObjectDuration = 0;
-    [Tooltip("Subtract a random amount from a spawned object's duration by this fraction of its max duration.")]
+    public float _MaxObjectLifespan = 0;
+    [Tooltip("Subtract a random amount from a spawned object's lifespan by this fraction of its max duration.")]
     [Range(0, 1)]
-    public float _DurationVariance = 0;
+    public float _LifespanVariance = 0;
     [Range(0f, 3f)]
     public float _SpawnRadius = 0.5f;
+    
+    [Header("Spawn Randomisation")]
+    [Range(0, 100)]
+    public float _RandomVelocity = 0;
+    [Range(0, 100)]
+    public float _RandomAngularVelocity = 0;
+
     [Header("Object Behaviour")]
     public BehaviourClass _BehaviourPrefab;
     protected string _Name;
@@ -91,14 +98,23 @@ public class ObjectSpawner : MonoBehaviour
                 _ControllerObject.transform.position,
                 Quaternion.identity, gameObject.transform);
 
+            if (!newObject.TryGetComponent(out Rigidbody rb))
+                rb = newObject.AddComponent<Rigidbody>();
+                
+            Vector3 randomVel = new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f);
+            Vector3 randomAng = new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f);
+
+            rb.AddForce(randomVel * _RandomVelocity);
+            rb.angularVelocity = randomAng * _RandomAngularVelocity;
+
              _ObjectCounter++;
             newObject.name = newObject.name + " (" + _ObjectCounter + ")";
             newObject.transform.localPosition = _ControllerObject.transform.localPosition;
 
             if (!newObject.TryGetComponent(out DestroyTimer timer))
                 timer = newObject.AddComponent<DestroyTimer>();
-            if (_MaxObjectDuration != 0)
-                timer._Lifespan = _MaxObjectDuration - _MaxObjectDuration * Random.Range(0, _DurationVariance);
+            if (_MaxObjectLifespan != 0)
+                timer._Lifespan = _MaxObjectLifespan - _MaxObjectLifespan * Random.Range(0, _LifespanVariance);
             
             // Set emitter properties if spawned GameObject is an emitter host
             HostAuthoring newHost = newObject.GetComponentInChildren(typeof(HostAuthoring), true) as HostAuthoring;
