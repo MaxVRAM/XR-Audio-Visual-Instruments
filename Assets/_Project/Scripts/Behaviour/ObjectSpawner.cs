@@ -95,19 +95,20 @@ public class ObjectSpawner : MonoBehaviour
             newObject.name = newObject.name + " (" + _ObjectCounter + ")";
             newObject.transform.localPosition = _ControllerObject.transform.localPosition;
 
+            if (!newObject.TryGetComponent(out DestroyTimer timer))
+                timer = newObject.AddComponent<DestroyTimer>();
+            if (_MaxObjectDuration != 0)
+                timer._Lifespan = _MaxObjectDuration - _MaxObjectDuration * Random.Range(0, _DurationVariance);
+            
             // Set emitter properties if spawned GameObject is an emitter host
             HostAuthoring newHost = newObject.GetComponentInChildren(typeof(HostAuthoring), true) as HostAuthoring;
             if (newHost != null)
             {
                 newHost._LocalObject = newObject;
                 newHost._RemoteObject = _ControllerObject;
+                newHost.AddBehaviourInputSource(timer);
             }
 
-            if (!newObject.TryGetComponent(out DestroyTimer timer))
-                timer = newObject.AddComponent<DestroyTimer>();
-            if (_MaxObjectDuration != 0)
-                timer._Duration = _MaxObjectDuration - _MaxObjectDuration * Random.Range(0, _DurationVariance);
-            
             _ActiveObjects.Add(newObject);
             _TimeSinceSpawn = 0;
             maxToSpawn --;

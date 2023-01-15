@@ -48,10 +48,11 @@ public class GrainSynth :  MonoBehaviour
 
     [Header("DSP Config")]
     [Range(0, 100)]
-    [Tooltip(@"Additional time to buffer processed grains. Set at 0, the grain buffer has a duration of previous frame, 
-        and will almost certainly create underrun (dead-spots). Additional time adds latency, but will help produce consistent playback.")]
-    public float _QueueDurationMS = 30;
+    [Tooltip("Additional time to buffer processed grains. Set at 0, the grain buffer has a duration of previous frame, and will almost certainly create underrun (dead-spots). Additional time adds latency, but will help produce consistent playback.")]
+    public float _QueueDurationMS = 22;
     public int QueueDurationSamples { get { return (int)(_QueueDurationMS * _SampleRate * .001f); } }
+    [Range(0, 100)]
+    public float _AddPrevFramePercentOfSlack = 10;
 
     [Header("Registered Components")]
     public List<HostAuthoring> _Hosts = new List<HostAuthoring>();
@@ -99,7 +100,7 @@ public class GrainSynth :  MonoBehaviour
             CreateSpeaker(transform.position);
 
         _DSPTimerEntity = _EntityManager.CreateEntity();
-        _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample + QueueDurationSamples, _GrainQueueDuration = QueueDurationSamples });
+        _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent { _NextFrameIndexEstimate = _CurrentDSPSample + QueueDurationSamples, _GrainQueueSampleDuration = QueueDurationSamples });
         #if UNITY_EDITOR
                     _EntityManager.SetName(_DSPTimerEntity, "_DSP Timer");
         #endif
@@ -175,9 +176,13 @@ public class GrainSynth :  MonoBehaviour
 
     private void Update()
     {
-        // Update DSP sample
+        // Update DSP timing
+        int previousFrameSampleDuration = (int)(Time.deltaTime * _SampleRate);
         DSPTimerComponent dspTimer = _EntityManager.GetComponentData<DSPTimerComponent>(_DSPTimerEntity);
-        _EntityManager.SetComponentData(_DSPTimerEntity, new DSPTimerComponent { _CurrentSampleIndex = _CurrentDSPSample + (int)(Time.deltaTime * _SampleRate), _GrainQueueDuration = QueueDurationSamples });
+        _EntityManager.SetComponentData(_DSPTimerEntity, new DSPTimerComponent {
+            _NextFrameIndexEstimate = _CurrentDSPSample + previousFrameSampleDuration + (int)(previousFrameSampleDuration / _AddPrevFramePercentOfSlack / 100),
+            _GrainQueueSampleDuration = QueueDurationSamples,
+            _PreviousFrameSampleDuration = previousFrameSampleDuration });
         
         // Update audio listener position
         _EntityManager.SetComponentData(_ActivationRadiusEntity, new ActivationRadiusComponent
@@ -220,7 +225,7 @@ public class GrainSynth :  MonoBehaviour
                 grainDataObject._PlayheadNormalised = grain._PlayheadNorm;
                 _Speakers[grain._SpeakerIndex].AddGrainPlaybackDataToPool(grainDataObject);
             }
-            catch (ArgumentException ex)
+            catch (Exception ex) when (ex is ArgumentException || ex is NullReferenceException )
             {
                 Debug.LogWarning($"Error while copying grain data to managed array for speaker ({grain._SpeakerIndex}). Killing grain {i}.\n{ex}");
             }

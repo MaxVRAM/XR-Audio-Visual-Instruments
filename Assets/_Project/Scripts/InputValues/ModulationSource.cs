@@ -65,6 +65,8 @@ public class ModulationSource : MonoBehaviour
         _ColliderMaterial = material;
     }
 
+    public virtual void SetBehaviourInput(BehaviourClass behaviour) { }
+
     public virtual void ProcessCollisionValue(Collision collision) { }
 
     public static float Map(float val, float inMin, float inMax, float outMin, float outMax)
@@ -73,7 +75,4 @@ public class ModulationSource : MonoBehaviour
     }
 }
 
-public class BlankModulation : ModulationSource
-{
-
-}
+public class BlankModulation : ModulationSource { }

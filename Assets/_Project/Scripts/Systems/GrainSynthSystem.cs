@@ -63,7 +63,6 @@ public class GrainSynthSystem : SystemBase
         NativeArray<AudioClipDataComponent> audioClipData = GetEntityQuery(typeof(AudioClipDataComponent)).ToComponentDataArray<AudioClipDataComponent>(Allocator.TempJob);
         WindowingDataComponent windowingData = GetSingleton<WindowingDataComponent>();
         DSPTimerComponent dspTimer = GetSingleton<DSPTimerComponent>();
-        float dt = Time.DeltaTime;
         var randomArray = World.GetExistingSystem<RandomSystem>().RandomArray;
 
         #region EMIT GRAINS
@@ -77,6 +76,7 @@ public class GrainSynthSystem : SystemBase
                 int maxGrains = 50;
                 int grainCount = 0;
                 int dspTailLength = 0;
+
                 // Get new random values
                 var randomGen = randomArray[nativeThreadIndex];
                 float randomDuration = randomGen.NextFloat(-1, 1);
@@ -84,25 +84,28 @@ public class GrainSynthSystem : SystemBase
                 float randomPlayhead = randomGen.NextFloat(-1, 1);
                 float randomVolume = randomGen.NextFloat(-1, 1);
                 float randomTranspose = randomGen.NextFloat(-1, 1);
+
                 // Compute first grain value
                 int duration = (int)ComputeEmitterParameter(emitter._Duration, randomDuration);
                 float density = ComputeEmitterParameter(emitter._Density, randomDensity);
                 int offset = 0;
-                int sampleIndexNextGrainStart = dspTimer._CurrentSampleIndex;
+                int sampleIndexNextGrainStart = dspTimer._NextFrameIndexEstimate;
                 if (emitter._LastSampleIndex > 0)
                 {
                     offset = (int)(emitter._PreviousGrainDuration / density);
                     sampleIndexNextGrainStart = emitter._LastSampleIndex + offset;
                 }
                 float playhead = ComputeEmitterParameter(emitter._Playhead, randomPlayhead);
-                float volume = ComputeEmitterParameter(emitter._Volume, randomVolume);
                 float transpose = ComputeEmitterParameter(emitter._Transpose, randomTranspose);
                 float pitch = Mathf.Pow(2, Mathf.Clamp(transpose, -4f, 4f));
 
+                float fadeFactor = FadeFactor(sampleIndexNextGrainStart, emitter._FadeoutStartIndex, emitter._FadeoutEndIndex);
+                float volume = ComputeEmitterParameter(emitter._Volume, randomVolume) * emitter._DistanceAmplitude * fadeFactor;
+
                 // Create new grain
-                while (sampleIndexNextGrainStart <= dspTimer._CurrentSampleIndex + dspTimer._GrainQueueDuration && grainCount < maxGrains)
+                while (sampleIndexNextGrainStart <= dspTimer._NextFrameIndexEstimate + dspTimer._GrainQueueSampleDuration && grainCount < maxGrains)
                 {
-                    if (volume * emitter._DistanceAmplitude > 0.001f)
+                    if (volume > 0.001f)
                     {
                         // Prevent infinite loop if there's too many grains for some reason
                         grainCount++;
@@ -114,7 +117,7 @@ public class GrainSynthSystem : SystemBase
                         
                         dspTailLength = Mathf.Clamp(dspTailLength, 0, emitter._OutputSampleRate - duration);
                         Entity grainProcessorEntity = entityCommandBuffer.CreateEntity(entityInQueryIndex);
-                        //Add ping-pong tag if needed
+                        // Add ping-pong tag if needed
                         int clipLength = audioClipData[emitter._AudioClipIndex]._ClipDataBlobAsset.Value.array.Length;
                         if (emitter._PingPong && playhead * clipLength + duration * pitch >= clipLength)
                             entityCommandBuffer.AddComponent(entityInQueryIndex, grainProcessorEntity, new PingPongTag());
@@ -125,12 +128,11 @@ public class GrainSynthSystem : SystemBase
                             _PlayheadNorm = playhead,
                             _SampleCount = duration,
                             _Pitch = pitch,
-                            _Volume = volume * emitter._DistanceAmplitude,
+                            _Volume = volume,
                             _SpeakerIndex = emitter._SpeakerIndex,
                             _StartSampleIndex = sampleIndexNextGrainStart,
                             _EffectTailSampleLength = dspTailLength
                         });
-
                         // Attach sample and DSP buffers to grain processor
                         entityCommandBuffer.AddBuffer<GrainSampleBufferElement>(entityInQueryIndex, grainProcessorEntity);
                         entityCommandBuffer.AddBuffer<DSPSampleBufferElement>(entityInQueryIndex, grainProcessorEntity);
@@ -162,9 +164,11 @@ public class GrainSynthSystem : SystemBase
                     offset = (int)(duration / density);
                     sampleIndexNextGrainStart += offset;
                     playhead = ComputeEmitterParameter(emitter._Playhead, randomPlayhead);
-                    volume = ComputeEmitterParameter(emitter._Volume, randomVolume);
                     transpose = ComputeEmitterParameter(emitter._Transpose, randomTranspose);
                     pitch = Mathf.Pow(2, Mathf.Clamp(transpose, -4f, 4f));
+
+                    fadeFactor = FadeFactor(sampleIndexNextGrainStart, emitter._FadeoutStartIndex, emitter._FadeoutEndIndex);
+                    volume = ComputeEmitterParameter(emitter._Volume, randomVolume) * emitter._DistanceAmplitude * fadeFactor;
                 }
             }
         ).ScheduleParallel(Dependency);
@@ -179,7 +183,8 @@ public class GrainSynthSystem : SystemBase
             {
                 int grainsCreated = 0;
                 // TODO - CHECK IF THIS NEEDS TO HAVE GRAIN QUEUE DURATION ADDED, POSSIBLE CAUSE OF UNNECESSARY LATENCY ON BURST TRIGGER
-                int currentDSPTime = dspTimer._CurrentSampleIndex + dspTimer._GrainQueueDuration;
+                // int currentDSPTime = dspTimer._CurrentSampleIndex + dspTimer._GrainQueueDuration;
+                int currentDSPTime = dspTimer._NextFrameIndexEstimate;
                 int dspTailLength = 0;
                 var randomGen = randomArray[nativeThreadIndex];
                 int burstDurationRange = (int)(burst._BurstDuration._Max - burst._BurstDuration._Min);
@@ -207,7 +212,6 @@ public class GrainSynthSystem : SystemBase
                     if (volume * burst._DistanceAmplitude > 0.001f)
                     {
                         grainsCreated++;
-
                         // Find the largest delay DSP effect tail in the chain so that the tail can be added to the sample and DSP buffers
                         for (int j = 0; j < dspChain.Length; j++)
                             if (dspChain[j]._DelayBasedEffect)
@@ -230,7 +234,7 @@ public class GrainSynthSystem : SystemBase
                             _Pitch = pitch,
                             _Volume = volume * burst._DistanceAmplitude,
                             _SpeakerIndex = burst._SpeakerIndex,
-                            _StartSampleIndex = offset + currentDSPTime,
+                            _StartSampleIndex = currentDSPTime + offset,
                             _EffectTailSampleLength = dspTailLength
                         });
                         // Attach sample and DSP buffers to grain processor
@@ -242,7 +246,7 @@ public class GrainSynthSystem : SystemBase
                         for (int i = 0; i < dspChain.Length; i++)
                         {
                             DSPParametersElement tempParams = dspChain[i];
-                            tempParams._SampleStartTime = offset + currentDSPTime;
+                            tempParams._SampleStartTime = currentDSPTime + offset;
                             dspParameters.Add(tempParams);
                         }
                     }
@@ -431,6 +435,12 @@ public class GrainSynthSystem : SystemBase
             interaction *= 1 - timeShaped;
         float random = r * mod._Noise * Mathf.Abs(mod._Max - mod._Min);
         return Mathf.Clamp(mod._StartValue + modulationOverTime + interaction + random, mod._Min, mod._Max);
+    }
+
+    public static float FadeFactor(int index, int start, int end)
+    {
+        if (start == -1 || end == -1) return 1;
+        return Mathf.Clamp(Map(index, start, end, 1, 0), 0, 1);
     }
 
     #endregion

@@ -4,31 +4,8 @@ using UnityEngine;
 
 public class BehaviourClass : MonoBehaviour
 {
-    public List<GameObject> _EmitterHosts;
+    void Start() { }
 
-    void Start()
-    {
-        
-    }
+    void Update() { }
 
-    void Update()
-    {
-        
-    }
-
-    public void AddHost(GameObject go)
-    {
-        if (!_EmitterHosts.Contains(go))
-            _EmitterHosts.Add(go);
-    }
-    public void RemoveHost(GameObject go)
-    {
-        if (_EmitterHosts.Contains(go))
-            _EmitterHosts.Remove(go);
-    }
-
-    public void ProcessNewHost()
-    {
-        
-    }
 }

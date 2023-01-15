@@ -8,8 +8,9 @@ using Unity.Transforms;
 
 public struct DSPTimerComponent : IComponentData
 {
-    public int _CurrentSampleIndex;
-    public int _GrainQueueDuration;
+    public int _NextFrameIndexEstimate;
+    public int _GrainQueueSampleDuration;
+    public int _PreviousFrameSampleDuration;
 }
 
 public struct AudioClipDataComponent :IComponentData
@@ -101,6 +102,8 @@ public struct ContinuousComponent : IComponentData
     public float _DistanceAmplitude;
     public int _LastSampleIndex;
     public int _PreviousGrainDuration;
+    public int _FadeoutStartIndex;
+    public int _FadeoutEndIndex;
     public ModulationComponent _Playhead;
     public ModulationComponent _Density;
     public ModulationComponent _Duration;

@@ -506,7 +506,7 @@ MonoBehaviour:
   _MaxDynamicSpeakers: 1
   _DynamicSpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
     type: 3}
-  _QueueDurationMS: 50
+  _QueueDurationMS: 22
   _Hosts: []
   _Emitters: []
   _Speakers: []
@@ -611,7 +611,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 415cc941bc07c9c49b2c59db6c80e4e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _EmitterHosts: []
   _TetherActive: 1
   _TetherVisible: 1
 --- !u!114 &99037935
@@ -3174,7 +3173,7 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _SelectRandomPrefab: 0
   _ActiveObjects: []
-  _MaxSpawnables: 10
+  _MaxSpawnables: 1
   _AutoSpawn: 1
   _AutoRemove: 1
   _ObjectCounter: 0

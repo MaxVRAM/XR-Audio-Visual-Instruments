@@ -16,6 +16,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     protected BlankModulation _BlankInputComponent;
     
     [Header("Runtime Dynamics")]
+    public DestroyTimer _DestroyTimer;
     public bool _IsColliding = false;
     public bool _InListenerRadius = false;
     public float _ListenerDistance = 0;
@@ -32,6 +33,9 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     protected EmitterAttachmentLine _AttachmentLine;
 
     [Header("Interaction Sources")]
+    [Tooltip("List of attached behaviour scripts to use as modulation input sources.")]
+    [SerializeField]
+    protected List<BehaviourClass> _Behaviours;
     [Tooltip("Primary target for generating collision and modulation data for emitters. Defaults parent game object.")]
     public GameObject _LocalObject;
     [Tooltip("Additional object used to generate 'relative' values with against the interaction object. E.g. distance, relative speed, etc.")]
@@ -97,7 +101,8 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             _LocalObject = transform.parent.gameObject;
 
         SetLocalInputSource(_LocalObject);
-        if (_RemoteObject != null) SetRemoteInputSource(_RemoteObject);
+        SetRemoteInputSource(_RemoteObject);
+        UpdateBehaviourModulationInputs();
 
         if (_DedicatedSpeaker != null)
         {
@@ -121,7 +126,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         
         _ListenerDistance = Mathf.Abs((transform.position - _HeadTransform.position).magnitude);
 
-        // ---- START HOST COMPONENT
+        #region START HOST COMPONENT
         EmitterHostComponent hostData = _EntityManager.GetComponentData<EmitterHostComponent>(_HostEntity);        
 
         if (_DedicatedSpeaker != null)
@@ -144,17 +149,15 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             }
         }
         _EntityManager.SetComponentData(_HostEntity, hostData);
-        // ---- END HOST COMPONENT
+        #endregion
 
         float speakerAmplitudeFactor = 0;
 
         if (_Connected)
-        {
             speakerAmplitudeFactor = AudioUtils.SpeakerOffsetFactor(
                 transform.position,
                 _HeadTransform.position,
                 _SpeakerTransform.position);
-        }
 
         foreach (EmitterAuthoring emitter in _HostedEmitters)
         {
@@ -183,22 +186,45 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public void SetLocalInputSource(GameObject go)
     {
         _LocalObject = go;
-        // Set up a collision pipe to send collisions from the targeted object here
-        if (!_LocalObject.TryGetComponent(out _CollisionPipeComponent))
-            _CollisionPipeComponent = _LocalObject.AddComponent<CollisionPipe>();
-        if (_CollisionPipeComponent != null) _CollisionPipeComponent.AddHost(this);
-
-        foreach (ModulationSource source in _ModulationSources)
-            if (!(source is BlankModulation))
-                source._Objects.SetLocalObject(_LocalObject);
+        if (go != null)
+        {
+            // Set up a collision pipe to send collisions from the targeted object here
+            if (!_LocalObject.TryGetComponent(out _CollisionPipeComponent))
+                _CollisionPipeComponent = _LocalObject.AddComponent<CollisionPipe>();
+            if (_CollisionPipeComponent != null)
+                _CollisionPipeComponent.AddHost(this);
+            
+            foreach (ModulationSource source in _ModulationSources)
+                if (!(source is BlankModulation))
+                    source._Objects.SetLocalObject(_LocalObject);
+        }
     }
 
     public void SetRemoteInputSource(GameObject go)
     {
         _RemoteObject = go;
-        foreach (ModulationSource source in _ModulationSources)
-            if (!(source is BlankModulation))
-                source._Objects.SetRemoteObject(_RemoteObject);
+        if (go != null)
+            foreach (ModulationSource source in _ModulationSources)
+                if (!(source is BlankModulation))
+                    source._Objects.SetRemoteObject(_RemoteObject);
+    }
+
+    public void AddBehaviourInputSource(BehaviourClass behaviour)
+    {
+        if (behaviour != null && !_Behaviours.Contains(behaviour))
+            _Behaviours.Add(behaviour);
+    }
+
+    public void UpdateBehaviourModulationInputs()
+    {
+        foreach (BehaviourClass behaviour in _Behaviours)
+        {
+            if (behaviour is DestroyTimer timer)
+                _DestroyTimer = timer;
+            foreach (ModulationSource source in _ModulationSources)
+                if (source is InputBehaviour)
+                    source.SetBehaviourInput(behaviour);
+        }
     }
     
     public void OnCollisionEnter(Collision collision)

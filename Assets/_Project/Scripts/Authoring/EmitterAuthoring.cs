@@ -35,6 +35,9 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     [Range(0.001f, 1f)]
     [Tooltip("Scaling factor applied to the global listener radius value. The result defines the emitter's distance-volume attenuation.")]
     public float _DistanceAttenuationFactor = 1f;
+    [Tooltip("Normalised age to begin fadeout of spawned emitter if a DestroyTimer component is attached.")]
+    [Range(0,1)]
+    public float _NormalisedAgeFadeout = .9f;  // TODO - not implemented yet
     [Tooltip("Reverses the playhead of an individual grain if it reaches the end of the clip during playback instead of outputting 0s.")]
     public bool _PingPongGrainPlayheads = true;
     [Tooltip("Multiplies the emitter's output by the rigidity value of the colliding surface.")]
