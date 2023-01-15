@@ -69,7 +69,7 @@ public class GrainSynth :  MonoBehaviour
     [SerializeField]
     protected int _GrainProcessorCount = 0;
     [SerializeField]
-    protected int _UnplayedProcessorsDestroyed = 0;
+    protected int _UnplayedGrainsDestroyed = 0;
 
 
     private void Awake()
@@ -187,62 +187,47 @@ public class GrainSynth :  MonoBehaviour
             _AttachmentRadius = _SpeakerAttachRadius
         });
 
-        NativeArray<Entity> currentGrainProcessors = _GrainQuery.ToEntityArray(Allocator.TempJob);
-        _GrainProcessorCount = (int)Mathf.Lerp(_GrainProcessorCount, currentGrainProcessors.Length, Time.deltaTime * 10f);
+        NativeArray<Entity> grainEntities = _GrainQuery.ToEntityArray(Allocator.TempJob);
+        _GrainProcessorCount = (int)Mathf.Lerp(_GrainProcessorCount, grainEntities.Length, Time.deltaTime * 10f);
 
-        //---- Push grain into associated speaker pooled data object
-        for (int i = 0; i < currentGrainProcessors.Length; i++)
+        //---- Add new Grains into their associated speaker's unused Grain objects.
+        for (int i = 0; i < grainEntities.Length; i++)
         {
-            GrainProcessorComponent grainProcessor = _EntityManager.GetComponentData<GrainProcessorComponent>(currentGrainProcessors[i]);
-
-            //----  Remove grain processors with start time more than a grain queue length in the past
-            if (grainProcessor._StartSampleIndex < _CurrentDSPSample - QueueDurationSamples)
-            {            
-                // TODO - tell emitter to reset its "LastSampleIndex"?    --- blocked until emitter index added to GrainProcessor component. 
-                // Debug.LogWarning($"KILLING OLD GRAIN.    Current DSP index {_CurrentDSPSample}.   Queue Length Samples {QueueDurationSamples}.    Grain Start Index {grainProcessor._StartSampleIndex}.");
-                _EntityManager.DestroyEntity(currentGrainProcessors[i]);
-                _UnplayedProcessorsDestroyed ++;
+            GrainProcessorComponent grain = _EntityManager.GetComponentData<GrainProcessorComponent>(grainEntities[i]);
+            GrainData grainDataObject;
+            int speakerIndex = grain._SpeakerIndex;
+            //----  Remove old grains or any pointing to invalid/pooled speakers
+            if (speakerIndex >= _Speakers.Count || _Speakers[speakerIndex] == null || grain._StartSampleIndex < _CurrentDSPSample - QueueDurationSamples)
+            {
+                // TODO - tell emitter to reset its "LastSampleIndex"?    --- blocked until emitter index added to Grain component. 
+                // Debug.LogWarning($"KILLING GRAIN.    Speaker {speakerIndex}.    Current DSP index {_CurrentDSPSample}.   Queue Length Samples {QueueDurationSamples}.    Grain Start Index {grain._StartSampleIndex}.");
+                _EntityManager.DestroyEntity(grainEntities[i]);
+                _UnplayedGrainsDestroyed++;
                 continue;
             }
+            else grainDataObject = _Speakers[grain._SpeakerIndex].GetEmptyGrainDataObject();
 
-            GrainData grainData = null;
-
+            // Populate empty GrainData object with fresh grain and pass it back to the speaker to play
+            NativeArray<float> grainSamples = _EntityManager.GetBuffer<GrainSampleBufferElement>(grainEntities[i]).Reinterpret<float>().ToNativeArray(Allocator.Temp);
             try
             {
-                grainData = _Speakers[grainProcessor._SpeakerIndex].GetEmptyGrainDataObject();
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                // TODO - do something with leftover grains from destroyed speakers; assign to temp speaker and fade out, etc? 
-                Debug.LogWarning($"Speaker ({grainProcessor._SpeakerIndex}) destroyed before playing grains from GrainProcessor: {ex}");
-                continue;
-            }
-
-            if (grainData == null)
-                continue;
-
-            NativeArray<float> grainSamples = _EntityManager.GetBuffer<GrainSampleBufferElement>(currentGrainProcessors[i]).Reinterpret<float>().ToNativeArray(Allocator.Temp);
-
-            try
-            {
-                NativeToManagedCopyMemory(grainData._SampleData, grainSamples);
-                grainData._Pooled = false;
-                grainData._IsPlaying = true;
-                grainData._PlayheadIndex = 0;
-                grainData._SizeInSamples = grainSamples.Length;
-                grainData._DSPStartTime = grainProcessor._StartSampleIndex;
-                grainData._PlayheadNormalised = grainProcessor._PlayheadNorm;
-                _Speakers[grainProcessor._SpeakerIndex].AddGrainPlaybackDataToPool(grainData);
+                NativeToManagedCopyMemory(grainDataObject._SampleData, grainSamples);
+                grainDataObject._Pooled = false;
+                grainDataObject._IsPlaying = true;
+                grainDataObject._PlayheadIndex = 0;
+                grainDataObject._SizeInSamples = grainSamples.Length;
+                grainDataObject._DSPStartTime = grain._StartSampleIndex;
+                grainDataObject._PlayheadNormalised = grain._PlayheadNorm;
+                _Speakers[grain._SpeakerIndex].AddGrainPlaybackDataToPool(grainDataObject);
             }
             catch (ArgumentException ex)
             {
-                Debug.LogWarning($"Error while copying grain data to managed array for speaker ({grainProcessor._SpeakerIndex}). Killing grain {i}.\n{ex}");
+                Debug.LogWarning($"Error while copying grain data to managed array for speaker ({grain._SpeakerIndex}). Killing grain {i}.\n{ex}");
             }
-
             // Destroy entity once we have sapped it of it's samply goodness and add playback data to speaker grain pool
-            _EntityManager.DestroyEntity(currentGrainProcessors[i]);
+            _EntityManager.DestroyEntity(grainEntities[i]);
         }
-        currentGrainProcessors.Dispose();
+        grainEntities.Dispose();
     }
 
 
@@ -260,6 +245,7 @@ public class GrainSynth :  MonoBehaviour
 
     public void RegisterSpeaker(SpeakerAuthoring speaker)
     {
+        // TODO - should use null entry before adding one to the end 
         if (speaker._Registered || _Speakers.Contains(speaker))
             return;
         speaker._SpeakerIndex = _Speakers.Count;
@@ -270,6 +256,8 @@ public class GrainSynth :  MonoBehaviour
 
     public void DeRegisterSpeaker(SpeakerAuthoring speaker)
     {
+        // TODO - replace with null and change RegisterSpeaker() to find first null slot.
+        // Removing speakers from list will cause issues with indexing.
         _Speakers.Remove(speaker);
     }
 

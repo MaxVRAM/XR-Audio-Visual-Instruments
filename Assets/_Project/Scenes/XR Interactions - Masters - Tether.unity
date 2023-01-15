@@ -503,7 +503,7 @@ MonoBehaviour:
   _DrawAttachmentLines: 1
   _AttachmentLineMat: {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
   _AttachmentLineWidth: 0.02
-  _MaxDynamicSpeakers: 10
+  _MaxDynamicSpeakers: 1
   _DynamicSpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
     type: 3}
   _QueueDurationMS: 50
@@ -513,7 +513,7 @@ MonoBehaviour:
   _SampleRate: 0
   _CurrentDSPSample: 0
   _GrainProcessorCount: 0
-  _UnplayedProcessorsDestroyed: 0
+  _UnplayedGrainsDestroyed: 0
 --- !u!4 &24721014
 Transform:
   m_ObjectHideFlags: 0
@@ -593,7 +593,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 99037932}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.69, y: 0.308, z: 1.261}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.14999999, y: 0.14999999, z: 0.14999999}
   m_Children: []
   m_Father: {fileID: 1064300460}
@@ -3174,7 +3174,7 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _SelectRandomPrefab: 0
   _ActiveObjects: []
-  _MaxSpawnables: 1
+  _MaxSpawnables: 10
   _AutoSpawn: 1
   _AutoRemove: 1
   _ObjectCounter: 0
