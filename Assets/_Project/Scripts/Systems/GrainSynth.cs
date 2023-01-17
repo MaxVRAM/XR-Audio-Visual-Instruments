@@ -1,19 +1,21 @@
-﻿using Unity.Burst;
-using Unity.Collections;
+﻿using Unity.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
-using Unity.Jobs;
 using Unity.Mathematics;
-using Unity.Transforms;
 using UnityEngine;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine.Profiling;
 using System;
-using System.Linq;
-using Unity.Entities.UniversalDelegates;
-using Unity.Entities.CodeGeneratedJobForEach;
-using Random = UnityEngine.Random;
 using System.Runtime.InteropServices;
+
+
+    // PROJECT AUDIO CONFIGURATION NOTES
+    // ---------------------------------
+
+        // DSP Buffer size in audio settings
+        // Best performance - 46.43991
+        // Good latency - 23.21995
+        // Best latency - 11.60998
+
 
 [RequireComponent(typeof(AudioSource))]
 public class GrainSynth :  MonoBehaviour
@@ -81,14 +83,9 @@ public class GrainSynth :  MonoBehaviour
 
     public int RegisterAudioClip(AudioClip clip)
     {
-        int index = 0;
-        if(_AudioClipList.Contains(clip)) index = _AudioClipList.IndexOf(clip);
-        else
-        {
+        if (!_AudioClipList.Contains(clip))
             _AudioClipList.Add(clip);
-            index = _AudioClipList.IndexOf(clip);
-        }
-        return index;
+        return _AudioClipList.IndexOf(clip);
     }
 
     public void Start()

@@ -145,10 +145,11 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (!DedicatedToHost)
         {
             transform.position = _EntityManager.GetComponentData<Translation>(_SpeakerEntity).Value;
+            transform.localScale = Vector3.one * GrainSynth.Instance._SpeakerAttachRadius;
             _SpeakerComponent = _EntityManager.GetComponentData<SpeakerComponent>(_SpeakerEntity);
-            bool currentlyActive = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._State == PooledState.Active;
+            bool currentActiveState = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._State == PooledState.Active;
             //---   Reset playback grain data pool when the speaker disconnects
-            if (_IsActive && !currentlyActive)
+            if (_IsActive && !currentActiveState)
             {
                 for (int i = 0; i < _GrainDataArray.Length; i++)
                 {
@@ -158,14 +159,14 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
                 _PooledGrainCount = _GrainDataArray.Length;
             }
             //---   SET MESH VISIBILITY AND VOLUME BASED ON CONNECTION TO EMITTER
-            _TargetVolume = currentlyActive ? 1 : 0;
+            _TargetVolume = currentActiveState ? 1 : 0;
             _AudioSource.volume = Mathf.Lerp(_AudioSource.volume, _TargetVolume, Time.deltaTime * _VolumeSmoothing);
             if (_TargetVolume == 0 && _AudioSource.volume < .005f)
                 _AudioSource.volume = 0;
             if (_MeshRenderer != null)
-                _MeshRenderer.enabled = currentlyActive;
+                _MeshRenderer.enabled = currentActiveState;
 
-            _IsActive = currentlyActive;
+            _IsActive = currentActiveState;
         }
         #endregion
     }
@@ -203,13 +204,6 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         print(name + "---------------------------  " + action + "       A: " + ActiveGrainPlaybackDataCount + "  P: " + _PooledGrainCount + "      T: " + _DebugTotalGrainsCreated);        
     }
 
-
-
-    // AUDIO BUFFER CALLS
-    // DSP Buffer size in audio settings
-    // Best performance - 46.43991
-    // Good latency - 23.21995
-    // Best latency - 11.60998
 
     int _CurrentDSPSample;
     

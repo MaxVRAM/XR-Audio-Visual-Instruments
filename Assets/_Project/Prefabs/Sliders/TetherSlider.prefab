@@ -84,7 +84,7 @@ MonoBehaviour:
     _GrainDuration:
       _InputSource: {fileID: 9051353317025261681}
       _InputValue: 0
-      _Idle: 100
+      _Idle: 80
       _InteractionAmount: -30
       _InteractionShape: 1
       _Noise:
@@ -95,7 +95,7 @@ MonoBehaviour:
     _Transpose:
       _InputSource: {fileID: 0}
       _InputValue: 0
-      _Idle: 1
+      _Idle: 2
       _InteractionAmount: 0
       _InteractionShape: 1
       _Noise:
@@ -284,21 +284,21 @@ MonoBehaviour:
       _InteractionAmount: 0
       _InteractionShape: 1
       _Noise:
-        _Amount: 0
-        _FreezeOnTrigger: 0
+        _Amount: 0.049
+        _FreezeOnTrigger: 1
       _Min: 5
       _Max: 500
     _Transpose:
       _InputSource: {fileID: 0}
       _InputValue: 0
-      _Start: 1
+      _Start: 1.2
       _End: 0
       _LockEndValue: 1
       _InteractionAmount: 0
       _InteractionShape: 1
       _Noise:
-        _Amount: 0
-        _FreezeOnTrigger: 0
+        _Amount: 0.039
+        _FreezeOnTrigger: 1
       _Min: -3
       _Max: 3
     _Volume:
