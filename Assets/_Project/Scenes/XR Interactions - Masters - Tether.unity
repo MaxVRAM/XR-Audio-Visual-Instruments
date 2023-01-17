@@ -499,15 +499,17 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 498da90aba050804a9acbc57ef2a5a4f, type: 3}
   - {fileID: 8300000, guid: b9c3d3d2da763fd488bacd296677499f, type: 3}
   _ListenerRadius: 10
-  _SpeakerAttachRadius: 1
-  _DrawAttachmentLines: 1
-  _AttachmentLineMat: {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
-  _AttachmentLineWidth: 0.02
-  _MaxDynamicSpeakers: 40
   _DynamicSpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
     type: 3}
-  _QueueDurationMS: 22
-  _AddPrevFramePercentOfSlack: 10
+  _MaxDynamicSpeakers: 10
+  _SpeakerAttachArcDegrees: 10
+  _SpeakerAttachPositionSmoothing: 0.8
+  _DrawAttachmentLines: 1
+  _AttachmentLineWidth: 0.01
+  _AttachmentLineMat: {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
+  _QueueDurationMS: 24
+  _FramePercentageGrainDelay: 10
+  _DiscardGrainsOlderThanMS: 20
   _Hosts: []
   _Emitters: []
   _Speakers: []
@@ -3176,13 +3178,13 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _SelectRandomPrefab: 0
   _ActiveObjects: []
-  _MaxSpawnables: 30
+  _MaxSpawnables: 5
   _AutoSpawn: 1
   _AutoRemove: 1
   _ObjectCounter: 0
-  _SpawnFrequency: 0.2
+  _SpawnFrequency: 0.5
   _MaxObjectLifespan: 7
-  _LifespanVariance: 0
+  _LifespanVariance: 0.1
   _SpawnRadius: 1
   _RandomVelocity: 50
   _RandomAngularVelocity: 0

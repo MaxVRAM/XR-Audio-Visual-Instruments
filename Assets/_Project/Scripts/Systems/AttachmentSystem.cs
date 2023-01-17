@@ -30,7 +30,7 @@ public class AttachmentSystem : SystemBase
 
         
         DSPTimerComponent dspTimer = GetSingleton<DSPTimerComponent>();       
-        ActivationRadiusComponent activationRanges = GetSingleton<ActivationRadiusComponent>();
+        AttachParameterComponent attachParameters = GetSingleton<AttachParameterComponent>();
 
         EntityQueryDesc speakerQueryDesc = new EntityQueryDesc
         {
@@ -50,8 +50,8 @@ public class AttachmentSystem : SystemBase
                 if (!host._HasDedicatedSpeaker)
                 {
                     // Calculate if host is currently in-range
-                    float listenerDistance = math.distance(translation.Value, activationRanges._ListenerPos);
-                    bool inListenerRadiusNow = listenerDistance < activationRanges._ListenerRadius;
+                    float listenerDistance = math.distance(translation.Value, attachParameters._ListenerPos);
+                    bool inListenerRadiusNow = listenerDistance < attachParameters._ListenerRadius;
 
                     // Update in-range status of host from the listener.
                     if (!inListenerRadiusNow)
@@ -66,7 +66,8 @@ public class AttachmentSystem : SystemBase
                     if (host._Connected)
                     {
                         float emitterToSpeakerDist = math.distance(translation.Value, speakerTranslations[host._SpeakerIndex].Value);
-                        if (speakerPool[host._SpeakerIndex]._State == PooledState.Pooled || emitterToSpeakerDist > activationRanges._AttachmentRadius)
+                        if (speakerPool[host._SpeakerIndex]._State == PooledState.Pooled ||
+                            emitterToSpeakerDist > speakerPool[host._SpeakerIndex]._AttachmentRadius)
                         {
                             host._Connected = false;
                             host._SpeakerIndex = int.MaxValue;
@@ -80,7 +81,7 @@ public class AttachmentSystem : SystemBase
 
 
 
-        //----     SET SPEAKER POSITION TO AVERAGE POSITION OF ATTACHED HOSTS AND POOL DETACHED SPEAKERS
+        //----     CALCULATE SPEAKER ATTACHMENT RADIUS, SET SPEAKER POSITION TO AVERAGE POSITION OF ATTACHED HOSTS AND POOL DETACHED SPEAKERS
         EntityQuery hostSitQuery = GetEntityQuery(typeof(EmitterHostComponent),typeof(Translation));
         NativeArray<EmitterHostComponent> hostsToSitSpeakers = hostSitQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
         NativeArray<Translation> hostTranslations = hostSitQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
@@ -88,39 +89,44 @@ public class AttachmentSystem : SystemBase
         (
             (ref Translation translation, ref PoolingComponent pooling, in SpeakerComponent speaker) =>
             {
-                float xPos = 0;
-                float yPos = 0;
-                float zPos = 0;
+                float3 hostPosSum = new float3(0, 0, 0);
                 int attachedHosts = 0;
                 
                 for (int e = 0; e < hostsToSitSpeakers.Length; e++)
                     if (hostsToSitSpeakers[e]._Connected && hostsToSitSpeakers[e]._SpeakerIndex == speaker._SpeakerIndex)
                     {
-                        xPos += hostTranslations[e].Value.x;
-                        yPos += hostTranslations[e].Value.y;
-                        zPos += hostTranslations[e].Value.z;
+                        hostPosSum += hostTranslations[e].Value;
                         attachedHosts++;
                     }
-
-                pooling._AttachedHostCount = attachedHosts;
                 
                 if (attachedHosts == 0)
                     pooling._State = PooledState.Pooled;
                 else
                 {
-                    if (attachedHosts > 1)
+                    float3 newPos = translation.Value;
+                    float3 targetPos = hostPosSum / attachedHosts;
+                    // Snap to position if speaker was previously pooled, if the proposed position is too far away,
+                    // or if the speaker maintains attached host count of 1.
+                    // NOTE: would be better to test against previously attached host indexes and snap if none are the same.
+                    // TODO: check if it's worth retaining array of host indexes on speaker component. 
+                    if (pooling._State == PooledState.Pooled || (pooling._AttachedHostCount == 1 && attachedHosts == 1) ||
+                            math.distance(translation.Value, targetPos) > pooling._AttachmentRadius)
                     {
-                        xPos /= attachedHosts;
-                        yPos /= attachedHosts;
-                        zPos /= attachedHosts;
+                        newPos = targetPos;
                     }
-                    Translation newTranslation = new Translation();
-                    newTranslation.Value.x = xPos;
-                    newTranslation.Value.y = yPos;
-                    newTranslation.Value.z = zPos;
-                    translation = newTranslation;
+                    else
+                    {
+                        newPos.x = newPos.x.Lerp(targetPos.x, attachParameters._TranslationSmoothing, 0.001f);
+                        newPos.y = newPos.y.Lerp(targetPos.y, attachParameters._TranslationSmoothing, 0.001f);
+                        newPos.z = newPos.z.Lerp(targetPos.z, attachParameters._TranslationSmoothing, 0.001f);
+                    }
+                    // Update attachment radius based on new position. TODO - check if this is the best place to calculate the radius value.
+                    float listenerCircumference = (float)(2 * Math.PI * math.distance(attachParameters._ListenerPos, newPos));
+                    pooling._AttachmentRadius = attachParameters._AttachArcDegrees / 360 * listenerCircumference;
                     pooling._State = PooledState.Active;
+                    translation.Value = newPos;
                 }
+                pooling._AttachedHostCount = attachedHosts;
             }
         ).WithDisposeOnCompletion(hostsToSitSpeakers)
         .WithDisposeOnCompletion(hostTranslations)
@@ -144,10 +150,11 @@ public class AttachmentSystem : SystemBase
                     // Find closest speaker to the host
                     for (int i = 0; i < inRangeSpeaker.Length; i++)
                     {
-                        if (GetComponent<PoolingComponent>(inRangeSpeaker[i])._State == PooledState.Active)
+                        PoolingComponent speaker = GetComponent<PoolingComponent>(inRangeSpeaker[i]);
+                        if (speaker._State == PooledState.Active)
                         {
                             float dist = math.distance(translation.Value, GetComponent<Translation>(inRangeSpeaker[i]).Value);
-                            if (dist < activationRanges._AttachmentRadius)
+                            if (dist < speaker._AttachmentRadius)
                             {
                                 closestDist = dist;
                                 closestSpeakerIndex = GetComponent<SpeakerComponent>(inRangeSpeaker[i])._SpeakerIndex;
@@ -197,12 +204,15 @@ public class AttachmentSystem : SystemBase
                             SetComponent(hostEntities[e], host);
 
                             // Update speaker position
+                            float3 hostPosition = GetComponent<Translation>(hostEntities[e]).Value;
                             Translation speakerTranslation = GetComponent<Translation>(speakerEntities[s]);
-                            speakerTranslation.Value = GetComponent<Translation>(hostEntities[e]).Value;
+                            speakerTranslation.Value = hostPosition;
                             SetComponent(speakerEntities[s], speakerTranslation);
 
-                            // Update speaker pooled status to active
+                            // Set active pooled status and update attachment radius
                             PoolingComponent pooledObj = GetComponent<PoolingComponent>(speakerEntities[s]);
+                            float listenerCircumference = (float)(2 * Math.PI * math.distance(attachParameters._ListenerPos, hostPosition));
+                            pooledObj._AttachmentRadius = attachParameters._AttachArcDegrees / 360 * listenerCircumference;
                             pooledObj._State = PooledState.Active;
                             SetComponent(speakerEntities[s], pooledObj);
 
@@ -216,5 +226,6 @@ public class AttachmentSystem : SystemBase
         .Schedule(linkToActiveSpeakerJob);
 
         Dependency = speakerActivation;
+
     }
 }

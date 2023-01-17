@@ -38,11 +38,12 @@ public struct GrainProcessorComponent : IComponentData
 }
 public struct SamplesProcessedTag : IComponentData {}
 
-public struct ActivationRadiusComponent : IComponentData
+public struct AttachParameterComponent : IComponentData
 {
     public float3 _ListenerPos;
     public float _ListenerRadius;
-    public float _AttachmentRadius;
+    public float _AttachArcDegrees;
+    public float _TranslationSmoothing;
 }
 public struct SpeakerComponent : IComponentData
 {
@@ -57,6 +58,7 @@ public struct PoolingComponent : IComponentData
 {
     public PooledState _State;
     public int _AttachedHostCount;
+    public float _AttachmentRadius;
 }
 
 public struct ConnectedTag : IComponentData {}

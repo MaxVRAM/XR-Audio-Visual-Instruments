@@ -42,33 +42,29 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     protected Entity _SpeakerEntity;
     protected SpeakerComponent _SpeakerComponent;
     protected MeshRenderer _MeshRenderer;
-    protected GrainData[] _GrainDataArray;   
+    protected GrainData[] _GrainDataArray;  
+    private AudioSource _AudioSource; 
     private int _SampleRate;
 
     public GrainSynth _GrainSynth;
     public int _SpeakerIndex = int.MaxValue;
-
-    public int _PooledGrainCount = 0;
-    int ActiveGrainPlaybackDataCount { get { return _GrainDataArray.Length - _PooledGrainCount; } }
-
-    readonly int _GrainPlaybackDataToPool = 100;
-    private int _DebugTotalGrainsCreated = 0;
-
-    private AudioSource _AudioSource;
-    readonly float _VolumeSmoothing = 4;
-    private float _TargetVolume = 0;
-
-    public bool _Registered = false;
-
-    [HideInInspector]
-    public bool DedicatedToHost { get { return _StaticallyPairedEmitters.Count > 0; } }
-    public List<GameObject> _StaticallyPairedEmitters = new List<GameObject>();
-
-    [SerializeField]
-    private bool _IsActive = false;
-    public bool _DebugLog = false;
     [SerializeField]
     private bool _Initialized = false;
+    public bool _Registered = false;
+    [SerializeField]
+    private bool _IsActive = false;
+    public float _AttachmentRadius = 1;
+    public bool _DebugLog = false;
+
+    public int _PooledGrainCount = 0;
+    readonly int _GrainPoolSize = 100;
+    private int _DebugTotalGrainsCreated = 0;
+    readonly float _VolumeSmoothing = 4;
+    private float _TargetVolume = 0;
+    int ActiveGrainPlaybackDataCount { get { return _GrainDataArray.Length - _PooledGrainCount; } }
+    public bool DedicatedToHost { get { return _StaticallyPairedEmitters.Count > 0; } }
+    [HideInInspector]
+    public List<GameObject> _StaticallyPairedEmitters = new List<GameObject>();
 
     #endregion
 
@@ -92,12 +88,15 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(entity, new SpeakerComponent { _SpeakerIndex = _SpeakerIndex });
 
         if (!DedicatedToHost)
-            dstManager.AddComponentData(entity, new PoolingComponent { _State = PooledState.Pooled });
+            dstManager.AddComponentData(entity, new PoolingComponent {
+                _State = PooledState.Pooled,
+                _AttachedHostCount = 0
+            });
 
         //---   CREATE GRAIN DATA ARRAY - CURRENT MAXIMUM LENGTH SET TO ONE SECOND OF SAMPLES      
-        _GrainDataArray = new GrainData[_GrainPlaybackDataToPool];
+        _GrainDataArray = new GrainData[_GrainPoolSize];
 
-        for (int i = 0; i < _GrainPlaybackDataToPool; i++)
+        for (int i = 0; i < _GrainPoolSize; i++)
             _GrainDataArray[i] = CreateNewGrain();
 
         _PooledGrainCount = _GrainDataArray.Length;
@@ -134,7 +133,9 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         //---   Pool playback finished playback data for re-use.
         for (int i = 0; i < _GrainDataArray.Length; i++)
         {
-            if (!_GrainDataArray[i]._IsPlaying && _GrainDataArray[i]._PlayheadIndex >= _GrainDataArray[i]._SizeInSamples && _GrainDataArray[i]._Pooled == false)
+            if (!_GrainDataArray[i]._IsPlaying &&
+                _GrainDataArray[i]._PlayheadIndex >= _GrainDataArray[i]._SizeInSamples &&
+                _GrainDataArray[i]._Pooled == false)
             {
                 _GrainDataArray[i]._Pooled = true;
                 _PooledGrainCount++;
@@ -144,9 +145,10 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         #region ---   DYNAMIC EMITTER HOST ATTACHMENT
         if (!DedicatedToHost)
         {
-            transform.position = _EntityManager.GetComponentData<Translation>(_SpeakerEntity).Value;
-            transform.localScale = Vector3.one * GrainSynth.Instance._SpeakerAttachRadius;
             _SpeakerComponent = _EntityManager.GetComponentData<SpeakerComponent>(_SpeakerEntity);
+            transform.position = _EntityManager.GetComponentData<Translation>(_SpeakerEntity).Value;
+            _AttachmentRadius = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._AttachmentRadius;
+            transform.localScale = Vector3.one * _AttachmentRadius;
             bool currentActiveState = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._State == PooledState.Active;
             //---   Reset playback grain data pool when the speaker disconnects
             if (_IsActive && !currentActiveState)
@@ -209,7 +211,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     
     void OnAudioFilterRead(float[] data, int channels)
     {
-        if (!_Initialized || _PooledGrainCount == _GrainPlaybackDataToPool)
+        if (!_Initialized || _PooledGrainCount == _GrainPoolSize)
             return;
         
         _CurrentDSPSample = _GrainSynth._CurrentDSPSample;
@@ -241,7 +243,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             else
                 Gizmos.color = Color.yellow;
 
-            Gizmos.DrawWireSphere(transform.position, _GrainSynth._SpeakerAttachRadius);
+            Gizmos.DrawWireSphere(transform.position, _AttachmentRadius);
         }
     }
 
