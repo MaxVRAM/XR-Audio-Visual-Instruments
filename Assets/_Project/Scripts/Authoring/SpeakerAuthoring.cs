@@ -145,8 +145,8 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         #region ---   DYNAMIC EMITTER HOST ATTACHMENT
         if (!DedicatedToHost)
         {
-            _SpeakerComponent = _EntityManager.GetComponentData<SpeakerComponent>(_SpeakerEntity);
             transform.position = _EntityManager.GetComponentData<Translation>(_SpeakerEntity).Value;
+            _SpeakerComponent = _EntityManager.GetComponentData<SpeakerComponent>(_SpeakerEntity);
             _AttachmentRadius = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._AttachmentRadius;
             transform.localScale = Vector3.one * _AttachmentRadius;
             bool currentActiveState = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._State == PooledState.Active;

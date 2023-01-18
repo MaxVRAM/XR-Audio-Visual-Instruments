@@ -50,12 +50,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _GrainSynth: {fileID: 0}
   _SpeakerIndex: 2147483647
-  _PooledGrainCount: 0
-  _Registered: 0
-  _StaticallyPairedEmitters: []
-  _IsActive: 0
-  _DebugLog: 0
   _Initialized: 0
+  _Registered: 0
+  _IsActive: 0
+  _AttachmentRadius: 1
+  _DebugLog: 0
+  _PooledGrainCount: 0
+  _StaticallyPairedEmitters: []
 --- !u!82 &4563112762925737388
 AudioSource:
   m_ObjectHideFlags: 0
@@ -202,7 +203,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enableSpatialization: 1
-  gain: 2
+  gain: 1
   useInvSqr: 1
   near: 0.2
   far: 200

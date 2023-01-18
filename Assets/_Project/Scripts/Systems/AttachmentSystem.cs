@@ -81,7 +81,7 @@ public class AttachmentSystem : SystemBase
 
 
 
-        //----     CALCULATE SPEAKER ATTACHMENT RADIUS, SET SPEAKER POSITION TO AVERAGE POSITION OF ATTACHED HOSTS AND POOL DETACHED SPEAKERS
+        //----     CALCULATE SPEAKER ATTACHMENT RADIUS, SET MOVE TO AVERAGE POSITION OF ATTACHED HOST, OR POOL IF NO LONGER ATTACHED
         EntityQuery hostSitQuery = GetEntityQuery(typeof(EmitterHostComponent),typeof(Translation));
         NativeArray<EmitterHostComponent> hostsToSitSpeakers = hostSitQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
         NativeArray<Translation> hostTranslations = hostSitQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
@@ -100,7 +100,10 @@ public class AttachmentSystem : SystemBase
                     }
                 
                 if (attachedHosts == 0)
+                {
+                    pooling._AttachmentRadius = 0.1f;
                     pooling._State = PooledState.Pooled;
+                }
                 else
                 {
                     float3 newPos = translation.Value;
@@ -111,9 +114,7 @@ public class AttachmentSystem : SystemBase
                     // TODO: check if it's worth retaining array of host indexes on speaker component. 
                     if (pooling._State == PooledState.Pooled || (pooling._AttachedHostCount == 1 && attachedHosts == 1) ||
                             math.distance(translation.Value, targetPos) > pooling._AttachmentRadius)
-                    {
                         newPos = targetPos;
-                    }
                     else
                     {
                         newPos.x = newPos.x.Lerp(targetPos.x, attachParameters._TranslationSmoothing, 0.001f);

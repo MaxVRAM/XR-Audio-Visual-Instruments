@@ -126,7 +126,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             // May need to add fade-out property to the GrainPlayback data component.
             if (_EmitterType == EmitterType.Continuous)
                 _IsPlaying = collision != null;
-            if (_ColliderRigidityVolumeScale && collision.collider.TryGetComponent(out SurfaceParameters surface))
+            if (collision != null && _ColliderRigidityVolumeScale && collision.collider.TryGetComponent(out SurfaceParameters surface))
                 _ContactSurfaceAttenuation = surface._Rigidity;
             else
                 _ContactSurfaceAttenuation = 1;           
