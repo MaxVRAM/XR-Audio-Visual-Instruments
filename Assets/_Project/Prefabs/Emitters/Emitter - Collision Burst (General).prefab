@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 445866981624732426}
   - component: {fileID: 445866981624732429}
   m_Layer: 8
-  m_Name: Emitter - Ball Hit
+  m_Name: Emitter - Collision Burst (General)
   m_TagString: Emitter
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -30,7 +30,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     [SerializeField]
     public int _SpeakerIndex = int.MaxValue;
     [SerializeField]
-    protected AttachmentLineViz _AttachmentLine;
+    protected AttachmentLine _AttachmentLine;
 
     [Header("Interaction Sources")]
     [Tooltip("List of attached behaviour scripts to use as modulation input sources.")]
@@ -88,7 +88,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _HeadTransform = FindObjectOfType<Camera>().transform;
 
         if (!TryGetComponent(out _AttachmentLine))
-            _AttachmentLine = gameObject.AddComponent<AttachmentLineViz>();
+            _AttachmentLine = gameObject.AddComponent<AttachmentLine>();
         _AttachmentLine._TransformA = transform;
 
         _HostedEmitters = transform.parent.GetComponentsInChildren<EmitterAuthoring>();

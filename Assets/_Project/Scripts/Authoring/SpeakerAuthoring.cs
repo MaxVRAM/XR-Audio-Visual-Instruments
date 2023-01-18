@@ -142,6 +142,8 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             }
         }
 
+
+        // TODO - dynamic speakers might be better defined as those spawned by the GrainSynth, not if they are the "dedicated to host"  
         #region ---   DYNAMIC EMITTER HOST ATTACHMENT
         if (!DedicatedToHost)
         {

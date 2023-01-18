@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-public class AttachmentLineViz : MonoBehaviour
+public class AttachmentLine : MonoBehaviour
 {
     protected LineRenderer _Line;
     public bool _Active;
