@@ -117,7 +117,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2306625124509221286}
   serializedVersion: 2
-  m_Mass: 0.5
+  m_Mass: 0.1
   m_Drag: 0.01
   m_AngularDrag: 0.01
   m_UseGravity: 1
@@ -1126,8 +1126,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
         type: 3}
+      propertyPath: _Properties._Playhead._Idle
+      value: 0.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
+        type: 3}
       propertyPath: _ColliderRigidityVolumeScale
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
+        type: 3}
+      propertyPath: _Properties._GrainDuration._Idle
+      value: 80
       objectReference: {fileID: 0}
     - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
         type: 3}
@@ -1144,6 +1154,26 @@ PrefabInstance:
       propertyPath: _Properties._Playhead._InputSource
       value: 
       objectReference: {fileID: 2306625123320307641}
+    - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
+        type: 3}
+      propertyPath: _Properties._Playhead._Noise._Amount
+      value: 0.22
+      objectReference: {fileID: 0}
+    - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
+        type: 3}
+      propertyPath: _Properties._Volume._InteractionShape
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
+        type: 3}
+      propertyPath: _Properties._Volume._InteractionAmount
+      value: 1.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
+        type: 3}
+      propertyPath: _Properties._Density._InteractionAmount
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
         type: 3}
       propertyPath: _Properties._GrainDuration._InputSource

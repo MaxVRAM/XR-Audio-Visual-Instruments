@@ -7,7 +7,7 @@ PhysicMaterial:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Physics - Dirt Ball
-  dynamicFriction: 0.5
+  dynamicFriction: 0
   staticFriction: 0.2
   bounciness: 0.2
   frictionCombine: 0

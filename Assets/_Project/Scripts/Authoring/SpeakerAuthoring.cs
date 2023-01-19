@@ -130,7 +130,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (_DebugLog)
             ReportGrainsDebug("");
 
-        //---   Pool playback finished playback data for re-use.
+        //---   Pool exhausted grain data objects for re-use.
         for (int i = 0; i < _GrainDataArray.Length; i++)
         {
             if (!_GrainDataArray[i]._IsPlaying &&

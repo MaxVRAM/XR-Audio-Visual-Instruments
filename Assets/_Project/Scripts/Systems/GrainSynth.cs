@@ -48,13 +48,13 @@ public class GrainSynth :  MonoBehaviour
 
     [Header("DSP Config")]
     [Range(0, 100)]
-    [Tooltip("Additional ms to buffer processed grains. (e.g. 0) buffer = prev frame duration. (e.g. 22) buffer = prev frame duration + 22 ms. Additional time adds latency, but will help to avoid underrun and produce smoother playback.")]
+    [Tooltip("Additional ms to calculate and queue grains each frame. Set to 0, the grain queue equals the previous frame's duration. Adds latency, but help to avoid underrun. Recommended values > 20ms.")]
     public float _QueueDurationMS = 22;
     [Range(0, 100)]
-    [Tooltip("Offset DSP start index of grains by a percentage of the previous frame duration. Helps to prevent missing grains when the framerate slows, but adds latency to the audio.")]
-    public float _FramePercentageGrainDelay = 10;
+    [Tooltip("Percentage of previous frame duration to delay grain start times of next frame. Adds a predictable amount of latency to help avoid timing issues when the framerate slows.")]
+    public float _PreviousFramePercentageDelay = 10;
     [Range(0, 100)]
-    [Tooltip("Discard unplayed grains with a DSP start index more than this value (ms) in the past.")]
+    [Tooltip("Discard unplayed grains with a DSP start index more than this value (ms) in the past. Prevents clustered grain playback when resources are near their limit.")]
     public float _DiscardGrainsOlderThanMS = 10;
     public int SamplesPerMS { get { return (int)(_SampleRate * .001f); }}
     public int QueueDurationSamples { get { return (int)(_QueueDurationMS * SamplesPerMS); } }
@@ -181,7 +181,7 @@ public class GrainSynth :  MonoBehaviour
         int previousFrameSampleDuration = (int)(Time.deltaTime * _SampleRate);
         DSPTimerComponent dspTimer = _EntityManager.GetComponentData<DSPTimerComponent>(_DSPTimerEntity);
         _EntityManager.SetComponentData(_DSPTimerEntity, new DSPTimerComponent {
-            _NextFrameIndexEstimate = _CurrentDSPSample + previousFrameSampleDuration + (int)(previousFrameSampleDuration / _FramePercentageGrainDelay / 100),
+            _NextFrameIndexEstimate = _CurrentDSPSample + (int)(previousFrameSampleDuration * (1 + _PreviousFramePercentageDelay / 100)),
             _GrainQueueSampleDuration = QueueDurationSamples,
             _PreviousFrameSampleDuration = previousFrameSampleDuration });
         
