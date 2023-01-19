@@ -77,11 +77,11 @@ AudioSource:
   Spatialize: 1
   SpatializePostEffects: 1
   Priority: 128
-  DopplerLevel: 1
+  DopplerLevel: 2
   MinDistance: 0.2
   MaxDistance: 200
   Pan2D: 0
-  rolloffMode: 2
+  rolloffMode: 0
   BypassEffects: 0
   BypassListenerEffects: 0
   BypassReverbZones: 0
@@ -203,10 +203,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enableSpatialization: 1
-  gain: 1
-  useInvSqr: 1
+  gain: 10
+  useInvSqr: 0
   near: 0.2
-  far: 200
+  far: 50
   volumetricRadius: 0
   reverbSend: 0
   enableRfl: 1
