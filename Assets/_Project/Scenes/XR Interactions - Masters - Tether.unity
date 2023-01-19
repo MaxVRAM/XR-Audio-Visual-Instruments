@@ -502,13 +502,13 @@ MonoBehaviour:
   _DynamicSpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
     type: 3}
   _MaxDynamicSpeakers: 10
-  _SpeakerAttachArcDegrees: 10
-  _SpeakerAttachPositionSmoothing: 0.8
+  _SpeakerAttachArcDegrees: 16
+  _SpeakerAttachPositionSmoothing: 0.7
   _DrawAttachmentLines: 1
   _AttachmentLineWidth: 0.01
   _AttachmentLineMat: {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
   _QueueDurationMS: 24
-  _FramePercentageGrainDelay: 10
+  _PreviousFramePercentageDelay: 10
   _DiscardGrainsOlderThanMS: 20
   _Hosts: []
   _Emitters: []
@@ -2066,6 +2066,7 @@ MonoBehaviour:
     _LocalRigidbody: {fileID: 0}
     _RemoteObject: {fileID: 0}
     _RemoteRigidbody: {fileID: 0}
+  _InputValue: 0
   _InputMin: 0
   _InputMax: 1
   _OutputValue: 0
@@ -2760,7 +2761,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1064300459}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.873, y: 1.63, z: 4.665}
+  m_LocalPosition: {x: -0.873, y: 1.63, z: 3.57}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 99037933}
@@ -2786,13 +2787,13 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _SelectRandomPrefab: 0
   _ActiveObjects: []
-  _MaxSpawnables: 4
+  _MaxSpawnables: 1
   _AutoSpawn: 1
   _AutoRemove: 1
   _ObjectCounter: 0
   _SpawnFrequency: 0.5
-  _MaxObjectLifespan: 4
-  _LifespanVariance: 0.3
+  _MaxObjectLifespan: 1
+  _LifespanVariance: 0
   _SpawnRadius: 1
   _RandomVelocity: 1
   _RandomAngularVelocity: 0
@@ -4561,7 +4562,7 @@ PrefabInstance:
     - target: {fileID: 784736715040113787, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: _Properties._Transpose._End
-      value: 1
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 784736715040113787, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
@@ -4576,7 +4577,7 @@ PrefabInstance:
     - target: {fileID: 784736715040113787, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: _Properties._Transpose._Start
-      value: 1
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 784736715040113787, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
@@ -4731,11 +4732,16 @@ PrefabInstance:
     - target: {fileID: 2903093725423820502, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: _InputMax
-      value: 5
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 2903093725423820502, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: _InputProperty
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4285892560819824123, guid: 5d7afc283b1571f4999ce7d45c25b12b,
+        type: 3}
+      propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4903853960118749137, guid: 5d7afc283b1571f4999ce7d45c25b12b,

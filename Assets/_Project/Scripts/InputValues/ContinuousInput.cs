@@ -29,56 +29,56 @@ public class ContinuousInput : ModulationSource
 
     private void Update()
     {
-        float value = _PreviousValue;
+        float newValue = _PreviousValue;
         Rigidbody rb = _Objects._LocalRigidbody;
         if (rb != null)
         {
             switch (_InputProperty)
             {
                 case ContinuousProperty.Speed:
-                    value = rb.velocity.magnitude;
+                    newValue = rb.velocity.magnitude;
                     break;
                 case ContinuousProperty.Acceleration:
-                    value = Mathf.Max((rb.velocity.magnitude - _PreviousValue) / Time.deltaTime, 0f);
+                    newValue = Mathf.Max((rb.velocity.magnitude - _PreviousValue) / Time.deltaTime, 0f);
                     _PreviousValue = rb.velocity.magnitude;
                     break;
                 case ContinuousProperty.Deceleration:
-                    value = Mathf.Abs(Mathf.Min((rb.velocity.magnitude - _PreviousValue) / Time.deltaTime, 0f));
+                    newValue = Mathf.Abs(Mathf.Min((rb.velocity.magnitude - _PreviousValue) / Time.deltaTime, 0f));
                     _PreviousValue = rb.velocity.magnitude;
                     break;
                 case ContinuousProperty.AccelerationAbsolute:
-                    value = Mathf.Abs((rb.velocity.magnitude - _PreviousValue) / Time.deltaTime);
+                    newValue = Mathf.Abs((rb.velocity.magnitude - _PreviousValue) / Time.deltaTime);
                     _PreviousValue = rb.velocity.magnitude;
                     break;
                 case ContinuousProperty.AccelerationDirectional:
-                    value = (rb.velocity.magnitude - _PreviousValue) / Time.deltaTime;
+                    newValue = (rb.velocity.magnitude - _PreviousValue) / Time.deltaTime;
                     _PreviousValue = rb.velocity.magnitude;
                     break;
                 case ContinuousProperty.Scale:
-                    value = _Objects._LocalObject.transform.localScale.magnitude;
+                    newValue = _Objects._LocalObject.transform.localScale.magnitude;
                     break;
                 case ContinuousProperty.Roll:
-                    if (_Colliding) value = rb.angularVelocity.magnitude;
-                    else value = 0;
+                    if (_Colliding) newValue = rb.angularVelocity.magnitude;
+                    else newValue = 0;
                     break;
                 case ContinuousProperty.RollTimesMass:
-                    if (_Colliding) value = rb.angularVelocity.magnitude * (rb.mass / 2 + 0.5f);
-                    else value = 0;
+                    if (_Colliding) newValue = rb.angularVelocity.magnitude * (rb.mass / 2 + 0.5f);
+                    else newValue = 0;
                     break;
                 case ContinuousProperty.Slide:
-                    if (_Colliding) value = rb.velocity.magnitude / rb.angularVelocity.magnitude;
-                    else value = 0;
+                    if (_Colliding) newValue = rb.velocity.magnitude / rb.angularVelocity.magnitude;
+                    else newValue = 0;
                     break;
                 default:
                     break;
             }
         }
-        else value = 0;
-        UpdateSmoothedOutputValue(value, _Smoothing);
+        else newValue = 0;
+        UpdateModulationValue(newValue, _Smoothing);
     }
 
     public void SetAuxValue(float val)
     {
-        UpdateSmoothedOutputValue(val, _Smoothing);
+        UpdateModulationValue(val, _Smoothing);
     }
 }

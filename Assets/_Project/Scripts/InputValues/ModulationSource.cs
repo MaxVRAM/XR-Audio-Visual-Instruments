@@ -28,6 +28,7 @@ public class InputObjects
 public class ModulationSource : MonoBehaviour
 {
     public InputObjects _Objects;
+    public float _InputValue = 0;
     public float _InputMin = 0f;
     public float _InputMax = 1f;
     public float _OutputValue = 0;
@@ -46,12 +47,15 @@ public class ModulationSource : MonoBehaviour
         return _OutputValue;
     }
 
-    public void UpdateSmoothedOutputValue(float value, float smoothing)
+    public void UpdateModulationValue(float value, float smoothing = 0)
     {
-        float newValue = Map(value, _InputMin, _InputMax, 0, 1);
+        _InputValue = value;
+        value = Map(value, _InputMin, _InputMax, 0, 1);
 
-        float actualSmoothing = (1 - smoothing) * 10f;
-        _OutputValue = Mathf.Lerp(_OutputValue, newValue, actualSmoothing * Time.deltaTime);
+        if (smoothing > 0.001f && Mathf.Abs(_OutputValue - value) > 0.001f)
+            _OutputValue = Mathf.Lerp(_OutputValue, value, (1 - smoothing) * 10f * Time.deltaTime);
+        else
+            _OutputValue = value; 
 
         if (_OutputValue < 0.001f)
             _OutputValue = 0;

@@ -48,19 +48,20 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public GrainSynth _GrainSynth;
     public int _SpeakerIndex = int.MaxValue;
-    [SerializeField]
-    private bool _Initialized = false;
-    public bool _Registered = false;
-    [SerializeField]
-    private bool _IsActive = false;
     public float _AttachmentRadius = 1;
-    public bool _DebugLog = false;
-
-    public int _PooledGrainCount = 0;
     readonly int _GrainPoolSize = 100;
+    public int _PooledGrainCount = 0;
     private int _DebugTotalGrainsCreated = 0;
     readonly float _VolumeSmoothing = 4;
     private float _TargetVolume = 0;
+
+    [SerializeField]
+    private bool _Initialized = false;
+    public bool _Registered = false;
+    public bool _DebugLog = false;
+    [SerializeField]
+    private bool _IsActive = false;
+
     int ActiveGrainPlaybackDataCount { get { return _GrainDataArray.Length - _PooledGrainCount; } }
     public bool DedicatedToHost { get { return _StaticallyPairedEmitters.Count > 0; } }
     [HideInInspector]
@@ -207,6 +208,9 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
                 
         print(name + "---------------------------  " + action + "       A: " + ActiveGrainPlaybackDataCount + "  P: " + _PooledGrainCount + "      T: " + _DebugTotalGrainsCreated);        
     }
+
+
+    // TODO -  ADD SAMPLE BUFFER RMS ANALYSIS FOR SPEAKER VISUAL MODULATION
 
 
     int _CurrentDSPSample;

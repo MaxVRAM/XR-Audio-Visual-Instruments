@@ -113,7 +113,7 @@ public class AttachmentSystem : SystemBase
                     // NOTE: would be better to test against previously attached host indexes and snap if none are the same.
                     // TODO: check if it's worth retaining array of host indexes on speaker component. 
                     if (pooling._State == PooledState.Pooled || (pooling._AttachedHostCount == 1 && attachedHosts == 1) ||
-                            math.distance(translation.Value, targetPos) > pooling._AttachmentRadius)
+                            math.distance(translation.Value, targetPos) > pooling._AttachmentRadius * 2)
                         newPos = targetPos;
                     else
                     {

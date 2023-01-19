@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿
 using UnityEngine;
 
 public class CollisionInput : ModulationSource
@@ -9,7 +8,7 @@ public class CollisionInput : ModulationSource
         CollisionForce,
         CollisionForceTimesMass,
         CollisionPoint,
-        CollisionNormal,
+        CollisionNormal
     }
 
     public CollisionProperty _InputProperty;
@@ -17,28 +16,29 @@ public class CollisionInput : ModulationSource
 
     public override void ProcessCollisionValue(Collision collision)
     {
+        float newValue = 0;
         switch (_InputProperty)
         {
             case CollisionProperty.CollisionForce:
-                _OutputValue = collision.relativeVelocity.magnitude;
+                newValue = collision.relativeVelocity.magnitude;
                 break;
             case CollisionProperty.CollisionForceTimesMass:
                 if (_Objects._LocalRigidbody != null)
                     if (_UseMassOfCollider)
                         if (_Objects._RemoteRigidbody != null)
-                            _OutputValue = collision.relativeVelocity.magnitude * (1 - _Objects._RemoteRigidbody.mass / 2);
+                            newValue = collision.relativeVelocity.magnitude * (1 - _Objects._RemoteRigidbody.mass / 2);
                     else
-                        _OutputValue = collision.relativeVelocity.magnitude * _Objects._LocalRigidbody.mass;
+                        newValue = collision.relativeVelocity.magnitude * _Objects._LocalRigidbody.mass;
                 break;
             case CollisionProperty.CollisionPoint:
                 break;
             case CollisionProperty.CollisionNormal:
-                _OutputValue = collision.GetContact(0).normal.magnitude;
+                newValue = collision.GetContact(0).normal.magnitude;
                 break;
             default:
                 break;
         }
-        _OutputValue = Map(_OutputValue, _InputMin, _InputMax, 0, 1);
         
+        UpdateModulationValue(newValue);
     }
 }

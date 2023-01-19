@@ -42,10 +42,10 @@ public class InputBehaviour : ModulationSource
             }
         }
         else value = 0;
-        UpdateSmoothedOutputValue(value, _Smoothing);
+        UpdateModulationValue(value, _Smoothing);
     }
 
     public void SetAuxValue(float val)
     {
-        UpdateSmoothedOutputValue(val, _Smoothing);
+        UpdateModulationValue(val, _Smoothing);
     }}

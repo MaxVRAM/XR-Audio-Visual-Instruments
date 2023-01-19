@@ -105,7 +105,7 @@ public class GrainSynthSystem : SystemBase
                 // Create new grain
                 while (sampleIndexNextGrainStart <= dspTimer._NextFrameIndexEstimate + dspTimer._GrainQueueSampleDuration && grainCount < maxGrains)
                 {
-                    if (volume > 0.001f)
+                    if (volume > 0.005f)
                     {
                         // Prevent infinite loop if there's too many grains for some reason
                         grainCount++;
@@ -188,9 +188,9 @@ public class GrainSynthSystem : SystemBase
                 int dspTailLength = 0;
                 var randomGen = randomArray[nativeThreadIndex];
                 int burstDurationRange = (int)(burst._BurstDuration._Max - burst._BurstDuration._Min);
-                int burstDurationInteraction = (int)(Map(burst._BurstDuration._InteractionInput,
+                int burstDurationInteraction = (int) (Map(burst._BurstDuration._InteractionInput,
                     0, 1, 0, 1, burst._BurstDuration._Shape) * burst._BurstDuration._InteractionAmount);
-                int burstDurationRandom = (int)(randomGen.NextFloat(-1, 1) * burst._BurstDuration._Noise * burstDurationRange);
+                int burstDurationRandom = (int) (randomGen.NextFloat(-1, 1) * burst._BurstDuration._Noise * burstDurationRange);
                 int totalBurstSampleCount = (int) Mathf.Clamp(burst._BurstDuration._StartValue + burstDurationInteraction + burstDurationRandom,
                     burst._BurstDuration._Min, burst._BurstDuration._Max);
                 float randomDensity = randomGen.NextFloat(-1, 1);
@@ -201,7 +201,7 @@ public class GrainSynthSystem : SystemBase
                 // Compute first grain value
                 int offset = 0;
                 float playhead = ComputeBurstParameter(burst._Playhead, offset, totalBurstSampleCount, randomPlayhead);
-                int duration = (int)ComputeBurstParameter(burst._GrainDuration, offset, totalBurstSampleCount, randomGrainDuration);
+                int duration = (int) ComputeBurstParameter(burst._GrainDuration, offset, totalBurstSampleCount, randomGrainDuration);
                 float density = ComputeBurstParameter(burst._Density, offset, totalBurstSampleCount, randomDensity);
                 float transpose = ComputeBurstParameter(burst._Transpose, offset, totalBurstSampleCount, randomTranspose);
                 float volume = ComputeBurstParameter(burst._Volume, offset, totalBurstSampleCount, randomVolume);
@@ -209,7 +209,7 @@ public class GrainSynthSystem : SystemBase
 
                 while (offset < totalBurstSampleCount)
                 {
-                    if (volume * burst._DistanceAmplitude > 0.001f)
+                    if (volume * burst._DistanceAmplitude > 0.005f)
                     {
                         grainsCreated++;
                         // Find the largest delay DSP effect tail in the chain so that the tail can be added to the sample and DSP buffers

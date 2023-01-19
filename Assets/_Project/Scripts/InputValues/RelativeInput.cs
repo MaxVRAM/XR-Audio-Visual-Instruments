@@ -33,63 +33,58 @@ public class RelativeInput : ModulationSource
 
     private void Update()
     {
-        float currentValue = _PreviousValue;
+        float newValue = _PreviousValue;
 
         if (_Objects._LocalRigidbody != null && _Objects._RemoteRigidbody != null)
         {
             switch (_InputProperty)
             {
                 case RelativeProperty.DistanceX:
-                    currentValue = Mathf.Abs(RelativePosition().x);
+                    newValue = Mathf.Abs(RelativePosition().x);
                     break;
                 case RelativeProperty.DistanceY:
-                    currentValue = Mathf.Abs(RelativePosition().y);
+                    newValue = Mathf.Abs(RelativePosition().y);
                     break;
                 case RelativeProperty.DistanceZ:
-                    currentValue = Mathf.Abs(RelativePosition().z);
+                    newValue = Mathf.Abs(RelativePosition().z);
                     break;
                 case RelativeProperty.Radius:
-                    currentValue = Mathf.Abs(RelativePosition().magnitude);
+                    newValue = Mathf.Abs(RelativePosition().magnitude);
                     break;
                 case RelativeProperty.PolarPos:
-                    currentValue = CartToSpherical(RelativePosition()).x;
+                    newValue = CartToSpherical(RelativePosition()).x;
                     break;
                 case RelativeProperty.AzimuthPos:
-                    currentValue = CartToSpherical(RelativePosition()).y;
+                    newValue = CartToSpherical(RelativePosition()).y;
                     break;
                 case RelativeProperty.LinearSpeed:
-                    currentValue = Mathf.Abs(RelativeVelocity().magnitude);
+                    newValue = Mathf.Abs(RelativeVelocity().magnitude);
                     break;
                 case RelativeProperty.LinearAccelerationAbsolute:
-                    currentValue = Mathf.Abs((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime);
-                    _PreviousValue = currentValue;
+                    newValue = Mathf.Abs((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime);
+                    _PreviousValue = newValue;
                     break;
                 case RelativeProperty.LinearAcceleration:
-                    currentValue = Mathf.Max((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime, 0f);
-                    _PreviousValue = currentValue;
+                    newValue = Mathf.Max((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime, 0f);
+                    _PreviousValue = newValue;
                     break;
                 case RelativeProperty.LinearDeceleration:
-                    currentValue = Mathf.Abs(Mathf.Min((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime, 0f));
-                    _PreviousValue = currentValue;
+                    newValue = Mathf.Abs(Mathf.Min((RelativeVelocity().magnitude - _PreviousValue) / Time.deltaTime, 0f));
+                    _PreviousValue = newValue;
                     break;
                 case RelativeProperty.TangentialSpeed:
-                    currentValue = CartToSpherical(RelativeVelocity()).magnitude;
+                    newValue = CartToSpherical(RelativeVelocity()).magnitude;
                     break;
                 case RelativeProperty.TangentialAccelerationAbsolute:
-                    currentValue = Mathf.Abs((CartToSpherical(RelativeVelocity()).magnitude - _PreviousValue) / Time.deltaTime);
-                    _PreviousValue = currentValue;
+                    newValue = Mathf.Abs((CartToSpherical(RelativeVelocity()).magnitude - _PreviousValue) / Time.deltaTime);
+                    _PreviousValue = newValue;
                     break;
                 default:
                     break;
             }
         }
-        else currentValue = 0;
-        UpdateSmoothedOutputValue(currentValue, _Smoothing);
-    }
-
-    public void SetAuxValue(float val)
-    {
-        UpdateSmoothedOutputValue(val, _Smoothing);
+        else newValue = 0;
+        UpdateModulationValue(newValue, _Smoothing);
     }
 
     public Vector3 RelativePosition()

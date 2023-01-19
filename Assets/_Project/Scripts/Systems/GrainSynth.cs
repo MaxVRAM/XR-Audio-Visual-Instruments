@@ -16,6 +16,9 @@ using System.Runtime.InteropServices;
         // Good latency - 23.21995
         // Best latency - 11.60998
 
+    // TODO - FIX WINDOWING FUNCTIONS:
+    // https://michaelkrzyzaniak.com/AudioSynthesis/2_Audio_Synthesis/11_Granular_Synthesis/1_Window_Functions/
+
 
 [RequireComponent(typeof(AudioSource))]
 public class GrainSynth :  MonoBehaviour

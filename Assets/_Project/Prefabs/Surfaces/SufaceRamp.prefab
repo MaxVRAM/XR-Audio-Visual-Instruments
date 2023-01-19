@@ -204,6 +204,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _Rigidity: 0.8
+  _ApplyToChildren: 0
+  _ChildSurfaces: []
+  _IsSurfaceChild: 0
 --- !u!1001 &540683786152352429
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -343,6 +346,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 964637747006463702, guid: 871f06ce055c058488617bc8980be316,
         type: 3}
+      propertyPath: _Properties._Volume._InteractionAmount
+      value: 1.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 964637747006463702, guid: 871f06ce055c058488617bc8980be316,
+        type: 3}
       propertyPath: _Properties._BurstDuration._InputSource
       value: 
       objectReference: {fileID: 4285892560819824121}
@@ -374,7 +382,7 @@ PrefabInstance:
     - target: {fileID: 9064253048543241107, guid: 2d8dcb920f6c164478c6f36463d835b2,
         type: 3}
       propertyPath: _InputMax
-      value: 14
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 9064253048543241107, guid: 2d8dcb920f6c164478c6f36463d835b2,
         type: 3}

@@ -321,6 +321,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Input - Roll Value
       objectReference: {fileID: 0}
+    - target: {fileID: 2539693815544075849, guid: 42f45cfae9deb0644bcf046a95d3a917,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2539693815544075850, guid: 42f45cfae9deb0644bcf046a95d3a917,
         type: 3}
       propertyPath: m_RootOrder
@@ -379,7 +384,17 @@ PrefabInstance:
     - target: {fileID: 2539693815544075851, guid: 42f45cfae9deb0644bcf046a95d3a917,
         type: 3}
       propertyPath: _InputMax
-      value: 1
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2539693815544075851, guid: 42f45cfae9deb0644bcf046a95d3a917,
+        type: 3}
+      propertyPath: _InputMin
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2539693815544075851, guid: 42f45cfae9deb0644bcf046a95d3a917,
+        type: 3}
+      propertyPath: _Smoothing
+      value: 0.2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 42f45cfae9deb0644bcf046a95d3a917, type: 3}
@@ -412,6 +427,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Emitter - Air Move
+      objectReference: {fileID: 0}
+    - target: {fileID: 357190598401452315, guid: badba5643050cc7429814bfeea956860,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 357190598401452316, guid: badba5643050cc7429814bfeea956860,
         type: 3}
@@ -563,6 +583,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Input - Directional Acceleration
       objectReference: {fileID: 0}
+    - target: {fileID: 7182227189843219788, guid: 5f6b035f97635d641a3450651544d04a,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5f6b035f97635d641a3450651544d04a, type: 3}
 --- !u!4 &4565150370204184433 stripped
@@ -594,6 +619,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Input - Acceleration
+      objectReference: {fileID: 0}
+    - target: {fileID: 2052035991113726746, guid: 760d68f4ef55c654c9991dbcfee88137,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2052035991113726747, guid: 760d68f4ef55c654c9991dbcfee88137,
         type: 3}
@@ -670,6 +700,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Input - Speed
       objectReference: {fileID: 0}
+    - target: {fileID: 7422734483325890209, guid: c98ee20bf2216a14ebd262edea63c15f,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7422734483325890210, guid: c98ee20bf2216a14ebd262edea63c15f,
         type: 3}
       propertyPath: m_RootOrder
@@ -724,6 +759,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7422734483325890211, guid: c98ee20bf2216a14ebd262edea63c15f,
+        type: 3}
+      propertyPath: _Smoothing
+      value: 0.05
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c98ee20bf2216a14ebd262edea63c15f, type: 3}
@@ -826,6 +866,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Input - Impact
+      objectReference: {fileID: 0}
+    - target: {fileID: 9064253048543241117, guid: 2d8dcb920f6c164478c6f36463d835b2,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2d8dcb920f6c164478c6f36463d835b2, type: 3}
@@ -1167,7 +1212,7 @@ PrefabInstance:
     - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
         type: 3}
       propertyPath: _Properties._Volume._InteractionAmount
-      value: 1.2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
         type: 3}
@@ -1183,6 +1228,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Emitter - Ball Roll
+      objectReference: {fileID: 0}
+    - target: {fileID: 5410839227482219987, guid: e3754de8c36983045a46c3267a210fee,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e3754de8c36983045a46c3267a210fee, type: 3}
@@ -1203,6 +1253,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Input - Scale
+      objectReference: {fileID: 0}
+    - target: {fileID: 6418141775733178312, guid: fa5dcfb968bd89743b93ee28e829ee2c,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6418141775733178313, guid: fa5dcfb968bd89743b93ee28e829ee2c,
         type: 3}
