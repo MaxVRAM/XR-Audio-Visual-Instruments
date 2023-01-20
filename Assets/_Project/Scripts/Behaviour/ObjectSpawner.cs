@@ -25,13 +25,11 @@ public class ObjectSpawner : MonoBehaviour
     public int _MaxSpawnables = 1;
     public bool _AutoSpawn = true;
     public bool _AutoRemove = true;
-    [SerializeField]
-    protected int _ObjectCounter = 0;
     [Range(0f, 2f)]
     public float _SpawnFrequency = 1f;
     [Tooltip("Duration in seconds before destroying spawned object (0 = do not destroy based on duration).")]
     [Range(0, 60)]
-    public float _MaxObjectLifespan = 0;
+    public float _ObjectLifespan = 0;
     [Tooltip("Subtract a random amount from a spawned object's lifespan by this fraction of its max duration.")]
     [Range(0, 1)]
     public float _LifespanVariance = 0;
@@ -49,6 +47,8 @@ public class ObjectSpawner : MonoBehaviour
     protected string _Name;
 
     [Header("Runtime Dynamics")]
+    [SerializeField]
+    protected int _ObjectCounter = 0;
     [SerializeField]
     protected float _TimeSinceSpawn = 0;
     [SerializeField]
@@ -113,8 +113,8 @@ public class ObjectSpawner : MonoBehaviour
 
             if (!newObject.TryGetComponent(out DestroyTimer timer))
                 timer = newObject.AddComponent<DestroyTimer>();
-            if (_MaxObjectLifespan != 0)
-                timer._Lifespan = _MaxObjectLifespan - _MaxObjectLifespan * Random.Range(0, _LifespanVariance);
+            if (_ObjectLifespan != 0)
+                timer._Lifespan = _ObjectLifespan - _ObjectLifespan * Random.Range(0, _LifespanVariance);
             
             // Set emitter properties if spawned GameObject is an emitter host
             HostAuthoring newHost = newObject.GetComponentInChildren(typeof(HostAuthoring), true) as HostAuthoring;
