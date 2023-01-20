@@ -501,9 +501,9 @@ MonoBehaviour:
   _ListenerRadius: 10
   _DynamicSpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
     type: 3}
-  _MaxDynamicSpeakers: 10
+  _MaxDynamicSpeakers: 20
   _SpeakerAttachArcDegrees: 16
-  _SpeakerAttachPositionSmoothing: 0.7
+  _SpeakerAttachPositionSmoothing: 0.5
   _DrawAttachmentLines: 1
   _AttachmentLineWidth: 0.01
   _AttachmentLineMat: {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
@@ -1525,8 +1525,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _Rigidity: 0
   _ApplyToChildren: 1
-  _ChildSurfaces: []
   _IsSurfaceChild: 0
+  _ChildSurfaces: []
 --- !u!1 &424598525
 GameObject:
   m_ObjectHideFlags: 0
@@ -2528,8 +2528,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _Rigidity: 0
   _ApplyToChildren: 1
-  _ChildSurfaces: []
   _IsSurfaceChild: 0
+  _ChildSurfaces: []
 --- !u!1 &1064300459
 GameObject:
   m_ObjectHideFlags: 0
@@ -2582,15 +2582,15 @@ MonoBehaviour:
   - {fileID: 2306625124509221286, guid: 8408191c1bcbfa340b0f13e414291219, type: 3}
   _SelectRandomPrefab: 0
   _ActiveObjects: []
-  _MaxSpawnables: 10
+  _MaxSpawnables: 16
   _AutoSpawn: 1
   _AutoRemove: 1
-  _SpawnFrequency: 0.5
-  _ObjectLifespan: 10
-  _LifespanVariance: 0.2
+  _SpawnFrequency: 0.1
+  _ObjectLifespan: 4
+  _LifespanVariance: 0.5
   _SpawnRadius: 1
-  _RandomVelocity: 10
-  _RandomAngularVelocity: 10
+  _RandomVelocity: 5
+  _RandomAngularVelocity: 5
   _BehaviourPrefab: {fileID: 0}
   _ObjectCounter: 0
   _TimeSinceSpawn: 0
@@ -4709,37 +4709,37 @@ PrefabInstance:
     - target: {fileID: 1920882317727243603, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.213
+      value: -0.29
       objectReference: {fileID: 0}
     - target: {fileID: 1920882317727243603, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.49
+      value: -1.3
       objectReference: {fileID: 0}
     - target: {fileID: 1920882317727243603, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 4.335
+      value: 3.53
       objectReference: {fileID: 0}
     - target: {fileID: 1920882317727243603, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9107286
+      value: 0.99436444
       objectReference: {fileID: 0}
     - target: {fileID: 1920882317727243603, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.058519743
+      value: -0.0754499
       objectReference: {fileID: 0}
     - target: {fileID: 1920882317727243603, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.40448833
+      value: -0.06539695
       objectReference: {fileID: 0}
     - target: {fileID: 1920882317727243603, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.059481528
+      value: -0.035635997
       objectReference: {fileID: 0}
     - target: {fileID: 1920882317727243603, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
@@ -4749,7 +4749,7 @@ PrefabInstance:
     - target: {fileID: 1920882317727243603, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -47.62
+      value: -7.25
       objectReference: {fileID: 0}
     - target: {fileID: 1920882317727243603, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}

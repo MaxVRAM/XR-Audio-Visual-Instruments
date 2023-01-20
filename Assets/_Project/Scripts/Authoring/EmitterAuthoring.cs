@@ -113,23 +113,30 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void NewCollision(Collision collision)
     {
-        if (_EmitterType == EmitterType.Burst && _ContactEmitter)
+        if (_ContactEmitter && _ColliderRigidityVolumeScale && _EmitterType == EmitterType.Burst)
+        {
             _IsPlaying = true;
-        UpdateContactStatus(collision);
+            if (collision.collider.TryGetComponent(out SurfaceProperties surface))
+                _ContactSurfaceAttenuation = surface._Rigidity;
+            else
+                _ContactSurfaceAttenuation = 0;
+        }
+        else UpdateContactStatus(collision);
     }
 
     public void UpdateContactStatus(Collision collision)
     {
-        if (_ContactEmitter)
+        if (_ContactEmitter && _EmitterType == EmitterType.Continuous)
         {
             // TODO Add feature to quickly fade-out these emitters in case their grain durations are very long
             // May need to add fade-out property to the GrainPlayback data component.
-            if (_EmitterType == EmitterType.Continuous)
-                _IsPlaying = collision != null;
-            if (collision != null && _ColliderRigidityVolumeScale && collision.collider.TryGetComponent(out SurfaceProperties surface))
-                _ContactSurfaceAttenuation = surface._Rigidity;
-            else
-                _ContactSurfaceAttenuation = 1;           
+            _IsPlaying = collision != null;
+            if (!_ColliderRigidityVolumeScale)
+                _ContactSurfaceAttenuation = 1;
+            else if (collision == null)
+                _ContactSurfaceAttenuation = 0;
+            else if (_EmitterType == EmitterType.Continuous)
+                _ContactSurfaceAttenuation = _Host._CurrentCollidingRigidity;
         }
     }
 

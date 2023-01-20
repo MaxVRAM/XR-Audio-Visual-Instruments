@@ -296,6 +296,10 @@ MonoBehaviour:
   _HostedEmitters: []
   _ModulationSources: []
   _CollidingObjects: []
+  _RigidityLerpUp: 0.8
+  _CurrentCollidingRigidity: 0
+  _TargetCollidingRigidity: 0
+  _ContactSurfaceRigidities: []
 --- !u!114 &3439191513928790181
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -384,17 +388,17 @@ PrefabInstance:
     - target: {fileID: 2539693815544075851, guid: 42f45cfae9deb0644bcf046a95d3a917,
         type: 3}
       propertyPath: _InputMax
-      value: 3
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 2539693815544075851, guid: 42f45cfae9deb0644bcf046a95d3a917,
         type: 3}
       propertyPath: _InputMin
-      value: 0.2
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 2539693815544075851, guid: 42f45cfae9deb0644bcf046a95d3a917,
         type: 3}
       propertyPath: _Smoothing
-      value: 0.2
+      value: 0.3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 42f45cfae9deb0644bcf046a95d3a917, type: 3}
@@ -917,7 +921,7 @@ PrefabInstance:
     - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
         type: 3}
       propertyPath: _DistanceAttenuationFactor
-      value: 0.4
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
         type: 3}
@@ -997,7 +1001,7 @@ PrefabInstance:
     - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
         type: 3}
       propertyPath: _Properties._Volume._InteractionAmount
-      value: 1.5
+      value: 1.4
       objectReference: {fileID: 0}
     - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
         type: 3}
@@ -1171,6 +1175,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
         type: 3}
+      propertyPath: _Properties._Density._Idle
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
+        type: 3}
       propertyPath: _Properties._Playhead._Idle
       value: 0.23
       objectReference: {fileID: 0}
@@ -1182,7 +1191,7 @@ PrefabInstance:
     - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
         type: 3}
       propertyPath: _Properties._GrainDuration._Idle
-      value: 80
+      value: 140
       objectReference: {fileID: 0}
     - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
         type: 3}
@@ -1217,13 +1226,18 @@ PrefabInstance:
     - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
         type: 3}
       propertyPath: _Properties._Density._InteractionAmount
-      value: 1
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
         type: 3}
       propertyPath: _Properties._GrainDuration._InputSource
       value: 
       objectReference: {fileID: 2306625123320307641}
+    - target: {fileID: 5410839227482219982, guid: e3754de8c36983045a46c3267a210fee,
+        type: 3}
+      propertyPath: _Properties._GrainDuration._InteractionAmount
+      value: -70
+      objectReference: {fileID: 0}
     - target: {fileID: 5410839227482219987, guid: e3754de8c36983045a46c3267a210fee,
         type: 3}
       propertyPath: m_Name

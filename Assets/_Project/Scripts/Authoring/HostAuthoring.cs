@@ -49,8 +49,9 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public ModulationSource[] _ModulationSources;
     [Tooltip("(generated) List of objects currently in-contact with the host's local object target.")]
     public List<GameObject> _CollidingObjects;
-    public float _RigidityUpwardSmoothing = 0.1f;
-    public float _CurrentSurfaceRigidity = 0;
+    public float _RigidityLerpUp = 0.1f;
+    public float _CurrentCollidingRigidity = 0;
+    public float _TargetCollidingRigidity = 0;
     public List<float> _ContactSurfaceRigidities;
 
 
@@ -154,14 +155,23 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _EntityManager.SetComponentData(_HostEntity, hostData);
         #endregion
 
-        if (_RigidityUpwardSmoothing > 0 && _ContactSurfaceRigidities.Count > 0)
+        // Smooth increasing contact rigidity value to prevent contact emitters producing random bursts
+        // after brief contact with a very rigid object while rolling on a non-rigid surface
+        if (_ContactSurfaceRigidities.Count == 0)
+            _CurrentCollidingRigidity = 0;
+        else
         {
             _ContactSurfaceRigidities.Sort();
-            float mostRigid = _ContactSurfaceRigidities.Count;
-            if (mostRigid < _CurrentSurfaceRigidity) _CurrentSurfaceRigidity = mostRigid;
+            _TargetCollidingRigidity = _ContactSurfaceRigidities[_ContactSurfaceRigidities.Count - 1];
+
+            if (_RigidityLerpUp == 0) _CurrentCollidingRigidity = _TargetCollidingRigidity;
             else
             {
-                
+                if (_TargetCollidingRigidity < _CurrentCollidingRigidity + 0.001f)
+                    _CurrentCollidingRigidity = _TargetCollidingRigidity;
+                else
+                    _CurrentCollidingRigidity = Mathf.Lerp(_CurrentCollidingRigidity, _TargetCollidingRigidity, (1 - _RigidityLerpUp) * 30f * Time.deltaTime);
+                if (_CurrentCollidingRigidity < 0.001f) _CurrentCollidingRigidity = 0;
             }
         }
 
@@ -279,6 +289,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (_CollidingObjects.Count == 0)
         {
             _IsColliding = false;
+            _TargetCollidingRigidity = 0;
             foreach (EmitterAuthoring emitter in _HostedEmitters)
                 emitter.UpdateContactStatus(null);
         }
