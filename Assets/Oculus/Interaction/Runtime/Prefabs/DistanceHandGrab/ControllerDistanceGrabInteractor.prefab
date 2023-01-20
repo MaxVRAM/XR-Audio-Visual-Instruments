@@ -154,6 +154,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _activeState: {fileID: 5979516266493034131}
   _interactableFilters: []
+  _maxIterationsPerFrame: 3
+  _data: {fileID: 0}
   _selector: {fileID: 5021159392599816142}
   _selectionFrustum: {fileID: 2492800384500457778}
   _grabCenter: {fileID: 1736233816523549768}

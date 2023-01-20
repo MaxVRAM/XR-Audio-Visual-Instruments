@@ -253,10 +253,12 @@ MonoBehaviour:
   _positionFilterProperties:
     _minCutoff: 2
     _beta: 3
+    _dCutoff: 1
   _filterRotation: 1
   _rotationFilterProperties:
     _minCutoff: 0.6
     _beta: 6
+    _dCutoff: 1
 --- !u!1 &1334825631191652156
 GameObject:
   m_ObjectHideFlags: 0
@@ -305,10 +307,12 @@ MonoBehaviour:
   _positionFilterProperties:
     _minCutoff: 2
     _beta: 3
+    _dCutoff: 1
   _filterRotation: 1
   _rotationFilterProperties:
     _minCutoff: 0.6
     _beta: 6
+    _dCutoff: 1
 --- !u!1 &2802382959889008156
 GameObject:
   m_ObjectHideFlags: 0
@@ -559,10 +563,12 @@ MonoBehaviour:
   _positionFilterProperties:
     _minCutoff: 2
     _beta: 3
+    _dCutoff: 1
   _filterRotation: 1
   _rotationFilterProperties:
     _minCutoff: 0.6
     _beta: 6
+    _dCutoff: 1
 --- !u!1 &6364031080953275930
 GameObject:
   m_ObjectHideFlags: 0
@@ -611,10 +617,12 @@ MonoBehaviour:
   _positionFilterProperties:
     _minCutoff: 2
     _beta: 3
+    _dCutoff: 1
   _filterRotation: 1
   _rotationFilterProperties:
     _minCutoff: 0.6
     _beta: 6
+    _dCutoff: 1
 --- !u!1 &6503358876159784328
 GameObject:
   m_ObjectHideFlags: 0
@@ -718,6 +726,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _activeState: {fileID: 4479476189240411809}
   _interactableFilters: []
+  _maxIterationsPerFrame: 3
+  _data: {fileID: 0}
   _hand: {fileID: 4479476189240411809}
   _handGrabApi: {fileID: 41022092}
   _grabOrigin: {fileID: 7134606857323907258}
@@ -727,6 +737,7 @@ MonoBehaviour:
     _aidFrustum: {fileID: 7381632195567819182}
     _aidBlending: 0
   _supportedGrabTypes: 1
+  _hoverOnZeroStrength: 1
   _gripPoint: {fileID: 278801296609911309}
   _pinchPoint: {fileID: 4204883961928387025}
   _detectionDelay: 0.1
