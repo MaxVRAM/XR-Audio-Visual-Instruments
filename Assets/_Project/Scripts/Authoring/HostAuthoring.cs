@@ -49,6 +49,9 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public ModulationSource[] _ModulationSources;
     [Tooltip("(generated) List of objects currently in-contact with the host's local object target.")]
     public List<GameObject> _CollidingObjects;
+    public float _RigidityUpwardSmoothing = 0.1f;
+    public float _CurrentSurfaceRigidity = 0;
+    public List<float> _ContactSurfaceRigidities;
 
 
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
@@ -151,6 +154,17 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _EntityManager.SetComponentData(_HostEntity, hostData);
         #endregion
 
+        if (_RigidityUpwardSmoothing > 0 && _ContactSurfaceRigidities.Count > 0)
+        {
+            _ContactSurfaceRigidities.Sort();
+            float mostRigid = _ContactSurfaceRigidities.Count;
+            if (mostRigid < _CurrentSurfaceRigidity) _CurrentSurfaceRigidity = mostRigid;
+            else
+            {
+                
+            }
+        }
+
         float speakerAmplitudeFactor = 0;
 
         if (_Connected)
@@ -229,6 +243,9 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     
     public void OnCollisionEnter(Collision collision)
     {
+        if (collision.collider.TryGetComponent(out SurfaceProperties surface))
+            _ContactSurfaceRigidities.Add(surface._Rigidity);
+
         _CollidingObjects.Add(collision.collider.gameObject);
 
         foreach (ModulationSource source in _ModulationSources)
@@ -241,6 +258,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public void OnCollisionStay(Collision collision)
     {
         _IsColliding = true;
+
         foreach (ModulationSource source in _ModulationSources)
             source.SetInputCollision(true, collision.collider.material);
 
@@ -250,6 +268,9 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void OnCollisionExit(Collision collision)
     {
+        if (collision.collider.TryGetComponent(out SurfaceProperties surface))
+            _ContactSurfaceRigidities.Remove(surface._Rigidity);
+
         _CollidingObjects.Remove(collision.collider.gameObject);
 
         foreach (ModulationSource source in _ModulationSources)

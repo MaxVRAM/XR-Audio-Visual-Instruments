@@ -2,28 +2,23 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SurfaceParameters : MonoBehaviour
+public class SurfaceProperties : MonoBehaviour
 {
-    public enum SurfaceParameter
-    {
-        Rigidity
-    }
-
     [Range(0, 1)]
     public float _Rigidity = 1;
     public bool _ApplyToChildren = false;
     [SerializeField]
-    protected List<SurfaceParameters> _ChildSurfaces;
-    [SerializeField]
     protected bool _IsSurfaceChild = false;
+    [SerializeField]
+    protected List<SurfaceProperties> _ChildSurfaces;
 
     void Start()
     {
         if (!_IsSurfaceChild && _ApplyToChildren)
             foreach (Collider collider in GetComponentsInChildren<Collider>())
-                if (!collider.gameObject.TryGetComponent(out SurfaceParameters _))
+                if (!collider.gameObject.TryGetComponent(out SurfaceProperties _))
                 {
-                    SurfaceParameters surface = collider.gameObject.AddComponent<SurfaceParameters>();
+                    SurfaceProperties surface = collider.gameObject.AddComponent<SurfaceProperties>();
                     surface._IsSurfaceChild = true;
                     surface._Rigidity = _Rigidity;
                     _ChildSurfaces.Add(surface);

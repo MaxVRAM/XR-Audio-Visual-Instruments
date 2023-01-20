@@ -1,24 +1,10 @@
-﻿using Unity.Burst;
-using Unity.Collections;
-using System.Collections.Generic;
+﻿using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
-using Unity.Transforms;
 using UnityEngine;
-using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine.Profiling;
-using System;
-using System.Linq;
-using Unity.Entities.UniversalDelegates;
-using Unity.Entities.CodeGeneratedJobForEach;
-using Random = UnityEngine.Random;
-using System.ComponentModel;
 using Unity.Jobs.LowLevel.Unsafe;
 
-/// <summary>
-//     Populate random value buffer with unique values for each thread.
-/// <summary>
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 class RandomSystem : ComponentSystem
 {
