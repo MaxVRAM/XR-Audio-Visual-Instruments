@@ -1078,6 +1078,18 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 2252065984689227138}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &265266649 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5319563205857071587, guid: 1b228767b10579441baa30e872671372,
+    type: 3}
+  m_PrefabInstance: {fileID: 2252065984689227138}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 265266646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50b9106a41e98d44f8de20339e7fc120, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &311365146
 GameObject:
   m_ObjectHideFlags: 0
@@ -4424,6 +4436,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SpawnerObject: {fileID: 265266646}
   _SpawnerVFX: {fileID: 2025781603}
+  _GrabTransform: {fileID: 0}
+  _Velocity: {x: 0, y: 0, z: 0}
+  _AngularVelocity: {x: 0, y: 0, z: 0}
+  _VelocitySmoothing: 0.5
+  _AngularSmoothing: 0.5
 --- !u!1 &2060866324
 GameObject:
   m_ObjectHideFlags: 0
@@ -4729,27 +4746,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2025781603, guid: 1b228767b10579441baa30e872671372, type: 3}
       propertyPath: m_PropertySheet.m_Float.m_Array.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2025781603, guid: 1b228767b10579441baa30e872671372, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.size
-      value: 5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2025781603, guid: 1b228767b10579441baa30e872671372, type: 3}
       propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[0].m_Name
-      value: SpawnVelocityMultiplier
-      objectReference: {fileID: 0}
-    - target: {fileID: 2025781603, guid: 1b228767b10579441baa30e872671372, type: 3}
-      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[1].m_Name
-      value: SpawnAngularMultiplier
+      value: VelocityDamping
       objectReference: {fileID: 0}
     - target: {fileID: 2025781603, guid: 1b228767b10579441baa30e872671372, type: 3}
       propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[0].m_Value
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2025781603, guid: 1b228767b10579441baa30e872671372, type: 3}
-      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[1].m_Value
-      value: 10
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 2025781603, guid: 1b228767b10579441baa30e872671372, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Name
@@ -4764,15 +4773,7 @@ PrefabInstance:
       value: SpawnerVelocity
       objectReference: {fileID: 0}
     - target: {fileID: 2025781603, guid: 1b228767b10579441baa30e872671372, type: 3}
-      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[4].m_Name
-      value: SpawnerAngularVelocity
-      objectReference: {fileID: 0}
-    - target: {fileID: 2025781603, guid: 1b228767b10579441baa30e872671372, type: 3}
       propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[0].m_Overridden
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2025781603, guid: 1b228767b10579441baa30e872671372, type: 3}
-      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[1].m_Overridden
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2025781603, guid: 1b228767b10579441baa30e872671372, type: 3}
@@ -4785,11 +4786,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2025781603, guid: 1b228767b10579441baa30e872671372, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[3].m_Overridden
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2025781603, guid: 1b228767b10579441baa30e872671372, type: 3}
-      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[4].m_Overridden
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1821347093602906910, guid: 1b228767b10579441baa30e872671372,
         type: 3}
@@ -4846,26 +4843,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4431509566931312580, guid: 1b228767b10579441baa30e872671372,
+    - target: {fileID: 4252333843993769364, guid: 1b228767b10579441baa30e872671372,
         type: 3}
-      propertyPath: m_Drag
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 4431509566931312580, guid: 1b228767b10579441baa30e872671372,
-        type: 3}
-      propertyPath: m_Mass
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 4431509566931312580, guid: 1b228767b10579441baa30e872671372,
-        type: 3}
-      propertyPath: m_AngularDrag
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 4431509566931312580, guid: 1b228767b10579441baa30e872671372,
-        type: 3}
-      propertyPath: m_Interpolate
-      value: 1
-      objectReference: {fileID: 0}
+      propertyPath: _oneGrabTransformer
+      value: 
+      objectReference: {fileID: 265266649}
     - target: {fileID: 5319563205857071587, guid: 1b228767b10579441baa30e872671372,
         type: 3}
       propertyPath: _PositionDamping

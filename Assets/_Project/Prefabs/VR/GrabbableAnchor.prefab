@@ -369,6 +369,11 @@ PrefabInstance:
       propertyPath: _rigidbody
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 2613109288005475061, guid: 71f999a2019ae9045b33638e2f3597a2,
+        type: 3}
+      propertyPath: _oneGrabTransformer
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 7633846820267324729, guid: 71f999a2019ae9045b33638e2f3597a2,
         type: 3}
       propertyPath: _rigidbody

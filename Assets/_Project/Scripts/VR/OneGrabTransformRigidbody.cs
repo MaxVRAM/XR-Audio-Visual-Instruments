@@ -37,14 +37,15 @@ namespace Oculus.Interaction
         public float PositionDamping { get { return _RotationDamping / 8; }}
         public float _RotationDamping = 0.1f;
         public float RotationDamping { get { return 1 / _RotationDamping * 10; }}
-        private Vector3 _Velocity;
+        public Vector3 _Velocity;
+        public Vector3 _AngularVelocity;
 
         public void Initialize(IGrabbable grabbable)
         {
             _grabbable = grabbable;
             _grabbableRigidBody = grabbable.Transform.gameObject.GetComponent<Rigidbody>();
             if (grabbable.Transform.gameObject.TryGetComponent(out _grabbableRigidBody))
-                _Velocity = _grabbableRigidBody.velocity;
+                _Velocity = Vector3.zero;
         }
 
         public void BeginTransform()
@@ -64,6 +65,7 @@ namespace Oculus.Interaction
             {
                 Quaternion targetRotation = grabPoint.rotation * _grabDeltaInLocalSpace.rotation;
                 targetRotation = Quaternion.Lerp(objectTransform.rotation, targetRotation, Time.deltaTime * RotationDamping);
+                _AngularVelocity = targetRotation.eulerAngles - objectTransform.rotation.eulerAngles;
                 _grabbableRigidBody.MoveRotation(targetRotation);
 
                 Vector3 targetPosition = grabPoint.position - _grabbable.Transform.TransformVector(_grabDeltaInLocalSpace.position);
@@ -77,6 +79,9 @@ namespace Oculus.Interaction
             }            
         }
 
-        public void EndTransform() { }
+        public void EndTransform()
+        {
+            _Velocity = Vector3.zero;
+        }
     }
 }
