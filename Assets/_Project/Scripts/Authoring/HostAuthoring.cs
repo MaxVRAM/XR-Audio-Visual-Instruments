@@ -49,10 +49,11 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public ModulationSource[] _ModulationSources;
     [Tooltip("(generated) List of objects currently in-contact with the host's local object target.")]
     public List<GameObject> _CollidingObjects;
-    public float _RigidityLerpUp = 0.1f;
+    public float _RigiditySmoothUp = 0.5f;
+    public float RigiditySmoothUp { get { return 1 / _RigiditySmoothUp; }}
     public float _CurrentCollidingRigidity = 0;
     public float _TargetCollidingRigidity = 0;
-    public List<float> _ContactSurfaceRigidities;
+    public List<float> _ContactRigidValues;
 
 
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
@@ -131,6 +132,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _ListenerDistance = Mathf.Abs((transform.position - _HeadTransform.position).magnitude);
 
         #region START HOST COMPONENT
+
         EmitterHostComponent hostData = _EntityManager.GetComponentData<EmitterHostComponent>(_HostEntity);        
 
         if (_DedicatedSpeaker != null)
@@ -153,27 +155,34 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             }
         }
         _EntityManager.SetComponentData(_HostEntity, hostData);
+
         #endregion
 
-        // Smooth increasing contact rigidity value to prevent contact emitters producing random bursts
-        // after brief contact with a very rigid object while rolling on a non-rigid surface
-        if (_ContactSurfaceRigidities.Count == 0)
-            _CurrentCollidingRigidity = 0;
-        else
-        {
-            _ContactSurfaceRigidities.Sort();
-            _TargetCollidingRigidity = _ContactSurfaceRigidities[_ContactSurfaceRigidities.Count - 1];
 
-            if (_RigidityLerpUp == 0) _CurrentCollidingRigidity = _TargetCollidingRigidity;
+        #region PROCESS RIGIDITY VALUE FROM COLLIDING OBJECTS
+
+        // Clear lingering null contact objects and add rigidity values to list
+        _CollidingObjects.RemoveAll(item => item == null);
+        _ContactRigidValues.Clear();
+        
+        foreach (GameObject go in _CollidingObjects)
+            if (go.TryGetComponent(out SurfaceProperties props))
+                _ContactRigidValues.Add(props._Rigidity);
+        // Sort and find largest rigidity value to set as target
+        if (_ContactRigidValues.Count > 0)
+        {
+            _ContactRigidValues.Sort();
+            _TargetCollidingRigidity = _ContactRigidValues[_ContactRigidValues.Count - 1];
+            // Smooth transition to upward rigidity values to avoid random bursts of roll emitters from short collisions
+            if (_TargetCollidingRigidity < _CurrentCollidingRigidity + 0.001f || _RigiditySmoothUp <= 0)
+                _CurrentCollidingRigidity = _TargetCollidingRigidity;
             else
-            {
-                if (_TargetCollidingRigidity < _CurrentCollidingRigidity + 0.001f)
-                    _CurrentCollidingRigidity = _TargetCollidingRigidity;
-                else
-                    _CurrentCollidingRigidity = Mathf.Lerp(_CurrentCollidingRigidity, _TargetCollidingRigidity, (1 - _RigidityLerpUp) * 30f * Time.deltaTime);
-                if (_CurrentCollidingRigidity < 0.001f) _CurrentCollidingRigidity = 0;
-            }
+                _CurrentCollidingRigidity = _CurrentCollidingRigidity.Lerp(_TargetCollidingRigidity, RigiditySmoothUp * Time.deltaTime);
         }
+        if (_CurrentCollidingRigidity < 0.001f) _CurrentCollidingRigidity = 0;
+
+        #endregion
+
 
         float speakerAmplitudeFactor = 0;
 
@@ -254,7 +263,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public void OnCollisionEnter(Collision collision)
     {
         if (collision.collider.TryGetComponent(out SurfaceProperties surface))
-            _ContactSurfaceRigidities.Add(surface._Rigidity);
+            _ContactRigidValues.Add(surface._Rigidity);
 
         _CollidingObjects.Add(collision.collider.gameObject);
 
@@ -278,9 +287,6 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void OnCollisionExit(Collision collision)
     {
-        if (collision.collider.TryGetComponent(out SurfaceProperties surface))
-            _ContactSurfaceRigidities.Remove(surface._Rigidity);
-
         _CollidingObjects.Remove(collision.collider.gameObject);
 
         foreach (ModulationSource source in _ModulationSources)
@@ -290,6 +296,8 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         {
             _IsColliding = false;
             _TargetCollidingRigidity = 0;
+            _CurrentCollidingRigidity = 0;
+            _ContactRigidValues.Clear();
             foreach (EmitterAuthoring emitter in _HostedEmitters)
                 emitter.UpdateContactStatus(null);
         }

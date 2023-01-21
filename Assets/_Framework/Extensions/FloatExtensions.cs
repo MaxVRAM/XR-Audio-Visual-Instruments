@@ -30,7 +30,7 @@ public static class FloatExtensions
     }
 
     // alternative to Mathf.Lerp() - if value lies within epsilon of targ, then targ is returned
-    public static float Lerp(this float src, float targ, float t, float epsilon)
+    public static float Lerp(this float src, float targ, float t, float epsilon = 0.001f)
     {
         if (t <= 0.0f)
             return src;

@@ -125,6 +125,8 @@ public class ObjectSpawner : MonoBehaviour
                 newHost.AddBehaviourInputSource(timer);
             }
 
+            newObject.SetActive(true);
+
             _ActiveObjects.Add(newObject);
             _TimeSinceSpawn = 0;
             maxToSpawn --;

@@ -40,7 +40,8 @@ public class GrainSynth :  MonoBehaviour
     public SpeakerAuthoring _DynamicSpeakerPrefab;
     public int _MaxDynamicSpeakers = 50;
     public float _SpeakerAttachArcDegrees = 10;
-    public float _SpeakerAttachPositionSmoothing = 1;
+    public float _SpeakerAttachPositionSmoothing = 0.1f;
+    public float AttachSmoothing { get { return 1 / _SpeakerAttachPositionSmoothing / 5; }}
     public bool _DrawAttachmentLines = false;
     public float _AttachmentLineWidth = 0.002f;
     public Material _AttachmentLineMat;
@@ -118,7 +119,7 @@ public class GrainSynth :  MonoBehaviour
             _ListenerPos = _Listener.transform.position,
             _ListenerRadius = _ListenerRadius,
             _AttachArcDegrees = _SpeakerAttachArcDegrees,
-            _TranslationSmoothing = _SpeakerAttachPositionSmoothing
+            _TranslationSmoothing = AttachSmoothing
         });
         #if UNITY_EDITOR
                     _EntityManager.SetName(_AttachParamEntity, "_Activation Radius");
@@ -194,7 +195,7 @@ public class GrainSynth :  MonoBehaviour
             _ListenerPos = _Listener.transform.position,
             _ListenerRadius = _ListenerRadius,
             _AttachArcDegrees = _SpeakerAttachArcDegrees,
-            _TranslationSmoothing = _SpeakerAttachPositionSmoothing
+            _TranslationSmoothing = AttachSmoothing
         });
 
         NativeArray<Entity> grainEntities = _GrainQuery.ToEntityArray(Allocator.TempJob);

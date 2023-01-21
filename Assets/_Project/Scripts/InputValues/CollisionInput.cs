@@ -39,6 +39,7 @@ public class CollisionInput : ModulationSource
                 break;
         }
         
-        UpdateModulationValue(newValue);
+        _InputValue = newValue;
+        _OutputValue =  Mathf.Clamp(Map(newValue, _InputMin, _InputMax, 0, 1), 0, 1);
     }
 }

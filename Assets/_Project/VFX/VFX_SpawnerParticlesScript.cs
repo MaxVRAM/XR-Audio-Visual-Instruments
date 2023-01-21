@@ -34,7 +34,7 @@ public class VFX_SpawnerParticlesScript : MonoBehaviour
         {
             _GrabTransform = _SpawnerObject.GetComponent<OneGrabTransformRigidbody>();
             _VelocityID = Shader.PropertyToID("SpawnerVelocity");
-            _AngularVelocityID = Shader.PropertyToID("SpawnerAngularVelocity");
+            // _AngularVelocityID = Shader.PropertyToID("SpawnerAngularVelocity");
         }
     }
 
@@ -44,15 +44,15 @@ public class VFX_SpawnerParticlesScript : MonoBehaviour
         if (_GrabTransform != null)
         {
             _Velocity = Vector3.Lerp(_Velocity, _GrabTransform._Velocity, Time.deltaTime * VelocitySmoothing);
-            _AngularVelocity = Vector3.Lerp(_AngularVelocity, _GrabTransform._AngularVelocity, Time.deltaTime * AngularSmoothing);
+            // _AngularVelocity = Vector3.Lerp(_AngularVelocity, _GrabTransform._AngularVelocity, Time.deltaTime * AngularSmoothing);
         }
         else
         {
             _Velocity = _SpawnerRigidBody.velocity;
-            _AngularVelocity = _SpawnerRigidBody.angularVelocity;
+            // _AngularVelocity = _SpawnerRigidBody.angularVelocity;
 
         }
         _SpawnerVFX.SetVector3(_VelocityID, _Velocity);
-        _SpawnerVFX.SetVector3(_AngularVelocityID, _AngularVelocity);
+        // _SpawnerVFX.SetVector3(_AngularVelocityID, _AngularVelocity);
     }
 }
