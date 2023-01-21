@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 504654399819933224}
   - component: {fileID: 169060174}
   m_Layer: 0
-  m_Name: Host - Ramp Host
+  m_Name: Host_MetalRamp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25,9 +25,9 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1690714586038339022}
-  m_LocalRotation: {x: 0.052335896, y: -0, z: -0, w: 0.9986295}
-  m_LocalPosition: {x: 0, y: -0.20353633, z: -0.35585883}
-  m_LocalScale: {x: 0.125, y: 0.9289508, z: 0.12620659}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1920882317727243603}
   m_RootOrder: 0
@@ -60,10 +60,10 @@ MonoBehaviour:
   _HostedEmitters: []
   _ModulationSources: []
   _CollidingObjects: []
-  _RigidityLerpUp: 0.1
+  _RigiditySmoothUp: 0.5
   _CurrentCollidingRigidity: 0
   _TargetCollidingRigidity: 0
-  _ContactSurfaceRigidities: []
+  _ContactRigidValues: []
 --- !u!114 &169060174
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -276,7 +276,7 @@ PrefabInstance:
     - target: {fileID: 964637747006463699, guid: 871f06ce055c058488617bc8980be316,
         type: 3}
       propertyPath: m_Name
-      value: Emitter - Collision Burst (Metal Surface)
+      value: Emitter_MetalRamp_CollisionBurst
       objectReference: {fileID: 0}
     - target: {fileID: 964637747006463702, guid: 871f06ce055c058488617bc8980be316,
         type: 3}
@@ -311,7 +311,7 @@ PrefabInstance:
     - target: {fileID: 964637747006463702, guid: 871f06ce055c058488617bc8980be316,
         type: 3}
       propertyPath: _DistanceAttenuationFactor
-      value: 0.9
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 964637747006463702, guid: 871f06ce055c058488617bc8980be316,
         type: 3}
@@ -551,7 +551,7 @@ PrefabInstance:
     - target: {fileID: 9064253048543241117, guid: 2d8dcb920f6c164478c6f36463d835b2,
         type: 3}
       propertyPath: m_Name
-      value: Input - Impact
+      value: Input_MetalRamp_Impact
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2d8dcb920f6c164478c6f36463d835b2, type: 3}
@@ -583,7 +583,7 @@ PrefabInstance:
     - target: {fileID: 6418141775733178312, guid: fa5dcfb968bd89743b93ee28e829ee2c,
         type: 3}
       propertyPath: m_Name
-      value: Input - Scale
+      value: Input_MetalRamp_Scale
       objectReference: {fileID: 0}
     - target: {fileID: 6418141775733178313, guid: fa5dcfb968bd89743b93ee28e829ee2c,
         type: 3}
@@ -690,7 +690,7 @@ PrefabInstance:
     - target: {fileID: 2519325204652697371, guid: b46de1e33c7c38647882c6d1451339fd,
         type: 3}
       propertyPath: m_Name
-      value: Speaker
+      value: Speaker_MetalRamp
       objectReference: {fileID: 0}
     - target: {fileID: 2520372110442775027, guid: b46de1e33c7c38647882c6d1451339fd,
         type: 3}

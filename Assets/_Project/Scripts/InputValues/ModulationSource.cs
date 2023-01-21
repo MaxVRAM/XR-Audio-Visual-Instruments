@@ -55,10 +55,7 @@ public class ModulationSource : MonoBehaviour
         if (smoothing > 0.001f && Mathf.Abs(_OutputValue - value) > 0.001f)
             _OutputValue = Mathf.Lerp(_OutputValue, value, (1 - smoothing) * 10f * Time.deltaTime);
         else
-        {
-            Debug.Log($"Setting modulation value without lerp for: {_Objects._LocalObject.name}");
             _OutputValue = value;
-        }
 
         _OutputValue = Mathf.Clamp(_OutputValue, 0f, 1f);
     }

@@ -24,9 +24,8 @@ public class CollisionInput : ModulationSource
                 break;
             case CollisionProperty.CollisionForceTimesMass:
                 if (_Objects._LocalRigidbody != null)
-                    if (_UseMassOfCollider)
-                        if (_Objects._RemoteRigidbody != null)
-                            newValue = collision.relativeVelocity.magnitude * (1 - _Objects._RemoteRigidbody.mass / 2);
+                    if (_UseMassOfCollider && _Objects._RemoteRigidbody != null)
+                        newValue = collision.relativeVelocity.magnitude * (1 - _Objects._RemoteRigidbody.mass / 2);
                     else
                         newValue = collision.relativeVelocity.magnitude * _Objects._LocalRigidbody.mass;
                 break;

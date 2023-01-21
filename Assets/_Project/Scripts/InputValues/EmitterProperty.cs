@@ -38,7 +38,6 @@ public class ContinuousDensity : EmitterProperty
 {
     [Range(0.1f, 10f)]
     public float _Idle = 2f;
-    // public InteractionInput _Interaction;
     [Range(-9.9f, 9.9f)]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
@@ -56,7 +55,6 @@ public class ContinuousDuration : EmitterProperty
 {
     [Range(2f, 500f)]
     public float _Idle = 50f;
-    // public InteractionInput _Interaction;
     [Range(-502f, 502f)]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
@@ -74,7 +72,6 @@ public class ContinuousPlayhead : EmitterProperty
 {
     [Range(0f, 1f)]
     public float _Idle = 0f;
-    // public InteractionInput _Interaction;
     [Range(-1f, 1f)]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
@@ -92,7 +89,6 @@ public class ContinuousTranspose : EmitterProperty
 {
     [Range(-3f, 3f)]
     public float _Idle = 1;
-    // public InteractionInput _Interaction;
     [Range(-6f, 6f)]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
@@ -110,7 +106,6 @@ public class ContinuousVolume : EmitterProperty
 {
     [Range(0f, 2f)]
     public float _Idle = 1f;
-    // public InteractionInput _Interaction;
     [Range(-2f, 2f)]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
@@ -132,7 +127,6 @@ public class BurstDensity : EmitterProperty
     public float _Start = 2f;
     [Range(0.1f, 10f)]
     public float _End = 2f;
-    // public InteractionInput _Interaction;
     [Range(-9.9f, 9.9f)]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
@@ -150,7 +144,6 @@ public class BurstDuration : EmitterProperty
 {
     [Range(10f, 1000f)]
     public float _Default = 100f;
-    // public InteractionInput _Interaction;
     [Range(-990f, 990f)]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
@@ -170,7 +163,6 @@ public class BurstGrainDuration : EmitterProperty
     public float _Start = 20f;
     [Range(5f, 500f)]
     public float _End = 20f;
-    // public InteractionInput _Interaction;
     [Range(-495f, 495f)]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
@@ -191,7 +183,6 @@ public class BurstPlayhead : EmitterProperty
     public bool _LockStartValue = true;
     [Range(0f, 1f)]
     public float _End = 1f;
-    // public InteractionInput _Interaction;
     [Range(-1f, 1f)]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
@@ -212,7 +203,6 @@ public class BurstTranspose : EmitterProperty
     [Range(-3f, 3f)]
     public float _End = 0f;
     public bool _LockEndValue = true;
-    // public InteractionInput _Interaction;
     [Range(-3f, 3f)]
     public float _InteractionAmount = 0f;
     [Range(0.5f, 5.0f)]
@@ -233,7 +223,6 @@ public class BurstVolume : EmitterProperty
     [Range(0f, 1f)]
     public float _End = 0f;
     public bool _LockEndValue = true;
-    // public InteractionInput _Interaction;
     [Range(-2f, 2f)]
     public float _InteractionAmount = 1f;
     [Range(0.5f, 5.0f)]
