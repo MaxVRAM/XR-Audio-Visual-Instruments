@@ -185,6 +185,7 @@ public class GrainSynth :  MonoBehaviour
         int previousFrameSampleDuration = (int)(Time.deltaTime * _SampleRate);
         DSPTimerComponent dspTimer = _EntityManager.GetComponentData<DSPTimerComponent>(_DSPTimerEntity);
         _EntityManager.SetComponentData(_DSPTimerEntity, new DSPTimerComponent {
+            _LastActualDSPIndex = _CurrentDSPSample,
             _NextFrameIndexEstimate = _CurrentDSPSample + (int)(previousFrameSampleDuration * (1 + _PreviousFramePercentageDelay / 100)),
             _GrainQueueSampleDuration = QueueDurationSamples,
             _PreviousFrameSampleDuration = previousFrameSampleDuration });
@@ -205,7 +206,6 @@ public class GrainSynth :  MonoBehaviour
         for (int i = 0; i < grainEntities.Length; i++)
         {
             GrainProcessorComponent grain = _EntityManager.GetComponentData<GrainProcessorComponent>(grainEntities[i]);
-            GrainData grainDataObject;
             int speakerIndex = grain._SpeakerIndex;
             //----  Remove old grains or any pointing to invalid/pooled speakers
             if (speakerIndex >= _Speakers.Count || _Speakers[speakerIndex] == null || grain._StartSampleIndex < _CurrentDSPSample - _DiscardGrainsOlderThanMS * SamplesPerMS)
@@ -216,27 +216,32 @@ public class GrainSynth :  MonoBehaviour
                 _UnplayedGrainsDestroyed++;
                 continue;
             }
-            else grainDataObject = _Speakers[grain._SpeakerIndex].GetEmptyGrainDataObject();
-
-            // Populate empty GrainData object with fresh grain and pass it back to the speaker to play
-            NativeArray<float> grainSamples = _EntityManager.GetBuffer<GrainSampleBufferElement>(grainEntities[i]).Reinterpret<float>().ToNativeArray(Allocator.Temp);
-            try
+            else if (_Speakers[grain._SpeakerIndex].GetEmptyGrainDataObject(out GrainData grainDataObject) != null)
             {
-                NativeToManagedCopyMemory(grainDataObject._SampleData, grainSamples);
-                grainDataObject._Pooled = false;
-                grainDataObject._IsPlaying = true;
-                grainDataObject._PlayheadIndex = 0;
-                grainDataObject._SizeInSamples = grainSamples.Length;
-                grainDataObject._DSPStartTime = grain._StartSampleIndex;
-                grainDataObject._PlayheadNormalised = grain._PlayheadNorm;
-                _Speakers[grain._SpeakerIndex].AddGrainPlaybackDataToPool(grainDataObject);
+                // Populate empty GrainData object with fresh grain and pass it back to the speaker to play
+                NativeArray<float> grainSamples = _EntityManager.GetBuffer<GrainSampleBufferElement>(grainEntities[i]).Reinterpret<float>().ToNativeArray(Allocator.Temp);
+                try
+                {
+                    NativeToManagedCopyMemory(grainDataObject._SampleData, grainSamples);
+                    grainDataObject._Pooled = false;
+                    grainDataObject._IsPlaying = true;
+                    grainDataObject._PlayheadIndex = 0;
+                    grainDataObject._SizeInSamples = grainSamples.Length;
+                    grainDataObject._DSPStartTime = grain._StartSampleIndex;
+                    grainDataObject._PlayheadNormalised = grain._PlayheadNorm;
+                    _Speakers[grain._SpeakerIndex].GrainDataAdded(grainDataObject);
+                }
+                catch (Exception ex) when (ex is ArgumentException || ex is NullReferenceException )
+                {
+                    Debug.LogWarning($"Error while copying grain data to managed array for speaker ({grain._SpeakerIndex}). Killing grain {i}.\n{ex}");
+                }
+                // Destroy entity once we have sapped it of it's samply goodness and add playback data to speaker grain pool
+                _EntityManager.DestroyEntity(grainEntities[i]);
             }
-            catch (Exception ex) when (ex is ArgumentException || ex is NullReferenceException )
+            else
             {
-                Debug.LogWarning($"Error while copying grain data to managed array for speaker ({grain._SpeakerIndex}). Killing grain {i}.\n{ex}");
+                Debug.Log($"Speaker {_Speakers[grain._SpeakerIndex]} has no empty GrainData objects!");
             }
-            // Destroy entity once we have sapped it of it's samply goodness and add playback data to speaker grain pool
-            _EntityManager.DestroyEntity(grainEntities[i]);
         }
         grainEntities.Dispose();
     }

@@ -25,7 +25,7 @@ public class ObjectSpawner : MonoBehaviour
     public int _MaxSpawnables = 1;
     public bool _AutoSpawn = true;
     public bool _AutoRemove = true;
-    [Range(0f, 2f)]
+    [Range(0.01f, 2f)]
     public float _SpawnFrequency = 1f;
     [Tooltip("Duration in seconds before destroying spawned object (0 = do not destroy based on duration).")]
     [Range(0, 60)]
@@ -70,6 +70,8 @@ public class ObjectSpawner : MonoBehaviour
 
     void Update()
     {
+        if (_TimeSinceSpawn == float.NaN)
+            _TimeSinceSpawn = 0;
         _TimeSinceSpawn += Time.deltaTime;
 
         if (_ControllerObject != null && _PrefabToSpawn != null && _ActiveObjects.Count != _MaxSpawnables && _TimeSinceSpawn > _SpawnFrequency)

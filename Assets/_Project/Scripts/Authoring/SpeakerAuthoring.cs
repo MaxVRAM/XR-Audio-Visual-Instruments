@@ -19,7 +19,6 @@ public class GrainData
 
     public GrainData(int maxGrainSize)
     {
-        // Instantiate the playback data with max grain samples
         _SampleData = new float[maxGrainSize];
     }
 }
@@ -61,6 +60,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public bool _DebugLog = false;
     [SerializeField]
     private bool _IsActive = false;
+    protected bool _GrainPoolReady = false;
 
     int ActiveGrainPlaybackDataCount { get { return _GrainDataArray.Length - _PooledGrainCount; } }
     public bool DedicatedToHost { get { return _StaticallyPairedEmitters.Count > 0; } }
@@ -103,6 +103,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _PooledGrainCount = _GrainDataArray.Length;
         _AudioSource.rolloffMode = AudioRolloffMode.Custom;
         _AudioSource.maxDistance = 500;
+        _GrainPoolReady = true;
         _Initialized = true;
     }
 
@@ -128,21 +129,10 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (!_Initialized)
             return;
 
+        UpdateGrainObjectPool();
+
         if (_DebugLog)
             ReportGrainsDebug("");
-
-        //---   Pool exhausted grain data objects for re-use.
-        for (int i = 0; i < _GrainDataArray.Length; i++)
-        {
-            if (!_GrainDataArray[i]._IsPlaying &&
-                _GrainDataArray[i]._PlayheadIndex >= _GrainDataArray[i]._SizeInSamples &&
-                _GrainDataArray[i]._Pooled == false)
-            {
-                _GrainDataArray[i]._Pooled = true;
-                _PooledGrainCount++;
-            }
-        }
-
 
         // TODO - dynamic speakers might be better defined as those spawned by the GrainSynth, not if they are the "dedicated to host"  
         #region ---   DYNAMIC EMITTER HOST ATTACHMENT
@@ -152,6 +142,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             _SpeakerComponent = _EntityManager.GetComponentData<SpeakerComponent>(_SpeakerEntity);
             _AttachmentRadius = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._AttachmentRadius;
             transform.localScale = Vector3.one * _AttachmentRadius;
+
             bool currentActiveState = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._State == PooledState.Active;
             //---   Reset playback grain data pool when the speaker disconnects
             if (_IsActive && !currentActiveState)
@@ -177,22 +168,42 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     }
 
 
-    #region GRAIN PLAYBACK DATA POOLING
-    public GrainData GetEmptyGrainDataObject()
+    #region GRAIN DATA OBJECT POOL MANAGEMENT
+    public GrainData GetEmptyGrainDataObject(out GrainData grainData)
     {
-        if (!_Initialized)
+        grainData = null;
+        if (_Initialized)
         {
-            return null;            
+            // If we're desperate, go through the GrainPool to check if any grains have finished
+            if (_PooledGrainCount == 0 && !_GrainPoolReady)
+                UpdateGrainObjectPool();
+            // Get first pooled grain data object
+            if (_PooledGrainCount > 0)
+                for (int i = 0; i < _GrainDataArray.Length; i++)
+                    if (_GrainDataArray[i]._Pooled)
+                    {
+                        grainData = _GrainDataArray[i];
+                        return grainData;
+                    }
         }
-        // If pooled grains exist then find the first one
-        if (_PooledGrainCount > 0)
-            for (int i = 0; i < _GrainDataArray.Length; i++)
-                if (_GrainDataArray[i]._Pooled)
-                    return _GrainDataArray[i];
-        return null;
+        return grainData;
     }
  
-    public void AddGrainPlaybackDataToPool(GrainData grainData)
+    public void UpdateGrainObjectPool()
+    {
+        _PooledGrainCount = 0;
+        //---   Pool exhausted grain data objects for re-use.
+        for (int i = 0; i < _GrainDataArray.Length; i++)
+            if (!_GrainDataArray[i]._IsPlaying)
+            {
+                _GrainDataArray[i]._Pooled = true;
+                _PooledGrainCount++;
+            }
+
+        _GrainPoolReady = true;
+    }
+
+    public void GrainDataAdded(GrainData grainData)
     {
         if (!_Initialized)
             return;
@@ -200,6 +211,8 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         OnGrainEmitted?.Invoke(grainData, _GrainSynth._CurrentDSPSample);
     }
     #endregion
+
+
 
     void ReportGrainsDebug(string action)
     {
@@ -220,6 +233,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (!_Initialized || _PooledGrainCount == _GrainPoolSize)
             return;
         
+        GrainData grainData;
         _CurrentDSPSample = _GrainSynth._CurrentDSPSample;
         // For length of audio buffer, populate with grain samples, maintaining index over successive buffers
         for (int dataIndex = 0; dataIndex < data.Length; dataIndex += channels)
@@ -228,15 +242,22 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
                 if (!_GrainDataArray[i]._IsPlaying)
                     continue;
 
-                GrainData grainData = _GrainDataArray[i];
-                //---   GRAIN DSP START TIME HAS BEEN REACHED
+                grainData = _GrainDataArray[i];
+                //---   GRAIN DSP START INDEX REACHED = ADD SAMPLE
                 if (_CurrentDSPSample >= grainData._DSPStartTime)
+                    //--- GRAIN HAS REACHED THE END OF ITS PLAYHEAD = STOP PLAYBACK
                     if (grainData._PlayheadIndex >= grainData._SizeInSamples)
+                    {
                         grainData._IsPlaying = false;
+                        _GrainPoolReady = false;
+                    }
                     else
+                    {
+                        //--- SHOULD ACCEPT MULTIPLE CHANNEL GRAINS/SPEAKERS. FRAMEWORK CURRENTLY MONO ONLY
                         for (int chan = 0; chan < channels; chan++)
                             data[dataIndex + chan] += grainData._SampleData[grainData._PlayheadIndex];
                         grainData._PlayheadIndex++;
+                    }
             }
     }
 

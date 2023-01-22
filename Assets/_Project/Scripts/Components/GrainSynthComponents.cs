@@ -8,6 +8,7 @@ using Unity.Transforms;
 
 public struct DSPTimerComponent : IComponentData
 {
+    public int _LastActualDSPIndex;
     public int _NextFrameIndexEstimate;
     public int _GrainQueueSampleDuration;
     public int _PreviousFrameSampleDuration;
