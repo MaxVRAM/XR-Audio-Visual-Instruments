@@ -1,12 +1,17 @@
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 using Random = UnityEngine.Random;
+
+
+    public enum SiblingCollision { All, Single, None };
 
 /// <summary>
 //     Dynamically spawn/destroy child objects.
 /// <summary>
 public class ObjectSpawner : MonoBehaviour
 {
+
     [Header("Speaker Assignment")]
     [Tooltip("Force spawned emitters to use this speaker. Leave null to use dynamic allocation.")]
     public SpeakerAuthoring _DedicatedSpeaker;
@@ -21,10 +26,13 @@ public class ObjectSpawner : MonoBehaviour
     public List<GameObject> _ActiveObjects = new List<GameObject>();
 
     [Header("Spawn Configuration")]
-    [Range(1, 200)]
-    public int _MaxSpawnables = 1;
+    public SiblingCollision _AllowSiblingCollisionBurst = SiblingCollision.Single;
+    public bool _FilterSiblingBursts = true;
+    public bool _AllowSiblingSurfaceContact = true;
     public bool _AutoSpawn = true;
     public bool _AutoRemove = true;
+    [Range(1, 200)]
+    public int _MaxSpawnables = 1;
     [Range(0.01f, 2f)]
     public float _SpawnFrequency = 1f;
     [Tooltip("Duration in seconds before destroying spawned object (0 = do not destroy based on duration).")]
@@ -35,6 +43,8 @@ public class ObjectSpawner : MonoBehaviour
     public float _LifespanVariance = 0;
     [Range(0f, 3f)]
     public float _SpawnRadius = 0.5f;
+    [Tooltip("Destroy object outside this radius from its spawning position.")]
+    public float _DestroyRadius = 20f;
     
     [Header("Spawn Randomisation")]
     [Range(0, 100)]
@@ -53,6 +63,9 @@ public class ObjectSpawner : MonoBehaviour
     protected float _TimeSinceSpawn = 0;
     [SerializeField]
     protected int _MaxSpawnsPerFrame;
+    [SerializeField]
+    public HashSet<GameObject> _CollidedThisUpdate;
+    
 
     void Start()
     {
@@ -66,6 +79,23 @@ public class ObjectSpawner : MonoBehaviour
 
         if (_SpawnablePrefabs.Count == 0)
             Debug.LogWarning("Spawner [" + _Name + "] not assigned any prefabs!");
+
+        _CollidedThisUpdate = new HashSet<GameObject>();
+    }
+
+
+    void Awake()
+    {
+        StartCoroutine(ClearCollisions());
+    }
+
+    IEnumerator ClearCollisions()
+    {
+        while (true)
+        {
+            yield return new WaitForEndOfFrame();
+            _CollidedThisUpdate.Clear();
+        }
     }
 
     void Update()
@@ -117,16 +147,17 @@ public class ObjectSpawner : MonoBehaviour
                 timer = newObject.AddComponent<DestroyTimer>();
             if (_ObjectLifespan != 0)
                 timer._Lifespan = _ObjectLifespan - _ObjectLifespan * Random.Range(0, _LifespanVariance);
-            
+            timer._DestroyRadius = _DestroyRadius;
+
             // Set emitter properties if spawned GameObject is an emitter host
             HostAuthoring newHost = newObject.GetComponentInChildren(typeof(HostAuthoring), true) as HostAuthoring;
             if (newHost != null)
             {
+                newHost._Spawner = this;
                 newHost._LocalObject = newObject;
                 newHost._RemoteObject = _ControllerObject;
                 newHost.AddBehaviourInputSource(timer);
             }
-
             newObject.SetActive(true);
 
             _ActiveObjects.Add(newObject);
@@ -140,9 +171,10 @@ public class ObjectSpawner : MonoBehaviour
         while (_ActiveObjects.Count > _MaxSpawnables && maxToSpawn > 0)
         {
             if (_ActiveObjects[0] != null)
+            {
                 Destroy(_ActiveObjects[0]);
-            //_ActiveObjects.RemoveAt(0);
-            maxToSpawn --;
+                maxToSpawn --;
+            }
         }
     }
 
@@ -152,5 +184,16 @@ public class ObjectSpawner : MonoBehaviour
         float numberToSpawn = spawnClock / frequency;
         spawnClock = Time.deltaTime / (numberToSpawn % 1);
         return Mathf.Min(maxSpawnPerFrame, Mathf.CeilToInt(numberToSpawn));
+    }
+
+    public bool UniqueCollision(GameObject goA, GameObject goB)
+    {
+        if (!_ActiveObjects.Contains(goA) || !_ActiveObjects.Contains(goB) ||
+            _AllowSiblingCollisionBurst == SiblingCollision.All ||
+            _AllowSiblingCollisionBurst == SiblingCollision.Single &
+            _CollidedThisUpdate.Add(goA) | _CollidedThisUpdate.Add(goB))
+            return true;
+        else
+            return false;
     }
 }

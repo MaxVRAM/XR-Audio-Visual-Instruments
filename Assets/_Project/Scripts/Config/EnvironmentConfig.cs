@@ -9,6 +9,7 @@ public class EnvironmentConfig : MonoBehaviour
 
     void Awake()
     {
+        Debug.Log("");
     }
 
     void Start()

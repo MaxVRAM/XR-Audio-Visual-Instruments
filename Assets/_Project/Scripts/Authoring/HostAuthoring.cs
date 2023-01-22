@@ -7,16 +7,14 @@ using Unity.Transforms;
 [RequiresEntityConversion]
 public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
-    [SerializeField]
-    protected bool _Initialised = false;
-    
     protected Entity _HostEntity;
     protected EntityManager _EntityManager;
     protected Transform _HeadTransform;
     protected BlankModulation _BlankInputComponent;
-    
+        
     [Header("Runtime Dynamics")]
-    public DestroyTimer _DestroyTimer;
+    [SerializeField]
+    protected bool _Initialised = false;
     public bool _IsColliding = false;
     public bool _InListenerRadius = false;
     public float _ListenerDistance = 0;
@@ -32,16 +30,17 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     [SerializeField]
     protected AttachmentLine _AttachmentLine;
 
-    [Header("Interaction Sources")]
-    [Tooltip("List of attached behaviour scripts to use as modulation input sources.")]
-    [SerializeField]
-    protected List<BehaviourClass> _Behaviours;
-    [Tooltip("Primary target for generating collision and modulation data for emitters. Defaults parent game object.")]
+    [Header("Interactions")]
+    public ObjectSpawner _Spawner;
     public GameObject _LocalObject;
     [Tooltip("Additional object used to generate 'relative' values with against the interaction object. E.g. distance, relative speed, etc.")]
     public GameObject _RemoteObject;
     [Tooltip("(generated) Paired component that pipes collision data from the local object target to this host.")]
     public CollisionPipe _CollisionPipeComponent;
+    public DestroyTimer _DestroyTimer;
+    [Tooltip("List of attached behaviour scripts to use as modulation input sources.")]
+    [SerializeField]
+    protected List<BehaviourClass> _Behaviours;
 
     [Tooltip("(generated) Sibling emitters components for this host to manage.")]
     public EmitterAuthoring[] _HostedEmitters;
@@ -54,6 +53,14 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public float _CurrentCollidingRigidity = 0;
     public float _TargetCollidingRigidity = 0;
     public List<float> _ContactRigidValues;
+    public bool CollisionAllowed(GameObject other)
+    {
+        return _Spawner == null || _Spawner.UniqueCollision(_LocalObject, other);
+    }
+    public bool ContactAllowed(GameObject other)
+    {
+        return _Spawner == null || _Spawner._AllowSiblingSurfaceContact || !_Spawner._ActiveObjects.Contains(other);
+    }
 
 
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
@@ -262,35 +269,41 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     
     public void OnCollisionEnter(Collision collision)
     {
-        if (collision.collider.TryGetComponent(out SurfaceProperties surface))
-            _ContactRigidValues.Add(surface._Rigidity);
+        GameObject other = collision.collider.gameObject;
+        _CollidingObjects.Add(other);
 
-        _CollidingObjects.Add(collision.collider.gameObject);
+        if (ContactAllowed(other))
+        {
+            if (other.TryGetComponent(out SurfaceProperties surface))
+                _ContactRigidValues.Add(surface._Rigidity);
 
-        foreach (ModulationSource source in _ModulationSources)
-            source.ProcessCollisionValue(collision);
+            foreach (ModulationSource source in _ModulationSources)
+                source.ProcessCollisionValue(collision);
+        }
 
-        foreach (EmitterAuthoring emitter in _HostedEmitters)
-            emitter.NewCollision(collision);
+        if (CollisionAllowed(other))
+            foreach (EmitterAuthoring emitter in _HostedEmitters)
+                emitter.NewCollision(collision);
     }
 
     public void OnCollisionStay(Collision collision)
     {
+        Collider collider = collision.collider;
         _IsColliding = true;
 
-        foreach (ModulationSource source in _ModulationSources)
-            source.SetInputCollision(true, collision.collider.material);
+        if (ContactAllowed(collider.gameObject))
+        {
+            foreach (ModulationSource source in _ModulationSources)
+                source.SetInputCollision(true, collider.material);
 
-        foreach (EmitterAuthoring emitter in _HostedEmitters)
-            emitter.UpdateContactStatus(collision);
+            foreach (EmitterAuthoring emitter in _HostedEmitters)
+                emitter.UpdateContactStatus(collision);
+        }
     }
 
     public void OnCollisionExit(Collision collision)
     {
         _CollidingObjects.Remove(collision.collider.gameObject);
-
-        foreach (ModulationSource source in _ModulationSources)
-            source.SetInputCollision(false, collision.collider.material);
 
         if (_CollidingObjects.Count == 0)
         {
@@ -298,6 +311,8 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             _TargetCollidingRigidity = 0;
             _CurrentCollidingRigidity = 0;
             _ContactRigidValues.Clear();
+            foreach (ModulationSource source in _ModulationSources)
+                source.SetInputCollision(false, collision.collider.material);
             foreach (EmitterAuthoring emitter in _HostedEmitters)
                 emitter.UpdateContactStatus(null);
         }

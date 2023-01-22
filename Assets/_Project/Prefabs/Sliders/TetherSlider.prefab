@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 2306625124509221281}
   - component: {fileID: 2306625124509221280}
   - component: {fileID: 2306625124509221283}
-  - component: {fileID: 2306625124509221282}
   - component: {fileID: 2306625124509221284}
   - component: {fileID: 1347360291}
   m_Layer: 8
@@ -203,23 +202,6 @@ MonoBehaviour:
   m_ThrowAngularVelocityScale: 0.25
   m_GravityOnDetach: 0
   m_RetainTransformParent: 1
---- !u!114 &2306625124509221282
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2306625124509221286}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c24b0ae9e076db64aa6e40fceb550793, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _InitialPosition: {x: 0, y: 0, z: 0}
-  _InitialRotation: {x: 0, y: 0, z: 0, w: 0}
-  _BoundingObject: {fileID: 0}
-  _Radius: 30
-  _HeightLimit: 20
 --- !u!114 &2306625124509221284
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1008,7 +990,7 @@ PrefabInstance:
     - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
         type: 3}
       propertyPath: _Properties._Density._Start
-      value: 2.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
         type: 3}
@@ -1053,12 +1035,12 @@ PrefabInstance:
     - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
         type: 3}
       propertyPath: _Properties._Volume._Noise._Amount
-      value: 0.05
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
         type: 3}
       propertyPath: _Properties._BurstDuration._Default
-      value: 80
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
         type: 3}
@@ -1097,6 +1079,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
         type: 3}
+      propertyPath: _Properties._Density._InteractionShape
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
+        type: 3}
       propertyPath: _Properties._Volume._InteractionAmount
       value: 1
       objectReference: {fileID: 0}
@@ -1105,6 +1092,16 @@ PrefabInstance:
       propertyPath: _Properties._BurstDuration._InputSource
       value: 
       objectReference: {fileID: 2306625123323876118}
+    - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
+        type: 3}
+      propertyPath: _Properties._Density._InteractionAmount
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
+        type: 3}
+      propertyPath: _Properties._Playhead._InteractionShape
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
         type: 3}
       propertyPath: _Properties._Playhead._InteractionAmount
@@ -1129,6 +1126,11 @@ PrefabInstance:
         type: 3}
       propertyPath: _Properties._Transpose._InteractionAmount
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
+        type: 3}
+      propertyPath: _Properties._BurstDuration._InteractionShape
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5016405271372665489, guid: 23bf7722c8f371747b1ce6b80b95bd6a,
         type: 3}

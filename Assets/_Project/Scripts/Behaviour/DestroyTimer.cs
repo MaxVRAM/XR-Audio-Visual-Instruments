@@ -11,6 +11,9 @@ public class DestroyTimer : BehaviourClass
     protected int _SpawnTimeIndex;
     [SerializeField]
     protected float _Age = -1;
+    public float _DestroyRadius = 20;
+    [SerializeField]
+    protected Vector3 _SpawnPosition;
     public float CurrentAge { get => _Age; }
     public float CurrentAgeNorm { get => Mathf.Clamp(_Age / _Lifespan, 0, 1); }
 
@@ -20,12 +23,13 @@ public class DestroyTimer : BehaviourClass
         _SpawnTimeIndex = GrainSynth.Instance._CurrentDSPSample;
         if (_Lifespan == -1)
             _Lifespan = float.MaxValue;
+        _SpawnPosition = transform.position;
     }
 
     void Update()
     {
         _Age = Time.time - _SpawnTime;
-        if (_Age >= _Lifespan)
+        if (_Age >= _Lifespan || Mathf.Abs((transform.position - _SpawnPosition).magnitude) > _DestroyRadius)
             Destroy(gameObject);
     }
 
