@@ -168,11 +168,11 @@ public class GrainSynthSystem : SystemBase
             (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref BurstComponent burst, ref InListenerRadiusTag listenerRadius, ref PlayingTag playing, ref ConnectedTag connected) =>
             {
                 int grainsCreated = 0;
-                // TODO - CHECK IF THIS NEEDS TO HAVE GRAIN QUEUE DURATION ADDED, POSSIBLE CAUSE OF UNNECESSARY LATENCY ON BURST TRIGGER
-                // int currentDSPTime = dspTimer._CurrentSampleIndex + dspTimer._GrainQueueDuration;
-                int currentDSPTime = dspTimer._NextFrameIndexEstimate;
                 int dspTailLength = 0;
                 var randomGen = randomArray[nativeThreadIndex];
+                // TODO - CHECK IF THIS NEEDS TO HAVE GRAIN QUEUE DURATION ADDED, POSSIBLE CAUSE OF UNNECESSARY LATENCY ON BURST TRIGGER
+                // int currentDSPTime = dspTimer._CurrentSampleIndex + dspTimer._GrainQueueDuration;
+                int currentDSPTime = dspTimer._NextFrameIndexEstimate + (int)(randomGen.NextFloat(0, 1) * dspTimer._RandomiseBurstStartIndex);
                 int burstDurationRange = (int)(burst._BurstDuration._Max - burst._BurstDuration._Min);
                 int burstDurationInteraction = (int) (Map(burst._BurstDuration._InteractionInput,
                     0, 1, 0, 1, burst._BurstDuration._Shape) * burst._BurstDuration._InteractionAmount);

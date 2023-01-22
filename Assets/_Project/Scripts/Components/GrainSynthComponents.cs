@@ -12,6 +12,7 @@ public struct DSPTimerComponent : IComponentData
     public int _NextFrameIndexEstimate;
     public int _GrainQueueSampleDuration;
     public int _PreviousFrameSampleDuration;
+    public int _RandomiseBurstStartIndex;
 }
 
 public struct AudioClipDataComponent :IComponentData

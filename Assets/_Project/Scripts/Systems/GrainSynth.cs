@@ -56,10 +56,14 @@ public class GrainSynth :  MonoBehaviour
     public float _QueueDurationMS = 22;
     [Range(0, 100)]
     [Tooltip("Percentage of previous frame duration to delay grain start times of next frame. Adds a predictable amount of latency to help avoid timing issues when the framerate slows.")]
-    public float _PreviousFramePercentageDelay = 10;
-    [Range(0, 100)]
+    public float _DelayByPercentageOfPreviousDuration = 10;
+    [Range(0, 60)]
     [Tooltip("Discard unplayed grains with a DSP start index more than this value (ms) in the past. Prevents clustered grain playback when resources are near their limit.")]
     public float _DiscardGrainsOlderThanMS = 10;
+    [Range(0, 40)]
+    [Tooltip("Delay bursts triggered on the same frame by a random amount. Helps avoid phasing issues caused by identical emitters triggered together.")]
+    public float _RandomiseBurstStartTimeMS = 8;
+    public int RandomiseBurstStartIndex { get { return (int)(_RandomiseBurstStartTimeMS * SamplesPerMS); }}
     public int SamplesPerMS { get { return (int)(_SampleRate * .001f); }}
     public int QueueDurationSamples { get { return (int)(_QueueDurationMS * SamplesPerMS); } }
 
@@ -104,7 +108,10 @@ public class GrainSynth :  MonoBehaviour
             CreateSpeaker(transform.position);
 
         _DSPTimerEntity = _EntityManager.CreateEntity();
-        _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent { _NextFrameIndexEstimate = _CurrentDSPSample + QueueDurationSamples, _GrainQueueSampleDuration = QueueDurationSamples });
+        _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent {
+            _NextFrameIndexEstimate = _CurrentDSPSample + QueueDurationSamples,
+            _GrainQueueSampleDuration = QueueDurationSamples,
+            _RandomiseBurstStartIndex = RandomiseBurstStartIndex });
         #if UNITY_EDITOR
                     _EntityManager.SetName(_DSPTimerEntity, "_DSP Timer");
         #endif
@@ -186,9 +193,10 @@ public class GrainSynth :  MonoBehaviour
         DSPTimerComponent dspTimer = _EntityManager.GetComponentData<DSPTimerComponent>(_DSPTimerEntity);
         _EntityManager.SetComponentData(_DSPTimerEntity, new DSPTimerComponent {
             _LastActualDSPIndex = _CurrentDSPSample,
-            _NextFrameIndexEstimate = _CurrentDSPSample + (int)(previousFrameSampleDuration * (1 + _PreviousFramePercentageDelay / 100)),
+            _NextFrameIndexEstimate = _CurrentDSPSample + (int)(previousFrameSampleDuration * (1 + _DelayByPercentageOfPreviousDuration / 100)),
             _GrainQueueSampleDuration = QueueDurationSamples,
-            _PreviousFrameSampleDuration = previousFrameSampleDuration });
+            _PreviousFrameSampleDuration = previousFrameSampleDuration,
+            _RandomiseBurstStartIndex = RandomiseBurstStartIndex });
         
         // Update audio listener position
         _EntityManager.SetComponentData(_AttachParamEntity, new AttachParameterComponent

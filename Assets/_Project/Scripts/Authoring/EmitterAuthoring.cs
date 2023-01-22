@@ -9,6 +9,8 @@ using Random = UnityEngine.Random;
 [RequiresEntityConversion]
 public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
+    public enum Condition { Always, Colliding, NotColliding };
+
     [SerializeField]
     protected bool _Initialised = false;
     public enum EmitterType {Continuous, Burst}
@@ -22,7 +24,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     [Tooltip("(generated) This emitter's subtype. Current subtypes are either 'Continuous' or 'Burst'.")]
     public EmitterType _EmitterType;
     [Tooltip("Limit the emitter's playback to collision/contact states.")]
-    public bool _ContactEmitter = false;
+    public Condition _PlaybackCondition = Condition.Always;
     [Tooltip("Audio clip used as the emitter's content source.")]
     public int _ClipIndex = 0;
 
@@ -113,7 +115,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void NewCollision(Collision collision)
     {
-        if (_ContactEmitter && _EmitterType == EmitterType.Burst)
+        if (_EmitterType == EmitterType.Burst && _PlaybackCondition != Condition.NotColliding)
         {
             _IsPlaying = true;
             if (_ColliderRigidityVolumeScale)
@@ -125,15 +127,12 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void UpdateContactStatus(Collision collision)
     {
-        if (!_ContactEmitter || !_ColliderRigidityVolumeScale)
+        if (_PlaybackCondition == Condition.NotColliding || !_ColliderRigidityVolumeScale)
             _ContactSurfaceAttenuation = 1;
-        else if (_EmitterType == EmitterType.Continuous)
+        else if (_EmitterType == EmitterType.Continuous && _PlaybackCondition != Condition.NotColliding)
         {
             _IsPlaying = collision != null;
-            if (collision == null)
-                _ContactSurfaceAttenuation = 0;
-            else if (_EmitterType == EmitterType.Continuous)
-                _ContactSurfaceAttenuation = _Host._CurrentCollidingRigidity;
+            _ContactSurfaceAttenuation = collision == null ? _ContactSurfaceAttenuation = 0 : _ContactSurfaceAttenuation = _Host._CurrentCollidingRigidity;
         }
     }
 

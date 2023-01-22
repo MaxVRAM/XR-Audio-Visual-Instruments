@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 560150339}
   - component: {fileID: 560150341}
   - component: {fileID: 560150340}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Visual
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -93,8 +93,9 @@ GameObject:
   - component: {fileID: 2025781601}
   - component: {fileID: 2025781603}
   - component: {fileID: 2025781602}
-  m_Layer: 0
-  m_Name: Simple Swarm Particle System
+  - component: {fileID: 2025781604}
+  m_Layer: 11
+  m_Name: SpawnerParticles
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -130,13 +131,25 @@ VisualEffect:
   m_ResourceVersion: 1
   m_PropertySheet:
     m_Float:
-      m_Array: []
+      m_Array:
+      - m_Value: 0.2
+        m_Name: VelocityDamping
+        m_Overridden: 1
     m_Vector2f:
       m_Array: []
     m_Vector3f:
       m_Array:
       - m_Value: {x: 0, y: 0, z: 0}
         m_Name: SpawnObject_center
+        m_Overridden: 0
+      - m_Value: {x: 0, y: 0, z: 0}
+        m_Name: New OrientedBox_center
+        m_Overridden: 0
+      - m_Value: {x: 0, y: 0, z: 0}
+        m_Name: SpawnerTransform_position
+        m_Overridden: 0
+      - m_Value: {x: 0, y: 0, z: 0}
+        m_Name: SpawnerVelocity
         m_Overridden: 0
     m_Vector4f:
       m_Array: []
@@ -197,6 +210,25 @@ VFXRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+--- !u!114 &2025781604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2025781600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e69da1a3c63250d49b213d95eea61532, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _SpawnerObject: {fileID: 8552385342946073179}
+  _SpawnerVFX: {fileID: 2025781603}
+  _GrabTransform: {fileID: 0}
+  _Velocity: {x: 0, y: 0, z: 0}
+  _AngularVelocity: {x: 0, y: 0, z: 0}
+  _VelocitySmoothing: 0.5
+  _AngularSmoothing: 0.5
 --- !u!1001 &2225451531289725359
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -213,6 +245,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: SnapZone
+      objectReference: {fileID: 0}
+    - target: {fileID: 7158148873683429187, guid: 576141e8763b8f345bf10cb0fac89b48,
+        type: 3}
+      propertyPath: m_Layer
+      value: 11
       objectReference: {fileID: 0}
     - target: {fileID: 7158148873683429190, guid: 576141e8763b8f345bf10cb0fac89b48,
         type: 3}
@@ -294,6 +331,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 97019336606736125, guid: 71f999a2019ae9045b33638e2f3597a2,
+        type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
     - target: {fileID: 434117549717560447, guid: 71f999a2019ae9045b33638e2f3597a2,
         type: 3}
       propertyPath: m_RootOrder
@@ -373,6 +415,41 @@ PrefabInstance:
         type: 3}
       propertyPath: _oneGrabTransformer
       value: 
+      objectReference: {fileID: 5319563205857071587}
+    - target: {fileID: 3354966988573442913, guid: 71f999a2019ae9045b33638e2f3597a2,
+        type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 5026230445285824431, guid: 71f999a2019ae9045b33638e2f3597a2,
+        type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 6238066686232166018, guid: 71f999a2019ae9045b33638e2f3597a2,
+        type: 3}
+      propertyPath: _PositionDamping
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6238066686232166018, guid: 71f999a2019ae9045b33638e2f3597a2,
+        type: 3}
+      propertyPath: _RotationDamping
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6481616255517821712, guid: 71f999a2019ae9045b33638e2f3597a2,
+        type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 6763075260813085549, guid: 71f999a2019ae9045b33638e2f3597a2,
+        type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 6763075261697423132, guid: 71f999a2019ae9045b33638e2f3597a2,
+        type: 3}
+      propertyPath: m_Layer
+      value: 11
       objectReference: {fileID: 0}
     - target: {fileID: 7633846820267324729, guid: 71f999a2019ae9045b33638e2f3597a2,
         type: 3}
@@ -384,6 +461,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: GrabbableAnchor
       objectReference: {fileID: 0}
+    - target: {fileID: 7633846820267324730, guid: 71f999a2019ae9045b33638e2f3597a2,
+        type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 8263422252061158913, guid: 71f999a2019ae9045b33638e2f3597a2,
+        type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
     - target: {fileID: 8263422252061158926, guid: 71f999a2019ae9045b33638e2f3597a2,
         type: 3}
       propertyPath: _rigidbody
@@ -394,6 +481,11 @@ PrefabInstance:
       propertyPath: _rigidbody
       value: 
       objectReference: {fileID: 4431509566931312580}
+    - target: {fileID: 9214163089393335089, guid: 71f999a2019ae9045b33638e2f3597a2,
+        type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 71f999a2019ae9045b33638e2f3597a2, type: 3}
 --- !u!1 &8552385342946073179 stripped
@@ -408,6 +500,18 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 2252065984003813217}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5319563205857071587 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6238066686232166018, guid: 71f999a2019ae9045b33638e2f3597a2,
+    type: 3}
+  m_PrefabInstance: {fileID: 2252065984003813217}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8552385342946073179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50b9106a41e98d44f8de20339e7fc120, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!54 &4431509566931312580
 Rigidbody:
   m_ObjectHideFlags: 0

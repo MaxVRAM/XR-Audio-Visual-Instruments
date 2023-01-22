@@ -32,7 +32,7 @@ public class ContinuousAuthoring : EmitterAuthoring
 
         dstManager.AddComponentData(_EmitterEntity, new ContinuousComponent
         {
-            _IsPlaying = !_ContactEmitter,
+            _IsPlaying = _PlaybackCondition != Condition.NotColliding,
             _EmitterIndex = index,
             _AudioClipIndex = _ClipIndex,
             _SpeakerIndex = _Host._SpeakerIndex,
