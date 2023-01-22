@@ -53,10 +53,6 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public float _CurrentCollidingRigidity = 0;
     public float _TargetCollidingRigidity = 0;
     public List<float> _ContactRigidValues;
-    public bool CollisionAllowed(GameObject other)
-    {
-        return _Spawner == null || _Spawner.UniqueCollision(_LocalObject, other);
-    }
     public bool ContactAllowed(GameObject other)
     {
         return _Spawner == null || _Spawner._AllowSiblingSurfaceContact || !_Spawner._ActiveObjects.Contains(other);
@@ -281,7 +277,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
                 source.ProcessCollisionValue(collision);
         }
 
-        if (CollisionAllowed(other))
+        if (_Spawner == null || _Spawner.UniqueCollision(_LocalObject, other))
             foreach (EmitterAuthoring emitter in _HostedEmitters)
                 emitter.NewCollision(collision);
     }

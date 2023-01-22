@@ -1632,6 +1632,7 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
     static void OVRPluginLogCallback(OVRPlugin.LogLevel logLevel, IntPtr message, int size)
     {
         string logString = System.Runtime.InteropServices.Marshal.PtrToStringAnsi(message, size);
+        logLevel = OVRPlugin.LogLevel.Error;
         if (logLevel <= OVRPlugin.LogLevel.Info)
         {
             UnityEngine.Debug.Log("[OVRPlugin] " + logString);

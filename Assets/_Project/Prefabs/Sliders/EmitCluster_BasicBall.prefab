@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 2306625124509221284}
   - component: {fileID: 1347360291}
   m_Layer: 8
-  m_Name: TetherSlider
+  m_Name: EmitCluster_BasicBall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

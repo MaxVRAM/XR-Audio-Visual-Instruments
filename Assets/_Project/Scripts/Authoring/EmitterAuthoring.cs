@@ -17,6 +17,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     protected Entity _EmitterEntity;
     protected EntityManager _EntityManager;
     protected float[] _PerlinSeedArray;
+    protected float _LastTriggeredAt = 0;
 
     [Header("Emitter Configuration")]
     [Tooltip("(generated) Host component managing this emitter.")]
@@ -115,9 +116,11 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void NewCollision(Collision collision)
     {
-        if (_EmitterType == EmitterType.Burst && _PlaybackCondition != Condition.NotColliding)
+        if (_EmitterType == EmitterType.Burst && _PlaybackCondition != Condition.NotColliding &&
+            Time.time > _LastTriggeredAt + GrainSynth.Instance._BurstDebounceDurationMS * 0.001f)
         {
             _IsPlaying = true;
+            _LastTriggeredAt = Time.time;
             if (_ColliderRigidityVolumeScale)
                 _ContactSurfaceAttenuation = collision.collider.TryGetComponent(out SurfaceProperties surface) ? surface._Rigidity : 0;
             else _ContactSurfaceAttenuation = 1;
@@ -132,7 +135,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         else if (_EmitterType == EmitterType.Continuous && _PlaybackCondition != Condition.NotColliding)
         {
             _IsPlaying = collision != null;
-            _ContactSurfaceAttenuation = collision == null ? _ContactSurfaceAttenuation = 0 : _ContactSurfaceAttenuation = _Host._CurrentCollidingRigidity;
+            _ContactSurfaceAttenuation = collision == null ? 0 : _Host._CurrentCollidingRigidity;
         }
     }
 

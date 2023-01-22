@@ -63,6 +63,10 @@ public class GrainSynth :  MonoBehaviour
     [Range(0, 40)]
     [Tooltip("Delay bursts triggered on the same frame by a random amount. Helps avoid phasing issues caused by identical emitters triggered together.")]
     public float _RandomiseBurstStartTimeMS = 8;
+    [Range(0, 50)]
+    [Tooltip("Burst emitters ignore subsequent collisions for this duration to avoid fluttering from weird physics.")]
+    public float _BurstDebounceDurationMS = 25;
+    
     public int RandomiseBurstStartIndex { get { return (int)(_RandomiseBurstStartTimeMS * SamplesPerMS); }}
     public int SamplesPerMS { get { return (int)(_SampleRate * .001f); }}
     public int QueueDurationSamples { get { return (int)(_QueueDurationMS * SamplesPerMS); } }

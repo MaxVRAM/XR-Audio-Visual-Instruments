@@ -27,7 +27,6 @@ public class ObjectSpawner : MonoBehaviour
 
     [Header("Spawn Configuration")]
     public SiblingCollision _AllowSiblingCollisionBurst = SiblingCollision.Single;
-    public bool _FilterSiblingBursts = true;
     public bool _AllowSiblingSurfaceContact = true;
     public bool _AutoSpawn = true;
     public bool _AutoRemove = true;
@@ -188,11 +187,13 @@ public class ObjectSpawner : MonoBehaviour
 
     public bool UniqueCollision(GameObject goA, GameObject goB)
     {
-        if (!_ActiveObjects.Contains(goA) || !_ActiveObjects.Contains(goB) ||
-            _AllowSiblingCollisionBurst == SiblingCollision.All ||
-            _AllowSiblingCollisionBurst == SiblingCollision.Single &
-            _CollidedThisUpdate.Add(goA) | _CollidedThisUpdate.Add(goB))
+        if (!_ActiveObjects.Contains(goA) || !_ActiveObjects.Contains(goB) || _AllowSiblingCollisionBurst == SiblingCollision.All)
             return true;
+        else if (_AllowSiblingCollisionBurst == SiblingCollision.None)
+            return false;
+        else if (_AllowSiblingCollisionBurst == SiblingCollision.Single &
+                _CollidedThisUpdate.Add(goA) | _CollidedThisUpdate.Add(goB))
+                return true;
         else
             return false;
     }
