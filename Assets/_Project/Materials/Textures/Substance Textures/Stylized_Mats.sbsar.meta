@@ -512,7 +512,7 @@ ScriptedImporter:
     shaderName: Universal Render Pipeline/Lit
     materialProperties:
       shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
-      shaderKeywords: _METALLICSPECGLOSSMAP _NORMALMAP _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+      shaderKeywords: _METALLICSPECGLOSSMAP _NORMALMAP
       lightmapFlags: 4
       enableInstancingVariants: 0
       doubleSidedGI: 0
@@ -521,7 +521,7 @@ ScriptedImporter:
       - name: _BaseMap
         texture: {fileID: 6370658428473218738, guid: e6b97809f1e70e041a91f41d6f3689f7,
           type: 3}
-        scale: {x: 2, y: 2}
+        scale: {x: 1.5, y: 1.5}
         offset: {x: 0, y: 0}
       - name: _BumpMap
         texture: {fileID: 4601062017335380761, guid: e6b97809f1e70e041a91f41d6f3689f7,
@@ -546,7 +546,7 @@ ScriptedImporter:
         offset: {x: 0, y: 0}
       - name: _MainTex
         texture: {instanceID: 0}
-        scale: {x: 2, y: 2}
+        scale: {x: 1.5, y: 1.5}
         offset: {x: 0, y: 0}
       - name: _MetallicGlossMap
         texture: {fileID: -7328623129685019454, guid: e6b97809f1e70e041a91f41d6f3689f7,
@@ -617,9 +617,9 @@ ScriptedImporter:
       - name: _ReceiveShadows
         float: 1
       - name: _Smoothness
-        float: 0.918
-      - name: _SmoothnessTextureChannel
         float: 1
+      - name: _SmoothnessTextureChannel
+        float: 0
       - name: _SpecularHighlights
         float: 1
       - name: _SrcBlend
@@ -636,7 +636,7 @@ ScriptedImporter:
       - name: _Color
         color: {r: 1, g: 1, b: 1, a: 1}
       - name: _EmissionColor
-        color: {r: 0, g: 0, b: 0, a: 1}
+        color: {r: 0.07156863, g: 0.07156863, b: 0.07156863, a: 1}
       - name: _SpecColor
         color: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     outputDescList:
