@@ -316,8 +316,8 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     protected void OnDrawGizmos()
     {
-        Gizmos.color = _InListenerRadius ? Color.yellow : Color.blue;
-        Gizmos.DrawSphere(transform.position, .1f);
+        // Gizmos.color = _InListenerRadius ? Color.yellow : Color.blue;
+        // Gizmos.DrawSphere(transform.position, .1f);
     }
     
     private void OnDestroy()
