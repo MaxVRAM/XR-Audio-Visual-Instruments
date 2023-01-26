@@ -46,6 +46,7 @@ public struct AttachParameterComponent : IComponentData
     public float _ListenerRadius;
     public float _AttachArcDegrees;
     public float _TranslationSmoothing;
+    public float3 _PooledSpeakerPosition;
 }
 public struct SpeakerComponent : IComponentData
 {

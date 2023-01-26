@@ -36,16 +36,21 @@ public class GrainSynth :  MonoBehaviour
 
 
     [Header("Speaker Configuration")]
-    public float _ListenerRadius = 10;
     public SpeakerAuthoring _DynamicSpeakerPrefab;
-    public int _MaxDynamicSpeakers = 50;
+    public Vector3 _PooledSpeakerPosition = Vector3.down * 10;
+    [Range(0, 64)]
+    public int _MaxDynamicSpeakers = 32;
+    [Range(0.1f, 50)]
+    public float _ListenerRadius = 10;
+    [Range(0.1f, 45)]
     public float _SpeakerAttachArcDegrees = 10;
+    [Range(0, 30)]
     public float _SpeakerAttachPositionSmoothing = 0.1f;
     public float AttachSmoothing { get { return 1 / _SpeakerAttachPositionSmoothing / 5; }}
     public bool _DrawAttachmentLines = false;
+    [Range(0, 0.05f)]
     public float _AttachmentLineWidth = 0.002f;
     public Material _AttachmentLineMat;
-    [Range(0, 0.05f)]
 
     // TODO: Implement system to reduce dynamic speakers if additional dedicated speakers are spawned at runtime to avoid audio voice limit.
     int _MaxSpeakers;
@@ -109,7 +114,7 @@ public class GrainSynth :  MonoBehaviour
         _SampleRate = AudioSettings.outputSampleRate;
 
         for (int i = 0; i < _MaxDynamicSpeakers; i++)
-            CreateSpeaker(transform.position);
+            CreateSpeaker(new Vector3(0, -10, 0));
 
         _DSPTimerEntity = _EntityManager.CreateEntity();
         _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent {
@@ -130,7 +135,8 @@ public class GrainSynth :  MonoBehaviour
             _ListenerPos = _Listener.transform.position,
             _ListenerRadius = _ListenerRadius,
             _AttachArcDegrees = _SpeakerAttachArcDegrees,
-            _TranslationSmoothing = AttachSmoothing
+            _TranslationSmoothing = AttachSmoothing,
+            _PooledSpeakerPosition = _PooledSpeakerPosition
         });
         #if UNITY_EDITOR
                     _EntityManager.SetName(_AttachParamEntity, "_Activation Radius");
@@ -208,7 +214,8 @@ public class GrainSynth :  MonoBehaviour
             _ListenerPos = _Listener.transform.position,
             _ListenerRadius = _ListenerRadius,
             _AttachArcDegrees = _SpeakerAttachArcDegrees,
-            _TranslationSmoothing = AttachSmoothing
+            _TranslationSmoothing = AttachSmoothing,
+            _PooledSpeakerPosition = _PooledSpeakerPosition
         });
 
         NativeArray<Entity> grainEntities = _GrainQuery.ToEntityArray(Allocator.TempJob);

@@ -263,15 +263,15 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     void OnDrawGizmos()
     {
-        if (_IsActive)
-        {
-            if(_SpeakerIndex == 0)
-                Gizmos.color = Color.blue;
-            else
-                Gizmos.color = Color.yellow;
+        // if (_IsActive)
+        // {
+        //     if(_SpeakerIndex == 0)
+        //         Gizmos.color = Color.blue;
+        //     else
+        //         Gizmos.color = Color.yellow;
 
-            Gizmos.DrawWireSphere(transform.position, _AttachmentRadius);
-        }
+        //     Gizmos.DrawWireSphere(transform.position, _AttachmentRadius);
+        // }
     }
 
     private void OnDestroy()

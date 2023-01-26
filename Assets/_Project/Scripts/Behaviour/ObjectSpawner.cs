@@ -131,11 +131,12 @@ public class ObjectSpawner : MonoBehaviour
 
             if (!newObject.TryGetComponent(out Rigidbody rb))
                 rb = newObject.AddComponent<Rigidbody>();
-                
+
+            
             Vector3 randomVel = new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f);
             Vector3 randomAng = new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f);
-
-            rb.AddForce(randomVel * _RandomVelocity);
+            rb.velocity = randomVel * _RandomVelocity;
+            // rb.AddForce(randomVel * _RandomVelocity);
             rb.angularVelocity = randomAng * _RandomAngularVelocity;
 
              _ObjectCounter++;

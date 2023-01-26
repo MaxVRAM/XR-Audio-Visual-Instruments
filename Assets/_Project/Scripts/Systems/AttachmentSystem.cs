@@ -103,6 +103,7 @@ public class AttachmentSystem : SystemBase
                 {
                     pooling._AttachmentRadius = 0.1f;
                     pooling._State = PooledState.Pooled;
+                    translation.Value = attachParameters._PooledSpeakerPosition;
                 }
                 else
                 {
