@@ -50,12 +50,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _GrainSynth: {fileID: 0}
   _SpeakerIndex: 2147483647
+  _AttachmentRadius: 1
+  _PooledGrainCount: 0
   _Initialized: 0
   _Registered: 0
-  _IsActive: 0
-  _AttachmentRadius: 1
   _DebugLog: 0
-  _PooledGrainCount: 0
+  _IsActive: 0
   _StaticallyPairedEmitters: []
 --- !u!82 &4563112762925737388
 AudioSource:
@@ -238,7 +238,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2519325204652697371}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1

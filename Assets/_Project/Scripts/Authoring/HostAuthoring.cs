@@ -210,7 +210,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void UpdateSpeakerAttachmentLine()
     {
-        if (_AttachmentLine != null && _Connected && GrainSynth.Instance._DrawAttachmentLines)
+        if (_AttachmentLine != null && _Connected && GrainSynth.Instance._DrawAttachmentLines && _DedicatedSpeaker != null)
         {
             _AttachmentLine._Active = true;
             _AttachmentLine._TransformB = _SpeakerTransform;
