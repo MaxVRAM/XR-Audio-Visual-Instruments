@@ -39,10 +39,10 @@ public struct QuadData
 }
 #endregion
 
-public class DOTS_QuadrantSystem : SystemBase
+public partial class DOTS_QuadrantSystem : SystemBase
 {
     //--  Stores multiple quad data structs at an int hash key
-    public static NativeMultiHashMap<int, QuadData> _QuadrantMultiHashMap;
+    public static NativeParallelMultiHashMap<int, QuadData> _QuadrantMultiHashMap;
 
     //--  Used to scale the y component of the hash map so values don't overlap
     public const int _QuadYHashMultiplier = 1000;
@@ -53,7 +53,7 @@ public class DOTS_QuadrantSystem : SystemBase
     {
         // Multi hash map that has a single key which holds many values, in this case a has for a quadrant which holds entities
         // This is created as a persistent collection so it can be used by other classes
-        _QuadrantMultiHashMap = new NativeMultiHashMap<int, QuadData>(0, Allocator.Persistent);
+        _QuadrantMultiHashMap = new NativeParallelMultiHashMap<int, QuadData>(0, Allocator.Persistent);
         base.OnCreate();
     }
 
@@ -133,10 +133,10 @@ public class DOTS_QuadrantSystem : SystemBase
         //Debug.Log("Hashmap key: " + GetPosHashMapKey(pos) + "     Position: " + pos);
     }
 
-    private static int GetEntityCountInHashMap(NativeMultiHashMap<int, QuadData> quadMultiHashMap, int hashMapKey)
+    private static int GetEntityCountInHashMap(NativeParallelMultiHashMap<int, QuadData> quadMultiHashMap, int hashMapKey)
     {
         QuadData quadData;
-        NativeMultiHashMapIterator<int> nativeMultiHashMapIterator;
+        NativeParallelMultiHashMapIterator<int> nativeMultiHashMapIterator;
         int count = 0;
 
         if (quadMultiHashMap.TryGetFirstValue(hashMapKey, out quadData, out nativeMultiHashMapIterator))

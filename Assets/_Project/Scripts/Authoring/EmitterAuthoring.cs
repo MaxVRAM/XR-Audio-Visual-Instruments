@@ -6,7 +6,6 @@ using Random = UnityEngine.Random;
 
 
 [DisallowMultipleComponent]
-[RequiresEntityConversion]
 public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
     public enum Condition { Always, Colliding, NotColliding };

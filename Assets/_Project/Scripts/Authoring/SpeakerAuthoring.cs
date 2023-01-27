@@ -29,7 +29,6 @@ public class GrainData
 //      At the SampleStartTime GrainPlaybackData samples are written to the AudioSource's buffer with OnAudioFilterRead.
 /// <summary>
 [RequireComponent(typeof(AudioSource))]
-[RequireComponent(typeof(ConvertToEntity))]
 public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
     // Event to populate 

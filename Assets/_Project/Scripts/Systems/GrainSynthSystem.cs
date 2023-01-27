@@ -26,7 +26,7 @@ class RandomSystem : ComponentSystem
 }
 
 [UpdateAfter(typeof(AttachmentSystem))]
-public class GrainSynthSystem : SystemBase
+public partial class GrainSynthSystem : SystemBase
 {
     // Command buffer for removing tween components once they are completed
     private EndSimulationEntityCommandBufferSystem _CommandBufferSystem;

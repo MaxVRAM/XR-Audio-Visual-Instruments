@@ -12,7 +12,7 @@ using Substance.Game;
 //     Processes dynamic emitter host <-> speaker link components amd updates entity in-range statuses.
 /// <summary>
 [UpdateAfter(typeof(DOTS_QuadrantSystem))]
-public class AttachmentSystem : SystemBase
+public partial class AttachmentSystem : SystemBase
 {
     // private EndSimulationEntityCommandBufferSystem _CommandBufferSystem;
 

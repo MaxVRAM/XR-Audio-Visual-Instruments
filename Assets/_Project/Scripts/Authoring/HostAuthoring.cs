@@ -4,7 +4,6 @@ using Unity.Entities;
 using Unity.Transforms;
 
 [DisallowMultipleComponent]
-[RequiresEntityConversion]
 public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
     protected Entity _HostEntity;
