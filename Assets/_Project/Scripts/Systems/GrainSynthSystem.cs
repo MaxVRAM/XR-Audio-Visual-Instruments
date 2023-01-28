@@ -43,7 +43,7 @@ public partial class GrainSynthSystem : SystemBase
 
         // Acquire an ECB and convert it to a concurrent one to be able to use it from a parallel job.
         EntityCommandBuffer.ParallelWriter entityCommandBuffer = ecb.CreateCommandBuffer().AsParallelWriter();
-        
+
         // ----------------------------------- EMITTER UPDATE
         // Get all audio clip data components
         NativeArray<AudioClipDataComponent> audioClipData = GetEntityQuery(typeof(AudioClipDataComponent)).ToComponentDataArray<AudioClipDataComponent>(Allocator.TempJob);
@@ -53,8 +53,7 @@ public partial class GrainSynthSystem : SystemBase
 
         #region EMIT GRAINS
         //---   CREATES ENTITIES W/ GRAIN PROCESSOR + GRAIN SAMPLE BUFFER + DSP SAMPLE BUFFER + DSP PARAMS BUFFER
-
-        JobHandle emitGrains = Entities.WithNativeDisableParallelForRestriction(randomArray).ForEach
+        JobHandle emitGrains = Entities.WithNativeDisableParallelForRestriction(randomArray).WithReadOnly(audioClipData).ForEach
         (
             (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref ContinuousComponent emitter, ref InListenerRadiusTag listenerRadius, ref PlayingTag playing, ref ConnectedTag connected) =>
             {
@@ -165,7 +164,7 @@ public partial class GrainSynthSystem : SystemBase
         #endregion
 
         #region BURST GRAINS
-        JobHandle emitBurst = Entities.WithNativeDisableParallelForRestriction(randomArray).ForEach
+        JobHandle emitBurst = Entities.WithNativeDisableParallelForRestriction(randomArray).WithReadOnly(audioClipData).ForEach
         (
             (int nativeThreadIndex, int entityInQueryIndex, ref DynamicBuffer<DSPParametersElement> dspChain, ref BurstComponent burst, ref InListenerRadiusTag listenerRadius, ref PlayingTag playing, ref ConnectedTag connected) =>
             {
@@ -392,6 +391,11 @@ public partial class GrainSynthSystem : SystemBase
         #endregion
 
         Dependency = dspGrains;
+        
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Debug.Log("Breakpoint!");
+        }
     }
 
 

@@ -27,8 +27,10 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     [Header("Speaker assignment")]
     [Tooltip("Host will spawn a speaker prefab for itself if true, disabling attachment system functionality on both host and speaker entities.")]
     public bool _UseDedicatedSpeaker = false;
-    public GameObject _SpeakerPrefab;
-    public Transform _SpeakerOffsetPosition;
+    public SpeakerAuthoring _SpeakerPrefab;
+    [Tooltip("Parent transform to host dedicated speaker, defaults to parent. Cannot be this transform!")]
+    //  (may also be used as a location target for dynamic speakers)
+    public Transform _SpeakerContainer;
     [SerializeField]
     protected SpeakerAuthoring _DedicatedSpeaker;
     [SerializeField]
@@ -68,12 +70,12 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         {
             if (_SpeakerPrefab == null)
                 _SpeakerPrefab = GrainSynth.Instance._SpeakerPrefab;
-            if (_SpeakerOffsetPosition == null)
-                _SpeakerOffsetPosition = transform;
-            GameObject speakerObject = Instantiate(_SpeakerPrefab, _SpeakerOffsetPosition.position, Quaternion.identity, transform.parent);    
-            if (!speakerObject.TryGetComponent(out _DedicatedSpeaker))
-                Debug.Log($"Host {name} spawned dedicated speaker prefab without SpeakerAuthoring component.");
-            _DedicatedSpeaker._DedicatedSpeaker = true;
+            if (_SpeakerContainer == null)
+                _SpeakerContainer = transform.parent;
+            _DedicatedSpeaker = Instantiate(_SpeakerPrefab, _SpeakerContainer.position, Quaternion.identity, _SpeakerContainer);    
+            //if (!speakerObject.TryGetComponent(out _DedicatedSpeaker))
+            //    Debug.Log($"Host {name} spawned dedicated speaker prefab without SpeakerAuthoring component.");
+            _DedicatedSpeaker._IsDedicatedSpeaker = true;
         }
             
         GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;

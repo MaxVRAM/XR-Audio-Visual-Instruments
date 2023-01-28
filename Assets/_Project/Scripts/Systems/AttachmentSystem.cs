@@ -5,7 +5,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using System;
 
-// https://docs.unity3d.com/Packages/com.unity.entities@0.13/api/
+// https://docs.unity3d.com/Packages/com.unity.entities@0.51/api/
 
 /// <summary>
 //     Processes dynamic emitter host <-> speaker link components amd updates entity in-range statuses.

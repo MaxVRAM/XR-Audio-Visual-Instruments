@@ -63,7 +63,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     protected bool _GrainPoolReady = false;
 
     int ActiveGrainPlaybackDataCount { get { return _GrainDataArray.Length - _PooledGrainCount; } }
-    public bool _DedicatedSpeaker;
+    public bool _IsDedicatedSpeaker = false;
     public List<GameObject> _StaticallyPairedEmitters = new();
 
     #endregion
@@ -73,7 +73,10 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (TryGetComponent(out ConvertToEntity converter))
             converter.ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
         else
-            Debug.Log($"Cannot convert {name} to entity without component.");
+        {
+            Debug.Log($"Cannot convert {name} to entity without component. Removing object.");
+            Destroy(this);
+        }
     }
 
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
@@ -87,10 +90,10 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _GrainSynth.RegisterSpeaker(this);
         dstManager.AddComponentData(entity, new SpeakerComponent { _SpeakerIndex = _SpeakerIndex });
         #if UNITY_EDITOR
-                dstManager.SetName(_SpeakerEntity, "Speaker " + _SpeakerIndex + " (" + (_DedicatedSpeaker ? "Dedicated" : "Dynamic") + ") ");
+                dstManager.SetName(_SpeakerEntity, "Speaker " + _SpeakerIndex + " (" + (_IsDedicatedSpeaker ? "Dedicated" : "Dynamic") + ") ");
         #endif
 
-        if (!_DedicatedSpeaker)
+        if (!_IsDedicatedSpeaker)
             dstManager.AddComponentData(entity, new PoolingComponent {
                 _State = PooledState.Pooled,
                 _AttachedHostCount = 0
@@ -140,7 +143,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         // TODO - dynamic speakers might be better defined as those spawned by the GrainSynth, not if they are the "dedicated to host"  
         #region ---   DYNAMIC EMITTER HOST ATTACHMENT
-        if (!_DedicatedSpeaker)
+        if (!_IsDedicatedSpeaker)
         {
             transform.position = _EntityManager.GetComponentData<Translation>(_SpeakerEntity).Value;
             _AttachmentRadius = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._AttachmentRadius;

@@ -35,8 +35,8 @@ public class GrainSynth :  MonoBehaviour
     public AudioClip[] _AudioClips;
 
 
-    [Header("Speaker Configuration")]
-    public GameObject _SpeakerPrefab;
+    [Header(header: "Speaker Configuration")]
+    public SpeakerAuthoring _SpeakerPrefab;
     public Vector3 _PooledSpeakerPosition = Vector3.down * 10;
     [Range(0, 64)]
     public int _MaxDynamicSpeakers = 32;
@@ -77,12 +77,12 @@ public class GrainSynth :  MonoBehaviour
     public int QueueDurationSamples { get { return (int)(_QueueDurationMS * SamplesPerMS); } }
 
     [Header("Registered Components")]
-    public List<HostAuthoring> _Hosts = new();
+    public List<HostAuthoring> _Hosts = new List<HostAuthoring>();
     protected int _HostCounter = 0;
-    public List<EmitterAuthoring> _Emitters = new();
+    public List<EmitterAuthoring> _Emitters = new List<EmitterAuthoring>();
     protected int _EmitterCounter = 0;
-    public List<SpeakerAuthoring> _Speakers = new();
-    protected List<AudioClip> _AudioClipList = new();
+    public List<SpeakerAuthoring> _Speakers = new List<SpeakerAuthoring>();
+    protected List<AudioClip> _AudioClipList = new List<AudioClip>();
 
     [Header("Runtime Dynamics")]
     [SerializeField]
@@ -113,8 +113,8 @@ public class GrainSynth :  MonoBehaviour
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _SampleRate = AudioSettings.outputSampleRate;
 
-        // for (int i = 0; i < _MaxDynamicSpeakers; i++)
-        //     CreateSpeaker(_PooledSpeakerPosition);
+        for (int i = 0; i < _MaxDynamicSpeakers; i++)
+            CreateSpeaker(_PooledSpeakerPosition);
 
         _DSPTimerEntity = _EntityManager.CreateEntity();
         _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent {
@@ -270,7 +270,7 @@ public class GrainSynth :  MonoBehaviour
 
     public void CreateSpeaker(Vector3 pos)
     {
-        GameObject speaker = Instantiate(_SpeakerPrefab, pos, Quaternion.identity, transform);    
+        Instantiate(_SpeakerPrefab, pos, Quaternion.identity, transform);    
     }
 
     public void RegisterSpeaker(SpeakerAuthoring speaker)

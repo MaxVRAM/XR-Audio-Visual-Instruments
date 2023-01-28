@@ -22,11 +22,12 @@ public class ContinuousAuthoring : EmitterAuthoring
 
     public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
+        if (_Host == null || !_Host.enabled)
+            return;
+
         _EmitterEntity = entity;
         int index = GrainSynth.Instance.RegisterEmitter(this);
         
-        if (_Host == null || !_Host.enabled)
-            return;
 
         #region ADD EMITTER COMPONENT DATA
 

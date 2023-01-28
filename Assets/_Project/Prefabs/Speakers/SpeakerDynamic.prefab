@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 1731420856360394368}
   - component: {fileID: 8740640641133531379}
   m_Layer: 0
-  m_Name: Speaker
+  m_Name: SpeakerDynamic
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

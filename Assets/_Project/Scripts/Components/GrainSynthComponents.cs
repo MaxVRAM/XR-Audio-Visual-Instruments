@@ -73,7 +73,6 @@ public struct EmitterHostComponent : IComponentData
 {
     public int _HostIndex;
     public bool _InListenerRadius;
-    public bool _HasDedicatedSpeaker;
     public bool _Connected;
     public int _SpeakerIndex;
 }

@@ -30,10 +30,10 @@ MonoBehaviour:
     m_Value: 0
   limitMin:
     m_OverrideState: 1
-    m_Value: 7.7165456
+    m_Value: 8.292714
   limitMax:
     m_OverrideState: 1
-    m_Value: 12.173163
+    m_Value: 14.107314
   curveMap:
     m_OverrideState: 0
     m_Value:
@@ -498,7 +498,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f086a068d4c5889438831b3ae9afc11c, type: 3}
   m_Name: Tonemapping
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   mode:
     m_OverrideState: 1
     m_Value: 2
