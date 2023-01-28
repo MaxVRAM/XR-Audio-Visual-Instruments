@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class BehaviourClass : MonoBehaviour
 {
-    void Start() { }
-
-    void Update() { }
-
+    public ObjectSpawner _ObjectSpawner;
+    public virtual void UpdateBehaviour(BehaviourClass behaviour) {}
 }

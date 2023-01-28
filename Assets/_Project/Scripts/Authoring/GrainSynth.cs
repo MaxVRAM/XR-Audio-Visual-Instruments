@@ -36,7 +36,7 @@ public class GrainSynth :  MonoBehaviour
 
 
     [Header("Speaker Configuration")]
-    public SpeakerAuthoring _DynamicSpeakerPrefab;
+    public GameObject _SpeakerPrefab;
     public Vector3 _PooledSpeakerPosition = Vector3.down * 10;
     [Range(0, 64)]
     public int _MaxDynamicSpeakers = 32;
@@ -77,12 +77,12 @@ public class GrainSynth :  MonoBehaviour
     public int QueueDurationSamples { get { return (int)(_QueueDurationMS * SamplesPerMS); } }
 
     [Header("Registered Components")]
-    public List<HostAuthoring> _Hosts = new List<HostAuthoring>();
+    public List<HostAuthoring> _Hosts = new();
     protected int _HostCounter = 0;
-    public List<EmitterAuthoring> _Emitters = new List<EmitterAuthoring>();
+    public List<EmitterAuthoring> _Emitters = new();
     protected int _EmitterCounter = 0;
-    public List<SpeakerAuthoring> _Speakers = new List<SpeakerAuthoring>();
-    protected List<AudioClip> _AudioClipList = new List<AudioClip>();
+    public List<SpeakerAuthoring> _Speakers = new();
+    protected List<AudioClip> _AudioClipList = new();
 
     [Header("Runtime Dynamics")]
     [SerializeField]
@@ -113,8 +113,8 @@ public class GrainSynth :  MonoBehaviour
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _SampleRate = AudioSettings.outputSampleRate;
 
-        for (int i = 0; i < _MaxDynamicSpeakers; i++)
-            CreateSpeaker(new Vector3(0, -10, 0));
+        // for (int i = 0; i < _MaxDynamicSpeakers; i++)
+        //     CreateSpeaker(_PooledSpeakerPosition);
 
         _DSPTimerEntity = _EntityManager.CreateEntity();
         _EntityManager.AddComponentData(_DSPTimerEntity, new DSPTimerComponent {
@@ -165,13 +165,9 @@ public class GrainSynth :  MonoBehaviour
         for (int i = 0; i < _AudioClips.Length; i++)
         {
             Entity audioClipDataEntity = _EntityManager.CreateEntity();
-
             int clipChannels = _AudioClips[i].channels;
-
             float[] clipData = new float[_AudioClips[i].samples];
-
             _AudioClips[i].GetData(clipData, 0);
-
             using BlobBuilder blobBuilder = new BlobBuilder(Allocator.Temp);
             // ---- CREATE BLOB
             ref FloatBlobAsset audioClipBlobAsset = ref blobBuilder.ConstructRoot<FloatBlobAsset>();
@@ -274,9 +270,8 @@ public class GrainSynth :  MonoBehaviour
 
     public void CreateSpeaker(Vector3 pos)
     {
-        SpeakerAuthoring speaker = Instantiate(_DynamicSpeakerPrefab, pos, quaternion.identity, transform);    
+        GameObject speaker = Instantiate(_SpeakerPrefab, pos, Quaternion.identity, transform);    
     }
-
 
     public void RegisterSpeaker(SpeakerAuthoring speaker)
     {

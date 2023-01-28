@@ -89,7 +89,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (_Host._InListenerRadius) _EntityManager.AddComponent<InListenerRadiusTag>(_EmitterEntity);
         else _EntityManager.RemoveComponent<InListenerRadiusTag>(_EmitterEntity);
 
-        if (_Host._Connected) _EntityManager.AddComponent<ConnectedTag>(_EmitterEntity);
+        if (_Host.IsConnected) _EntityManager.AddComponent<ConnectedTag>(_EmitterEntity);
         else _EntityManager.RemoveComponent<ConnectedTag>(_EmitterEntity);
 
         if (_IsPlaying) _EntityManager.AddComponent<PlayingTag>(_EmitterEntity);

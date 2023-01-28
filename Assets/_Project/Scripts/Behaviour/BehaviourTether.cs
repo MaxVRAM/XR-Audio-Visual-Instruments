@@ -4,9 +4,11 @@ using UnityEngine;
 
 public class BehaviourTether : BehaviourClass
 {
-    public ObjectSpawner _ObjectSpawner;
     public bool _TetherActive = true;
-    public bool _TetherVisible = true;
+    public float _TetherLength;
+    public float _TetherSpringAmount;
+    public float _TetherSprintSpeed;
+    public bool _LineVisible = true;
     public LineRenderer _LinePrototype;
 
     void Start()
@@ -17,5 +19,15 @@ public class BehaviourTether : BehaviourClass
     void Update()
     {
         
+    }
+
+    public override void UpdateBehaviour(BehaviourClass behaviour)
+    {
+        if (behaviour.GetType() != typeof(BehaviourTether))
+            return;
+        else
+        {
+            
+        }
     }
 }

@@ -6,7 +6,7 @@ using UnityEngine;
 public class AttachmentLine : MonoBehaviour
 {
     protected LineRenderer _Line;
-    public bool _Active;
+    public bool _Active = false;
     public Transform _TransformA;
     public Transform _TransformB;
 

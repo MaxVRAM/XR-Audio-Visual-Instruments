@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System;
 using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Transforms;
@@ -62,15 +63,17 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     protected bool _GrainPoolReady = false;
 
     int ActiveGrainPlaybackDataCount { get { return _GrainDataArray.Length - _PooledGrainCount; } }
-    public bool DedicatedToHost { get { return _StaticallyPairedEmitters.Count > 0; } }
-    [HideInInspector]
-    public List<GameObject> _StaticallyPairedEmitters = new List<GameObject>();
+    public bool _DedicatedSpeaker;
+    public List<GameObject> _StaticallyPairedEmitters = new();
 
     #endregion
 
     public void Awake()
     {
-        GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
+        if (TryGetComponent(out ConvertToEntity converter))
+            converter.ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
+        else
+            Debug.Log($"Cannot convert {name} to entity without component.");
     }
 
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
@@ -82,12 +85,12 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _SpeakerEntity = entity;
         _GrainSynth = FindObjectOfType<GrainSynth>();
         _GrainSynth.RegisterSpeaker(this);
-        #if UNITY_EDITOR
-                dstManager.SetName(_SpeakerEntity, "Speaker " + _SpeakerIndex + " (" + (DedicatedToHost ? "Dedicated" : "Dynamic") + ") ");
-        #endif
         dstManager.AddComponentData(entity, new SpeakerComponent { _SpeakerIndex = _SpeakerIndex });
+        #if UNITY_EDITOR
+                dstManager.SetName(_SpeakerEntity, "Speaker " + _SpeakerIndex + " (" + (_DedicatedSpeaker ? "Dedicated" : "Dynamic") + ") ");
+        #endif
 
-        if (!DedicatedToHost)
+        if (!_DedicatedSpeaker)
             dstManager.AddComponentData(entity, new PoolingComponent {
                 _State = PooledState.Pooled,
                 _AttachedHostCount = 0
@@ -133,12 +136,13 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (_DebugLog)
             ReportGrainsDebug("");
 
+        _SpeakerComponent = _EntityManager.GetComponentData<SpeakerComponent>(_SpeakerEntity);
+
         // TODO - dynamic speakers might be better defined as those spawned by the GrainSynth, not if they are the "dedicated to host"  
         #region ---   DYNAMIC EMITTER HOST ATTACHMENT
-        if (!DedicatedToHost)
+        if (!_DedicatedSpeaker)
         {
             transform.position = _EntityManager.GetComponentData<Translation>(_SpeakerEntity).Value;
-            _SpeakerComponent = _EntityManager.GetComponentData<SpeakerComponent>(_SpeakerEntity);
             _AttachmentRadius = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._AttachmentRadius;
             transform.localScale = Vector3.one * _AttachmentRadius;
 
@@ -229,7 +233,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     
     void OnAudioFilterRead(float[] data, int channels)
     {
-        if (!_Initialized || _PooledGrainCount == _GrainPoolSize)
+        if (!_Initialized || _PooledGrainCount == _GrainPoolSize || _GrainDataArray == null)
             return;
         
         GrainData grainData;
@@ -282,8 +286,12 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public void DestroyEntity()
     {
         //print("Speaker DestroyEntity");
-        if (World.All.Count != 0 && _SpeakerEntity != null)
-            _EntityManager.DestroyEntity(_SpeakerEntity);
+        try
+        {
+            if (_EntityManager != null && World.All.Count != 0 && _SpeakerEntity != null)
+                _EntityManager.DestroyEntity(_SpeakerEntity);
+        }
+        catch (Exception ex) when (ex is NullReferenceException) { }
     }
 
 }

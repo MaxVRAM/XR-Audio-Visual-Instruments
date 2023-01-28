@@ -15,17 +15,22 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     [SerializeField]
     protected bool _Initialised = false;
     public bool _IsColliding = false;
+    [SerializeField]
+    protected bool _Connected = false;
+    public bool IsConnected { get { return _Connected; } }
+    [SerializeField]
+    public int _SpeakerIndex = int.MaxValue;
+    protected Transform _SpeakerTransform;
     public bool _InListenerRadius = false;
     public float _ListenerDistance = 0;
 
     [Header("Speaker assignment")]
-    [Tooltip("If a dedicated speaker is set, the runtime attachment system will be disabled for this host.")]
-    public SpeakerAuthoring _DedicatedSpeaker;
+    [Tooltip("Host will spawn a speaker prefab for itself if true, disabling attachment system functionality on both host and speaker entities.")]
+    public bool _UseDedicatedSpeaker = false;
+    public GameObject _SpeakerPrefab;
+    public Transform _SpeakerOffsetPosition;
     [SerializeField]
-    public bool _Connected = false;
-    protected Transform _SpeakerTransform;
-    [SerializeField]
-    public int _SpeakerIndex = int.MaxValue;
+    protected SpeakerAuthoring _DedicatedSpeaker;
     [SerializeField]
     protected AttachmentLine _AttachmentLine;
 
@@ -47,16 +52,35 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public ModulationSource[] _ModulationSources;
     [Tooltip("(generated) List of objects currently in-contact with the host's local object target.")]
     public List<GameObject> _CollidingObjects;
+    public List<float> _ContactRigidValues;
     public float _RigiditySmoothUp = 0.5f;
     public float RigiditySmoothUp { get { return 1 / _RigiditySmoothUp; }}
     public float _CurrentCollidingRigidity = 0;
     public float _TargetCollidingRigidity = 0;
-    public List<float> _ContactRigidValues;
     public bool ContactAllowed(GameObject other)
     {
         return _Spawner == null || _Spawner._AllowSiblingSurfaceContact || !_Spawner._ActiveObjects.Contains(other);
     }
 
+    void Awake()
+    {
+        if (_UseDedicatedSpeaker)
+        {
+            if (_SpeakerPrefab == null)
+                _SpeakerPrefab = GrainSynth.Instance._SpeakerPrefab;
+            if (_SpeakerOffsetPosition == null)
+                _SpeakerOffsetPosition = transform;
+            GameObject speakerObject = Instantiate(_SpeakerPrefab, _SpeakerOffsetPosition.position, Quaternion.identity, transform.parent);    
+            if (!speakerObject.TryGetComponent(out _DedicatedSpeaker))
+                Debug.Log($"Host {name} spawned dedicated speaker prefab without SpeakerAuthoring component.");
+            _DedicatedSpeaker._DedicatedSpeaker = true;
+        }
+            
+        GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
+        // Set up a blank input component for emitter properties that don't have one attached
+        if (!TryGetComponent(out _BlankInputComponent))
+            _BlankInputComponent = gameObject.AddComponent(typeof(BlankModulation)) as BlankModulation;
+    }
 
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
@@ -66,10 +90,9 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         dstManager.AddComponentData(_HostEntity, new EmitterHostComponent
         {
             _HostIndex = index,
+            _Connected = false,
             _InListenerRadius = false,
-            _SpeakerIndex = _SpeakerIndex,
-            _Connected = _DedicatedSpeaker != null,
-            _HasDedicatedSpeaker = _DedicatedSpeaker != null
+            _SpeakerIndex = _SpeakerIndex
         });
 
         name = $"Host {index}: {transform.parent.name}";
@@ -81,22 +104,10 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _Initialised = true;
     }
 
-    void Awake()
-    {
-        GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
-        // Set up a blank input component for emitter properties that don't have one attached
-        if (!TryGetComponent(out _BlankInputComponent))
-            _BlankInputComponent = gameObject.AddComponent(typeof(BlankModulation)) as BlankModulation;
-    }
-    
     void Start()
     {
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _HeadTransform = FindObjectOfType<Camera>().transform;
-
-        if (!TryGetComponent(out _AttachmentLine))
-            _AttachmentLine = gameObject.AddComponent<AttachmentLine>();
-        _AttachmentLine._TransformA = transform;
 
         _HostedEmitters = transform.parent.GetComponentsInChildren<EmitterAuthoring>();
         _ModulationSources = transform.parent.GetComponentsInChildren<ModulationSource>();
@@ -113,10 +124,16 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         if (_DedicatedSpeaker != null)
         {
-            _DedicatedSpeaker.AddEmitterLink(gameObject);                
-            _SpeakerIndex = _DedicatedSpeaker.RegisterAndGetIndex();
+            _DedicatedSpeaker.AddEmitterLink(gameObject);
             _SpeakerTransform = _DedicatedSpeaker.transform;
-            _Connected = true;
+            _SpeakerIndex = _DedicatedSpeaker._Registered ? _DedicatedSpeaker._SpeakerIndex : _DedicatedSpeaker.RegisterAndGetIndex();
+            _SpeakerIndex = _DedicatedSpeaker._SpeakerIndex;
+            _Connected = _DedicatedSpeaker._Registered;
+        }
+        else if (!TryGetComponent(out _AttachmentLine))
+        {
+            _AttachmentLine = gameObject.AddComponent<AttachmentLine>();
+            _AttachmentLine._TransformA = transform;
         }
     }
 
@@ -137,23 +154,26 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         EmitterHostComponent hostData = _EntityManager.GetComponentData<EmitterHostComponent>(_HostEntity);        
 
-        if (_DedicatedSpeaker != null)
+        if (!_UseDedicatedSpeaker)
         {
-            hostData._Connected = true;
-            hostData._HasDedicatedSpeaker = true;
-            hostData._SpeakerIndex = _SpeakerIndex;
-            _InListenerRadius = _ListenerDistance < GrainSynth.Instance._ListenerRadius;
-            hostData._InListenerRadius = _InListenerRadius;
-        }
-        else
-        {
+            _EntityManager.RemoveComponent<UsingDedicatedSpeaker>(_HostEntity);
             _InListenerRadius = hostData._InListenerRadius;
-            hostData._HasDedicatedSpeaker = false;
             _Connected = hostData._Connected;
             if (hostData._SpeakerIndex < GrainSynth.Instance._Speakers.Count)
             {               
                 _SpeakerIndex = hostData._SpeakerIndex; 
                 _SpeakerTransform = DynamicSpeaker.gameObject.transform;
+            }
+        }
+        else
+        {
+            _EntityManager.AddComponent<UsingDedicatedSpeaker>(_HostEntity);
+            if (_DedicatedSpeaker != null)
+            {
+                _InListenerRadius = _ListenerDistance < GrainSynth.Instance._ListenerRadius;
+                hostData._InListenerRadius = _InListenerRadius;
+                hostData._Connected = _DedicatedSpeaker._Registered;
+                hostData._SpeakerIndex = _SpeakerIndex;
             }
         }
         _EntityManager.SetComponentData(_HostEntity, hostData);
@@ -174,7 +194,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (_ContactRigidValues.Count > 0)
         {
             _ContactRigidValues.Sort();
-            _TargetCollidingRigidity = _ContactRigidValues[_ContactRigidValues.Count - 1];
+            _TargetCollidingRigidity = _ContactRigidValues[^1];
             // Smooth transition to upward rigidity values to avoid random bursts of roll emitters from short collisions
             if (_TargetCollidingRigidity < _CurrentCollidingRigidity + 0.001f || _RigiditySmoothUp <= 0)
                 _CurrentCollidingRigidity = _TargetCollidingRigidity;
@@ -209,13 +229,14 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void UpdateSpeakerAttachmentLine()
     {
-        if (_AttachmentLine != null && _Connected && GrainSynth.Instance._DrawAttachmentLines && _DedicatedSpeaker != null)
-        {
-            _AttachmentLine._Active = true;
-            _AttachmentLine._TransformB = _SpeakerTransform;
-        }
-        else
-            _AttachmentLine._Active = false;
+        if (_AttachmentLine != null)
+            if (!_UseDedicatedSpeaker && _Connected && _SpeakerTransform != null && GrainSynth.Instance._DrawAttachmentLines)
+            {
+                _AttachmentLine._Active = true;
+                _AttachmentLine._TransformB = _SpeakerTransform;
+            }
+            else
+                _AttachmentLine._Active = false;
     }
 
     public void SetLocalInputSource(GameObject go)
@@ -240,7 +261,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _RemoteObject = go;
         if (go != null)
             foreach (ModulationSource source in _ModulationSources)
-                if (!(source is BlankModulation))
+                if (source is not BlankModulation)
                     source._Objects.SetRemoteObject(_RemoteObject);
     }
 

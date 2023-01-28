@@ -29,12 +29,12 @@ class RandomSystem : ComponentSystem
 public partial class GrainSynthSystem : SystemBase
 {
     // Command buffer for removing tween components once they are completed
-    private EndSimulationEntityCommandBufferSystem _CommandBufferSystem;
+    private EndSimulationEntityCommandBufferSystem ecb;
 
     protected override void OnCreate()
     {
         base.OnCreate();
-        _CommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+        ecb = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
     }
 
     protected override void OnUpdate()
@@ -42,7 +42,7 @@ public partial class GrainSynthSystem : SystemBase
         int sampleRate = AudioSettings.outputSampleRate;
 
         // Acquire an ECB and convert it to a concurrent one to be able to use it from a parallel job.
-        EntityCommandBuffer.ParallelWriter entityCommandBuffer = _CommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
+        EntityCommandBuffer.ParallelWriter entityCommandBuffer = ecb.CreateCommandBuffer().AsParallelWriter();
         
         // ----------------------------------- EMITTER UPDATE
         // Get all audio clip data components
@@ -158,8 +158,10 @@ public partial class GrainSynthSystem : SystemBase
                 }
             }
         ).ScheduleParallel(Dependency);
+        emitGrains.Complete();
+
         // Make sure that the ECB system knows about our job
-        _CommandBufferSystem.AddJobHandleForProducer(emitGrains);
+        ecb.AddJobHandleForProducer(emitGrains);
         #endregion
 
         #region BURST GRAINS
@@ -260,8 +262,9 @@ public partial class GrainSynthSystem : SystemBase
             }
         ).WithDisposeOnCompletion(audioClipData)
         .ScheduleParallel(emitGrains);
+        emitBurst.Complete();
         // Make sure that the ECB system knows about our job
-        _CommandBufferSystem.AddJobHandleForProducer(emitBurst);
+        ecb.AddJobHandleForProducer(emitBurst);
 
         #endregion
 
@@ -309,6 +312,7 @@ public partial class GrainSynthSystem : SystemBase
                 entityCommandBuffer.AddComponent(entityInQueryIndex, grainProcessorEntities[entityInQueryIndex], new SamplesProcessedTag());
             }
         ).ScheduleParallel(emitBurst);
+        processGrains.Complete();
         #endregion
 
         #region POPULATE PiNG PONG GRAINS
@@ -384,6 +388,7 @@ public partial class GrainSynthSystem : SystemBase
                     }
            }
         ).ScheduleParallel(processPingPongGrains);
+        dspGrains.Complete();
         #endregion
 
         Dependency = dspGrains;

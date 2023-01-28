@@ -67,6 +67,8 @@ public struct PoolingComponent : IComponentData
 public struct ConnectedTag : IComponentData {}
 public struct InListenerRadiusTag : IComponentData {}
 
+public struct UsingDedicatedSpeaker : IComponentData {}
+
 public struct EmitterHostComponent : IComponentData
 {
     public int _HostIndex;
