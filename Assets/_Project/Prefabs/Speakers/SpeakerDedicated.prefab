@@ -49,14 +49,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 688e5dfc58d903e4e9071cb2f4363c8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GrainSynth: {fileID: 0}
   _SpeakerIndex: 2147483647
   _AttachmentRadius: 1
   _PooledGrainCount: 0
-  _Initialized: 0
+  _Initialised: 0
   _Registered: 0
   _DebugLog: 0
   _IsActive: 0
+  _IsDedicatedSpeaker: 1
   _StaticallyPairedEmitters: []
 --- !u!82 &4563112762925737388
 AudioSource:
@@ -273,4 +273,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea7d7495833204790ba1d3a8755397f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ConversionMode: 0
+  ConversionMode: 1

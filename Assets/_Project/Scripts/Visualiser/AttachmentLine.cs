@@ -3,8 +3,8 @@
 
 public class AttachmentLine : MonoBehaviour
 {
-    protected LineRenderer _Line;
     public bool _Active = false;
+    public LineRenderer _Line;
     public Transform _TransformA;
     public Transform _TransformB;
 
@@ -16,12 +16,17 @@ public class AttachmentLine : MonoBehaviour
             _Line.widthMultiplier = GrainSynth.Instance._AttachmentLineWidth;
             _Line.enabled = false;
         }
+
         if (_Line.material == null)
             _Line.material = GrainSynth.Instance._AttachmentLineMat;
 
+        _Line.widthMultiplier = GrainSynth.Instance._AttachmentLineWidth;
         _Line.positionCount = 2;
+
         if (_TransformA != null)
-            _Line.SetPosition(0, _TransformA.transform.position);
+            _Line.SetPosition(0, _TransformA.position);
+        if (_TransformB != null)
+            _Line.SetPosition(1, _TransformB.position);
     }
 
     void Update()

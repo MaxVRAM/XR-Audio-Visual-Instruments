@@ -27,6 +27,11 @@ public partial class AttachmentSystem : SystemBase
         DSPTimerComponent dspTimer = GetSingleton<DSPTimerComponent>();       
         AttachParameterComponent attachParameters = GetSingleton<AttachParameterComponent>();
 
+
+        // TODO --- BUG.. filtering out dedicated speakers and hosts with dedicated speakers might be the cause of the indexing
+        // issue that's making DOTS fail. It also could be the source of the duplication issue... first on the first to check!
+
+
         EntityQueryDesc speakerQueryDesc = new()
         {
             All = new ComponentType[] { typeof(SpeakerComponent), typeof(PoolingComponent), typeof(Translation) }
@@ -35,16 +40,15 @@ public partial class AttachmentSystem : SystemBase
 
         EntityQueryDesc hostQueryDesc = new()
         {
-            All = new ComponentType[] { typeof(EmitterHostComponent), typeof(Translation) },
-            None = new ComponentType[] { typeof(UsingDedicatedSpeaker) }
+            All = new ComponentType[] { typeof(EmitterHostComponent), typeof(Translation), typeof(UsingDynamicSpeakers) }
         };
         EntityQuery hostsQuery = GetEntityQuery(hostQueryDesc);
 
 
         //----    UPDATE HOST IN-RANGE STATUSES
-        NativeArray<PoolingComponent> speakerPool = speakersQuery.ToComponentDataArray<PoolingComponent>(Allocator.TempJob);
-        NativeArray<Translation> speakerTranslations = speakersQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
-        JobHandle updateHostRangeJob = Entities.WithName("UpdateHostRange").WithNone<UsingDedicatedSpeaker>().ForEach
+        NativeArray<PoolingComponent>.ReadOnly speakerPool = speakersQuery.ToComponentDataArray<PoolingComponent>(Allocator.TempJob).AsReadOnly();
+        NativeArray<Translation>.ReadOnly speakerTranslations = speakersQuery.ToComponentDataArray<Translation>(Allocator.TempJob).AsReadOnly();
+        JobHandle updateHostRangeJob = Entities.WithName("UpdateHostRange").WithAny<UsingDynamicSpeakers>().ForEach
         (
             (ref EmitterHostComponent host, in Translation translation) =>
             {
@@ -82,8 +86,8 @@ public partial class AttachmentSystem : SystemBase
 
 
         //----     CALCULATE SPEAKER ATTACHMENT RADIUS, SET MOVE TO AVERAGE POSITION OF ATTACHED HOST, OR POOL IF NO LONGER ATTACHED
-        NativeArray<EmitterHostComponent> hostsToSitSpeakers = hostsQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
-        NativeArray<Translation> hostTranslations = hostsQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
+        NativeArray<EmitterHostComponent>.ReadOnly hostsToSitSpeakers = hostsQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob).AsReadOnly();
+        NativeArray<Translation>.ReadOnly hostTranslations = hostsQuery.ToComponentDataArray<Translation>(Allocator.TempJob).AsReadOnly();
         JobHandle updateSpeakerPoolJob = Entities.WithName("MoveSpeakers").ForEach
         (
             (ref Translation translation, ref PoolingComponent pooling, in SpeakerComponent speaker) =>
@@ -138,8 +142,8 @@ public partial class AttachmentSystem : SystemBase
 
 
         //----    ATTACH HOST TO ACTIVE IN-RANGE SPEAKER
-        NativeArray<Entity> inRangeSpeaker = speakersQuery.ToEntityArray(Allocator.TempJob);
-        JobHandle linkToActiveSpeakerJob = Entities.WithName("LinkToActiveSpeaker").WithNone<UsingDedicatedSpeaker>().ForEach
+        NativeArray<Entity>.ReadOnly inRangeSpeaker = speakersQuery.ToEntityArray(Allocator.TempJob).AsReadOnly();
+        JobHandle linkToActiveSpeakerJob = Entities.WithName("LinkToActiveSpeaker").WithAny<UsingDynamicSpeakers>().ForEach
         (
             (ref EmitterHostComponent host, in Translation translation) =>
             {
@@ -179,8 +183,8 @@ public partial class AttachmentSystem : SystemBase
 
         //----     SPAWN A POOLED SPEAKER ON A HOST IF NO NEARBY SPEAKERS WERE FOUND
         NativeArray<Entity> hostEntities = hostsQuery.ToEntityArray(Allocator.TempJob);
-        NativeArray<Translation> hostTrans = hostsQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
-        NativeArray<EmitterHostComponent> hosts = hostsQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob);
+        NativeArray<Translation>.ReadOnly hostTrans = hostsQuery.ToComponentDataArray<Translation>(Allocator.TempJob).AsReadOnly();
+        NativeArray<EmitterHostComponent>.ReadOnly hosts = hostsQuery.ToComponentDataArray<EmitterHostComponent>(Allocator.TempJob).AsReadOnly();
         NativeArray<Entity> speakerEntities = speakersQuery.ToEntityArray(Allocator.TempJob);
         NativeArray<PoolingComponent> speakers = speakersQuery.ToComponentDataArray<PoolingComponent>(Allocator.TempJob);        
 

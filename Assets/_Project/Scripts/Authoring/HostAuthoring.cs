@@ -103,7 +103,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         name = $"Host {index}: {transform.parent.name}";
 
         #if UNITY_EDITOR
-                dstManager.SetName(entity, name);
+                dstManager.SetName(_HostEntity, name);
         #endif
 
         _Initialised = true;
@@ -166,7 +166,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         if (!_UseDedicatedSpeaker)
         {
-            _EntityManager.RemoveComponent<UsingDedicatedSpeaker>(_HostEntity);
+            _EntityManager.AddComponent<UsingDynamicSpeakers>(_HostEntity);
             _InListenerRadius = hostData._InListenerRadius;
             _Connected = hostData._Connected;
             if (hostData._SpeakerIndex < GrainSynth.Instance._Speakers.Count)
@@ -177,7 +177,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         }
         else
         {
-            _EntityManager.AddComponent<UsingDedicatedSpeaker>(_HostEntity);
+            _EntityManager.RemoveComponent<UsingDynamicSpeakers>(_HostEntity);
             if (_DedicatedSpeaker != null)
             {
                 _InListenerRadius = _ListenerDistance < GrainSynth.Instance._ListenerRadius;

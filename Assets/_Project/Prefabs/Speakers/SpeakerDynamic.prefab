@@ -57,6 +57,7 @@ MonoBehaviour:
   _Registered: 0
   _DebugLog: 0
   _IsActive: 0
+  _IsDedicatedSpeaker: 0
   _StaticallyPairedEmitters: []
 --- !u!82 &4563112762925737388
 AudioSource:
@@ -273,4 +274,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea7d7495833204790ba1d3a8755397f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ConversionMode: 0
+  ConversionMode: 1

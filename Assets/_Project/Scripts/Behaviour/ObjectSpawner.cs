@@ -17,6 +17,8 @@ public class ObjectSpawner : MonoBehaviour
     public SpeakerAuthoring _DedicatedSpeaker;
 
     [Header("Object Configuration")]
+    [Tooltip("Parent GameObject to attach spawned prefabs.")]
+    public GameObject _SpawnableHost;
     [Tooltip("Object providing the spawn location and controller behaviour.")]
     public GameObject _ControllerObject;
     [Tooltip("Currently selected prefab to spawn.")]
@@ -51,8 +53,8 @@ public class ObjectSpawner : MonoBehaviour
     [Range(0, 100)]
     public float _RandomAngularVelocity = 0;
 
-    [Header("Object Behaviour")]
-    public BehaviourClass _BehaviourScript;
+    //[Header("Spawnable Behaviour")]
+    //public GameObject _BehaviourPrefab;
     protected string _Name;
 
     [Header("Runtime Dynamics")]
@@ -69,6 +71,9 @@ public class ObjectSpawner : MonoBehaviour
     void Start()
     {
         _Name = "Spawner | " + name;
+
+        if (_SpawnableHost == null)
+            _SpawnableHost = gameObject;
 
         if (_SpawnablePrefabs.Count == 0 && _PrefabToSpawn != null)
             _SpawnablePrefabs.Add(_PrefabToSpawn);
@@ -127,12 +132,11 @@ public class ObjectSpawner : MonoBehaviour
 
             GameObject newObject = Instantiate(objectToSpawn,
                 _ControllerObject.transform.position,
-                Quaternion.identity, gameObject.transform);
+                Quaternion.identity, _SpawnableHost.transform);
 
             if (!newObject.TryGetComponent(out Rigidbody rb))
                 rb = newObject.AddComponent<Rigidbody>();
 
-            
             Vector3 randomVel = new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f);
             Vector3 randomAng = new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f);
             rb.velocity = randomVel * _RandomVelocity;
@@ -148,9 +152,25 @@ public class ObjectSpawner : MonoBehaviour
             if (_ObjectLifespan != 0)
                 spawnableManager._Lifespan = _ObjectLifespan - _ObjectLifespan * Random.Range(0, _LifespanVariance);
             spawnableManager._DestroyRadius = _DestroyRadius;
+            spawnableManager._SpawnedObject = newObject;
+            spawnableManager._ObjectSpawner = this;
 
-            if (_BehaviourScript != null)
-                newObject.AddComponent(_BehaviourScript.GetType());
+            if (newObject.TryGetComponent(out BehaviourClass behaviour))
+            {
+                behaviour._SpawnedObject = newObject;
+                behaviour._ControllerObject = _ControllerObject;
+                behaviour._ObjectSpawner = this;
+            }
+
+
+            //if (_BehaviourPrefab != null && _BehaviourPrefab.TryGetComponent(out BehaviourClass behaviour))
+            //{
+            //    BehaviourClass newBehaviour = Instantiate(_BehaviourPrefab, newObject.transform).GetComponent<BehaviourClass>();
+            //    newBehaviour._SpawnedObject = newObject;
+            //    newBehaviour._ControllerObject = _ControllerObject;
+            //    newBehaviour._ObjectSpawner = this;
+            //    newBehaviour.UpdateBehaviour(behaviour);
+            //}
 
             // Set emitter properties if spawned GameObject is an emitter host
             HostAuthoring newHost = newObject.GetComponentInChildren(typeof(HostAuthoring), true) as HostAuthoring;

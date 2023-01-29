@@ -45,7 +45,6 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     private AudioSource _AudioSource; 
     private int _SampleRate;
 
-    public GrainSynth _GrainSynth;
     public int _SpeakerIndex = int.MaxValue;
     public float _AttachmentRadius = 1;
     readonly int _GrainPoolSize = 100;
@@ -55,7 +54,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     private float _TargetVolume = 0;
 
     [SerializeField]
-    private bool _Initialized = false;
+    private bool _Initialised = false;
     public bool _Registered = false;
     public bool _DebugLog = false;
     [SerializeField]
@@ -81,35 +80,43 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
-        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-        _MeshRenderer = gameObject.GetComponentInChildren<MeshRenderer>();
-        _AudioSource = gameObject.GetComponent<AudioSource>();
-        _SampleRate = AudioSettings.outputSampleRate;
         _SpeakerEntity = entity;
-        _GrainSynth = FindObjectOfType<GrainSynth>();
-        _GrainSynth.RegisterSpeaker(this);
-        dstManager.AddComponentData(entity, new SpeakerComponent { _SpeakerIndex = _SpeakerIndex });
+        _SpeakerIndex = GrainSynth.Instance.RegisterSpeaker(this);
+        if (_SpeakerIndex == -1)
+            return;
+
+        _Registered = true;
+
+        dstManager.AddComponentData(_SpeakerEntity, new SpeakerComponent { _SpeakerIndex = _SpeakerIndex });
+
         #if UNITY_EDITOR
                 dstManager.SetName(_SpeakerEntity, "Speaker " + _SpeakerIndex + " (" + (_IsDedicatedSpeaker ? "Dedicated" : "Dynamic") + ") ");
         #endif
 
         if (!_IsDedicatedSpeaker)
-            dstManager.AddComponentData(entity, new PoolingComponent {
+            dstManager.AddComponentData(_SpeakerEntity, new PoolingComponent {
                 _State = PooledState.Pooled,
                 _AttachedHostCount = 0
             });
 
-        //---   CREATE GRAIN DATA ARRAY - CURRENT MAXIMUM LENGTH SET TO ONE SECOND OF SAMPLES      
-        _GrainDataArray = new GrainData[_GrainPoolSize];
+        name = transform.parent.name + " - Speaker " + _SpeakerIndex;
+        _Initialised = true;
+    }
 
-        for (int i = 0; i < _GrainPoolSize; i++)
-            _GrainDataArray[i] = CreateNewGrain();
-
-        _PooledGrainCount = _GrainDataArray.Length;
+    public void Start()
+    {
+        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        _SampleRate = AudioSettings.outputSampleRate;
+        _MeshRenderer = gameObject.GetComponentInChildren<MeshRenderer>();
+        _AudioSource = gameObject.GetComponent<AudioSource>();
         _AudioSource.rolloffMode = AudioRolloffMode.Custom;
         _AudioSource.maxDistance = 500;
+        //---   CREATE GRAIN DATA ARRAY - CURRENT MAXIMUM LENGTH SET TO ONE SECOND OF SAMPLES      
+        _GrainDataArray = new GrainData[_GrainPoolSize];
+        for (int i = 0; i < _GrainPoolSize; i++)
+            _GrainDataArray[i] = CreateNewGrain();
+        _PooledGrainCount = _GrainDataArray.Length;
         _GrainPoolReady = true;
-        _Initialized = true;
     }
 
     public void AddEmitterLink(GameObject emitterGameObject)
@@ -131,14 +138,10 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void Update()
     {
-        if (!_Initialized)
+        if (!_Initialised)
             return;
 
         UpdateGrainObjectPool();
-
-        if (_DebugLog)
-            ReportGrainsDebug("");
-
         _SpeakerComponent = _EntityManager.GetComponentData<SpeakerComponent>(_SpeakerEntity);
 
         // TODO - dynamic speakers might be better defined as those spawned by the GrainSynth, not if they are the "dedicated to host"  
@@ -178,7 +181,7 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public GrainData GetEmptyGrainDataObject(out GrainData grainData)
     {
         grainData = null;
-        if (_Initialized)
+        if (_Initialised)
         {
             // If we're desperate, go through the GrainPool to check if any grains have finished
             if (_PooledGrainCount == 0 && !_GrainPoolReady)
@@ -211,36 +214,24 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void GrainDataAdded(GrainData grainData)
     {
-        if (!_Initialized)
+        if (!_Initialised)
             return;
         _PooledGrainCount--;
-        OnGrainEmitted?.Invoke(grainData, _GrainSynth._CurrentDSPSample);
+        OnGrainEmitted?.Invoke(grainData, GrainSynth.Instance._CurrentDSPSample);
     }
     #endregion
 
 
 
-    void ReportGrainsDebug(string action)
-    {
-        //if (!_DebugLog)
-        //    return;
-                
-        print(name + "---------------------------  " + action + "       A: " + ActiveGrainPlaybackDataCount + "  P: " + _PooledGrainCount + "      T: " + _DebugTotalGrainsCreated);        
-    }
-
-
     // TODO -  ADD SAMPLE BUFFER RMS ANALYSIS FOR SPEAKER VISUAL MODULATION
-
-
     int _CurrentDSPSample;
-    
     void OnAudioFilterRead(float[] data, int channels)
     {
-        if (!_Initialized || _PooledGrainCount == _GrainPoolSize || _GrainDataArray == null)
+        if (!_Initialised || _PooledGrainCount == _GrainPoolSize || _GrainDataArray == null)
             return;
         
         GrainData grainData;
-        _CurrentDSPSample = _GrainSynth._CurrentDSPSample;
+        _CurrentDSPSample = GrainSynth.Instance._CurrentDSPSample;
         // For length of audio buffer, populate with grain samples, maintaining index over successive buffers
         for (int dataIndex = 0; dataIndex < data.Length; dataIndex += channels)
             for (int i = 0; i < _GrainDataArray.Length; i++) 

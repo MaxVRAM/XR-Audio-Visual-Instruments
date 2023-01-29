@@ -18,12 +18,12 @@ MonoBehaviour:
     supportSSRTransparent: 1
     supportSSAO: 1
     supportSSGI: 1
-    supportSubsurfaceScattering: 1
+    supportSubsurfaceScattering: 0
     sssSampleBudget:
       m_Values: 140000002800000050000000
       m_SchemaId:
         m_Id: With3Levels
-    supportVolumetrics: 1
+    supportVolumetrics: 0
     supportVolumetricClouds: 1
     supportLightLayers: 0
     supportDistortion: 1
@@ -33,7 +33,7 @@ MonoBehaviour:
     colorBufferFormat: 74
     supportCustomPass: 1
     customBufferFormat: 12
-    supportedLitShaderMode: 2
+    supportedLitShaderMode: 1
     planarReflectionResolution:
       m_Values: 000100000004000000040000
       m_SchemaId:
@@ -42,7 +42,7 @@ MonoBehaviour:
     supportDecalLayers: 0
     supportSurfaceGradient: 0
     decalNormalBufferHP: 0
-    msaaSampleCount: 1
+    msaaSampleCount: 4
     supportMotionVectors: 1
     supportRuntimeAOVAPI: 0
     supportDitheringCrossFade: 1
@@ -140,7 +140,7 @@ MonoBehaviour:
       singlePass: 1
       occlusionMesh: 1
       cameraJitter: 0
-      allowMotionBlur: 0
+      allowMotionBlur: 1
     postProcessQualitySettings:
       NearBlurSampleCount: 030000000500000008000000
       NearBlurMaxRadius:
@@ -162,7 +162,7 @@ MonoBehaviour:
       ChromaticAberrationMaxSamples: 03000000060000000c000000
     lightSettings:
       useContactShadow:
-        m_Values: 000001
+        m_Values: 000100
         m_SchemaId:
           m_Id: With3Levels
     maximumLODLevel:

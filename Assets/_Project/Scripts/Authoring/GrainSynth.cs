@@ -6,18 +6,19 @@ using UnityEngine;
 using Unity.Collections.LowLevel.Unsafe;
 using System;
 using System.Runtime.InteropServices;
+using Mono.Cecil;
 
 
-    // PROJECT AUDIO CONFIGURATION NOTES
-    // ---------------------------------
+// PROJECT AUDIO CONFIGURATION NOTES
+// ---------------------------------
 
-        // DSP Buffer size in audio settings
-        // Best performance - 46.43991
-        // Good latency - 23.21995
-        // Best latency - 11.60998
+// DSP Buffer size in audio settings
+// Best performance - 46.43991
+// Good latency - 23.21995
+// Best latency - 11.60998
 
-    // TODO - FIX WINDOWING FUNCTIONS:
-    // https://michaelkrzyzaniak.com/AudioSynthesis/2_Audio_Synthesis/11_Granular_Synthesis/1_Window_Functions/
+// TODO - FIX WINDOWING FUNCTIONS:
+// https://michaelkrzyzaniak.com/AudioSynthesis/2_Audio_Synthesis/11_Granular_Synthesis/1_Window_Functions/
 
 
 [RequireComponent(typeof(AudioSource))]
@@ -277,21 +278,18 @@ public class GrainSynth :  MonoBehaviour
         Instantiate(_SpeakerPrefab, pos, Quaternion.identity, transform);    
     }
 
-    public void RegisterSpeaker(SpeakerAuthoring speaker)
+    public int RegisterSpeaker(SpeakerAuthoring speaker)
     {
-        // TODO - should use null entry before adding one to the end 
         if (speaker._Registered || _Speakers.Contains(speaker))
-            return;
-        speaker._SpeakerIndex = _Speakers.Count;
-        speaker._Registered = true;
-        speaker.name = speaker.name + " - Speaker " + _Speakers.Count;
+            return -1;
+        int index = _Speakers.Count;
         _Speakers.Add(speaker);
+        return index;
     }
 
     public void DeRegisterSpeaker(SpeakerAuthoring speaker)
     {
-        // TODO - replace with null and change RegisterSpeaker() to find first null slot.
-        // Removing speakers from list will cause issues with indexing.
+        // TODO - fix dynamic indexing. Currently, removing speakers from list will cause issues with indexing.
         _Speakers.Remove(speaker);
     }
 
