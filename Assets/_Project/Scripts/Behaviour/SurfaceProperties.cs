@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class SurfaceProperties : MonoBehaviour
 {
+    protected HostAuthoring _AssociatedEmitterHost;
+    public bool IsEmitter { get {return _AssociatedEmitterHost != null;} }
     [Range(0, 1)]
     public float _Rigidity = 1;
     public bool _ApplyToChildren = false;
@@ -14,6 +16,8 @@ public class SurfaceProperties : MonoBehaviour
 
     void Start()
     {
+        _AssociatedEmitterHost = GetComponentInChildren<HostAuthoring>();
+
         if (!_IsSurfaceChild && _ApplyToChildren)
             foreach (Collider collider in GetComponentsInChildren<Collider>())
                 if (!collider.gameObject.TryGetComponent(out SurfaceProperties _))

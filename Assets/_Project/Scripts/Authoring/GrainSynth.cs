@@ -52,6 +52,10 @@ public class GrainSynth :  MonoBehaviour
     public float _AttachmentLineWidth = 0.002f;
     public Material _AttachmentLineMat;
 
+    [Header(header: "Interaction Behaviour")]
+    public bool _OnlyTriggerMostRigidSurface = true;
+    [Tooltip("During collision/contact between two emitter hosts, only trigger the emitter with the greatest surface rigidity, using an average of the two values.")]
+
     // TODO: Implement system to reduce dynamic speakers if additional dedicated speakers are spawned at runtime to avoid audio voice limit.
     int _MaxSpeakers;
 

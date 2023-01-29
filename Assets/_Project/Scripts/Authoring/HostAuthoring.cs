@@ -37,6 +37,9 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     protected AttachmentLine _AttachmentLine;
 
     [Header("Interactions")]
+    protected SurfaceProperties _SurfaceProperties;
+    protected float _SurfaceRigidity = 0.5f;
+    public float SurfaceRigidity { get {return _SurfaceRigidity;} }
     public ObjectSpawner _Spawner;
     public GameObject _LocalObject;
     [Tooltip("Additional object used to generate 'relative' values with against the interaction object. E.g. distance, relative speed, etc.")]
@@ -113,6 +116,11 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         _HostedEmitters = transform.parent.GetComponentsInChildren<EmitterAuthoring>();
         _ModulationSources = transform.parent.GetComponentsInChildren<ModulationSource>();
+
+        if (!TryGetComponent(out _SurfaceProperties))
+            _SurfaceProperties = transform.parent.GetComponent<SurfaceProperties>();
+        if (_SurfaceProperties != null)
+            _SurfaceRigidity = _SurfaceProperties._Rigidity;
 
         foreach (EmitterAuthoring emitter in _HostedEmitters)
             emitter._Host = this;
@@ -192,6 +200,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         foreach (GameObject go in _CollidingObjects)
             if (go.TryGetComponent(out SurfaceProperties props))
                 _ContactRigidValues.Add(props._Rigidity);
+            else _ContactRigidValues.Add(0.5f);
         // Sort and find largest rigidity value to set as target
         if (_ContactRigidValues.Count > 0)
         {

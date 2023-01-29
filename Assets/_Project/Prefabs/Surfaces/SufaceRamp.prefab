@@ -121,6 +121,7 @@ Transform:
   - {fileID: 784736715040113789}
   - {fileID: 2903093725423820505}
   - {fileID: 4285892560819824122}
+  - {fileID: 4134859367488507912}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: -22, y: 66.28, z: 0}
@@ -249,6 +250,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1920882317727243603}
   m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6721262749198253909
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4134859367488507912}
+  m_Layer: 0
+  m_Name: Emitter_MetalRamp_RollContinuous
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4134859367488507912
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6721262749198253909}
+  m_LocalRotation: {x: -0.08950491, y: -0.2061613, z: 0.04770817, w: 0.97324735}
+  m_LocalPosition: {x: 0.7693957, y: 0.16915625, z: -1.043769}
+  m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1920882317727243603}
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &540683786152352429
 PrefabInstance:

@@ -16,6 +16,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     protected Entity _EmitterEntity;
     protected EntityManager _EntityManager;
     protected float[] _PerlinSeedArray;
+    [SerializeField]
     protected float _LastTriggeredAt = 0;
 
     [Header("Emitter Configuration")]
@@ -50,9 +51,11 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public float _TimeExisted = 0;
     public float _AdjustedDistance = 0;
     public float _DistanceAmplitude = 0;
+    [SerializeField]
     protected float _ContactSurfaceAttenuation = 1;
     protected int _LastSampleIndex = 0;
     protected float _SamplesPerMS = 0;
+    protected bool OnlyTriggerMostRigid { get { return GrainSynth.Instance._OnlyTriggerMostRigidSurface; } }
 
     public DSP_Class[] _DSPChainParams;
 
@@ -115,27 +118,45 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void NewCollision(Collision collision)
     {
-        if (_EmitterType == EmitterType.Burst && _PlaybackCondition != Condition.NotColliding &&
-            Time.time > _LastTriggeredAt + GrainSynth.Instance._BurstDebounceDurationMS * 0.001f)
+        if (_EmitterType == EmitterType.Burst && _PlaybackCondition != Condition.NotColliding)
         {
+            if (Time.fixedTime < _LastTriggeredAt + GrainSynth.Instance._BurstDebounceDurationMS * 0.001f)
+                return;
+            if (OtherMoreRigid(collision.collider, _Host.SurfaceRigidity, out float otherRigidity) && OnlyTriggerMostRigid)
+                return;
+
+            _ContactSurfaceAttenuation = _ColliderRigidityVolumeScale ? (_Host.SurfaceRigidity + otherRigidity) / 2 : 1;
+            _LastTriggeredAt = Time.fixedTime;
             _IsPlaying = true;
-            _LastTriggeredAt = Time.time;
-            if (_ColliderRigidityVolumeScale)
-                _ContactSurfaceAttenuation = collision.collider.TryGetComponent(out SurfaceProperties surface) ? surface._Rigidity : 0;
-            else _ContactSurfaceAttenuation = 1;
         }
         else UpdateContactStatus(collision);
     }
 
     public void UpdateContactStatus(Collision collision)
     {
-        if (_PlaybackCondition == Condition.NotColliding || !_ColliderRigidityVolumeScale)
-            _ContactSurfaceAttenuation = 1;
-        else if (_EmitterType == EmitterType.Continuous && _PlaybackCondition != Condition.NotColliding)
+        if (_EmitterType != EmitterType.Continuous)
+            return;
+
+        if (_PlaybackCondition == Condition.NotColliding || collision == null)
         {
-            _IsPlaying = collision != null;
-            _ContactSurfaceAttenuation = collision == null ? 0 : _Host._CurrentCollidingRigidity;
+            _ContactSurfaceAttenuation = 1;
+            _IsPlaying = _PlaybackCondition == Condition.NotColliding ? collision == null : collision != null;
         }
+        else if (OtherMoreRigid(collision.collider, _Host._CurrentCollidingRigidity, out float otherRigidity) && OnlyTriggerMostRigid)
+        {        
+            _IsPlaying = false;
+        }
+        else
+        {
+            _ContactSurfaceAttenuation = _ColliderRigidityVolumeScale ? (_Host._CurrentCollidingRigidity + otherRigidity) / 2 : 0;
+            _IsPlaying = true;
+        }
+    }
+
+    public static bool OtherMoreRigid(Collider collider, float rigidity, out float otherRigidity)
+    {
+        otherRigidity = collider.TryGetComponent(out SurfaceProperties otherSurface) ? otherSurface._Rigidity : 0.5f;
+        return otherSurface != null && otherSurface.IsEmitter && otherSurface._Rigidity >= rigidity;
     }
 
     public float GeneratePerlinForParameter(int parameterIndex)
