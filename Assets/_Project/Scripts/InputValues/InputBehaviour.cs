@@ -16,11 +16,11 @@ public class InputBehaviour : ModulationSource
     [Range(0f, 1f)]
     public float _Smoothing = 0f;
 
-    protected DestroyTimer _DestroyTimer;
+    protected SpawnableManager _DestroyTimer;
 
     public override void SetBehaviourInput(BehaviourClass behaviour)
     {
-        if (behaviour is DestroyTimer timer)
+        if (behaviour is SpawnableManager timer)
             _DestroyTimer = timer;
     }
 

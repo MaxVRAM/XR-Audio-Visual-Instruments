@@ -46,7 +46,7 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public GameObject _RemoteObject;
     [Tooltip("(generated) Paired component that pipes collision data from the local object target to this host.")]
     public CollisionPipe _CollisionPipeComponent;
-    public DestroyTimer _DestroyTimer;
+    public SpawnableManager _SpawnableManager;
     [Tooltip("List of attached behaviour scripts to use as modulation input sources.")]
     [SerializeField]
     protected List<BehaviourClass> _Behaviours;
@@ -286,8 +286,8 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     {
         foreach (BehaviourClass behaviour in _Behaviours)
         {
-            if (behaviour is DestroyTimer timer)
-                _DestroyTimer = timer;
+            if (behaviour is SpawnableManager manager)
+                _SpawnableManager = manager;
             foreach (ModulationSource source in _ModulationSources)
                 if (source is InputBehaviour)
                     source.SetBehaviourInput(behaviour);

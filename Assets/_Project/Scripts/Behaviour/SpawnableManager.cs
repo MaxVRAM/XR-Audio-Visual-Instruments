@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DestroyTimer : BehaviourClass
+public class SpawnableManager : BehaviourClass
 {
     public float _Lifespan = -1;
     [SerializeField]

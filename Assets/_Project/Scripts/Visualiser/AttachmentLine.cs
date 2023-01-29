@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 
 public class AttachmentLine : MonoBehaviour
@@ -22,12 +20,13 @@ public class AttachmentLine : MonoBehaviour
             _Line.material = GrainSynth.Instance._AttachmentLineMat;
 
         _Line.positionCount = 2;
-        _Line.SetPosition(0, _TransformA.transform.position);
+        if (_TransformA != null)
+            _Line.SetPosition(0, _TransformA.transform.position);
     }
 
     void Update()
     {
-        if (_Active)
+        if (_Active && _TransformA != null && _TransformB != null)
             if (Vector3.SqrMagnitude(_TransformA.position - _TransformB.position) > .1f)
             {
                 _Line.enabled = true;

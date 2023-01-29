@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BehaviourTether : BehaviourClass
@@ -7,13 +5,12 @@ public class BehaviourTether : BehaviourClass
     public bool _TetherActive = true;
     public float _TetherLength;
     public float _TetherSpringAmount;
-    public float _TetherSprintSpeed;
+    public float _TetherSpringSpeed;
     public bool _LineVisible = true;
-    public LineRenderer _LinePrototype;
+    public GameObject _LinePrototype;
 
     void Start()
     {
-
     }
 
     void Update()

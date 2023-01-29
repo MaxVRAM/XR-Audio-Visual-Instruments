@@ -40,8 +40,8 @@ public class ContinuousAuthoring : EmitterAuthoring
             _HostIndex = _Host.EntityIndex,
             _DistanceAmplitude = 1,
             _PingPong = _PingPongGrainPlayheads,
-            _FadeoutStartIndex = _Host._DestroyTimer.GetFadeoutStartIndex(_NormalisedAgeFadeout),
-            _FadeoutEndIndex = _Host._DestroyTimer.GetFadeoutEndIndex(),
+            _FadeoutStartIndex = _Host._SpawnableManager.GetFadeoutStartIndex(_NormalisedAgeFadeout),
+            _FadeoutEndIndex = _Host._SpawnableManager.GetFadeoutEndIndex(),
             _LastSampleIndex = GrainSynth.Instance._CurrentDSPSample,
             _OutputSampleRate = AudioSettings.outputSampleRate,
 
@@ -138,8 +138,8 @@ public class ContinuousAuthoring : EmitterAuthoring
             continuousData._HostIndex = _Host.EntityIndex;
             continuousData._LastSampleIndex = _LastSampleIndex;
             continuousData._PingPong = _PingPongGrainPlayheads;
-            continuousData._FadeoutStartIndex = _Host._DestroyTimer.GetFadeoutStartIndex(_NormalisedAgeFadeout);
-            continuousData._FadeoutEndIndex = _Host._DestroyTimer.GetFadeoutEndIndex();
+            continuousData._FadeoutStartIndex = _Host._SpawnableManager.GetFadeoutStartIndex(_NormalisedAgeFadeout);
+            continuousData._FadeoutEndIndex = _Host._SpawnableManager.GetFadeoutEndIndex();
             continuousData._DistanceAmplitude = _DistanceAmplitude;
             continuousData._OutputSampleRate = AudioSettings.outputSampleRate;
 

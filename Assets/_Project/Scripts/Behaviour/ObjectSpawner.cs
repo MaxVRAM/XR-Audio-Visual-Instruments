@@ -52,7 +52,7 @@ public class ObjectSpawner : MonoBehaviour
     public float _RandomAngularVelocity = 0;
 
     [Header("Object Behaviour")]
-    public BehaviourClass _BehaviourPrefab;
+    public BehaviourClass _BehaviourScript;
     protected string _Name;
 
     [Header("Runtime Dynamics")]
@@ -143,11 +143,14 @@ public class ObjectSpawner : MonoBehaviour
             newObject.name = newObject.name + " (" + _ObjectCounter + ")";
             newObject.transform.localPosition = _ControllerObject.transform.localPosition;
 
-            if (!newObject.TryGetComponent(out DestroyTimer timer))
-                timer = newObject.AddComponent<DestroyTimer>();
+            if (!newObject.TryGetComponent(out SpawnableManager spawnableManager))
+                spawnableManager = newObject.AddComponent<SpawnableManager>();
             if (_ObjectLifespan != 0)
-                timer._Lifespan = _ObjectLifespan - _ObjectLifespan * Random.Range(0, _LifespanVariance);
-            timer._DestroyRadius = _DestroyRadius;
+                spawnableManager._Lifespan = _ObjectLifespan - _ObjectLifespan * Random.Range(0, _LifespanVariance);
+            spawnableManager._DestroyRadius = _DestroyRadius;
+
+            if (_BehaviourScript != null)
+                newObject.AddComponent(_BehaviourScript.GetType());
 
             // Set emitter properties if spawned GameObject is an emitter host
             HostAuthoring newHost = newObject.GetComponentInChildren(typeof(HostAuthoring), true) as HostAuthoring;
@@ -156,7 +159,7 @@ public class ObjectSpawner : MonoBehaviour
                 newHost._Spawner = this;
                 newHost._LocalObject = newObject;
                 newHost._RemoteObject = _ControllerObject;
-                newHost.AddBehaviourInputSource(timer);
+                newHost.AddBehaviourInputSource(spawnableManager);
             }
             newObject.SetActive(true);
 
