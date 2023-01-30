@@ -26,27 +26,27 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     [Header("Speaker assignment")]
     [Tooltip("Host will spawn a speaker prefab for itself if true, disabling attachment system functionality on both host and speaker entities.")]
-    public bool _UseDedicatedSpeaker = false;
-    public SpeakerAuthoring _SpeakerPrefab;
+    public bool _UseFixedSpeaker = false;
+    public SpeakerAuthoring _FixedSpeakerPrefab;
     [Tooltip("Parent transform to host dedicated speaker, defaults to parent. Cannot be this transform!")]
     //  (may also be used as a location target for dynamic speakers)
     public Transform _SpeakerContainer;
     [SerializeField]
-    protected SpeakerAuthoring _DedicatedSpeaker;
+    protected SpeakerAuthoring _FixedSpeaker;
     [SerializeField]
     protected AttachmentLine _AttachmentLine;
 
     [Header("Interactions")]
-    protected SurfaceProperties _SurfaceProperties;
-    protected float _SurfaceRigidity = 0.5f;
-    public float SurfaceRigidity { get {return _SurfaceRigidity;} }
     public ObjectSpawner _Spawner;
+    public SpawnableManager _SpawnableManager;
     public GameObject _LocalObject;
     [Tooltip("Additional object used to generate 'relative' values with against the interaction object. E.g. distance, relative speed, etc.")]
     public GameObject _RemoteObject;
     [Tooltip("(generated) Paired component that pipes collision data from the local object target to this host.")]
     public CollisionPipe _CollisionPipeComponent;
-    public SpawnableManager _SpawnableManager;
+    protected SurfaceProperties _SurfaceProperties;
+    protected float _SurfaceRigidity = 0.5f;
+    public float SurfaceRigidity { get { return _SurfaceRigidity; } }
     [Tooltip("List of attached behaviour scripts to use as modulation input sources.")]
     [SerializeField]
     protected List<BehaviourClass> _Behaviours;
@@ -69,18 +69,6 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     void Awake()
     {
-        if (_UseDedicatedSpeaker)
-        {
-            if (_SpeakerPrefab == null)
-                _SpeakerPrefab = GrainSynth.Instance._SpeakerPrefab;
-            if (_SpeakerContainer == null)
-                _SpeakerContainer = transform.parent;
-            _DedicatedSpeaker = Instantiate(_SpeakerPrefab, _SpeakerContainer.position, Quaternion.identity, _SpeakerContainer);    
-            //if (!speakerObject.TryGetComponent(out _DedicatedSpeaker))
-            //    Debug.Log($"Host {name} spawned dedicated speaker prefab without SpeakerAuthoring component.");
-            _DedicatedSpeaker._IsDedicatedSpeaker = true;
-        }
-            
         GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
         // Set up a blank input component for emitter properties that don't have one attached
         if (!TryGetComponent(out _BlankInputComponent))
@@ -97,7 +85,8 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             _HostIndex = index,
             _Connected = false,
             _InListenerRadius = false,
-            _SpeakerIndex = _SpeakerIndex
+            _SpeakerIndex = _SpeakerIndex,
+            _IsUsingFixedSpeaker = _UseFixedSpeaker
         });
 
         name = $"Host {index}: {transform.parent.name}";
@@ -114,6 +103,9 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _HeadTransform = FindObjectOfType<Camera>().transform;
 
+        if (_LocalObject == null)
+            _LocalObject = transform.parent.gameObject;
+
         _HostedEmitters = transform.parent.GetComponentsInChildren<EmitterAuthoring>();
         _ModulationSources = transform.parent.GetComponentsInChildren<ModulationSource>();
 
@@ -125,20 +117,24 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         foreach (EmitterAuthoring emitter in _HostedEmitters)
             emitter._Host = this;
 
-        if (_LocalObject == null)
-            _LocalObject = transform.parent.gameObject;
-
         SetLocalInputSource(_LocalObject);
         SetRemoteInputSource(_RemoteObject);
         UpdateBehaviourModulationInputs();
 
-        if (_DedicatedSpeaker != null)
+        if (_UseFixedSpeaker)
         {
-            _DedicatedSpeaker.AddEmitterLink(gameObject);
-            _SpeakerTransform = _DedicatedSpeaker.transform;
-            _SpeakerIndex = _DedicatedSpeaker._Registered ? _DedicatedSpeaker._SpeakerIndex : _DedicatedSpeaker.RegisterAndGetIndex();
-            _SpeakerIndex = _DedicatedSpeaker._SpeakerIndex;
-            _Connected = _DedicatedSpeaker._Registered;
+            if (_FixedSpeaker == null && _FixedSpeakerPrefab != null)
+            {
+                _SpeakerContainer = _SpeakerContainer != null ? _SpeakerContainer : transform.parent;
+                _FixedSpeaker = Instantiate(_FixedSpeakerPrefab, _SpeakerContainer.position, Quaternion.identity, _SpeakerContainer);
+            }
+
+            _FixedSpeaker._IsFixedSpeaker = true;
+            _SpeakerIndex = _FixedSpeaker.SpeakerIndex;
+            _SpeakerTransform = _FixedSpeaker.transform;
+            _Connected = _FixedSpeaker._Registered;
+
+            _FixedSpeaker.AddEmitterHostLink(this);
         }
         else if (!TryGetComponent(out _AttachmentLine))
         {
@@ -152,44 +148,62 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         if (!_Initialised)
             return;
 
-        UpdateSpeakerAttachmentLine();
-
         // Update host translation component.
         Translation translation = _EntityManager.GetComponentData<Translation>(_HostEntity);
         _EntityManager.SetComponentData(_HostEntity, new Translation { Value = transform.position });
-        
         _ListenerDistance = Mathf.Abs((transform.position - _HeadTransform.position).magnitude);
 
         #region START HOST COMPONENT
 
-        EmitterHostComponent hostData = _EntityManager.GetComponentData<EmitterHostComponent>(_HostEntity);        
+        EmitterHostComponent hostData = _EntityManager.GetComponentData<EmitterHostComponent>(_HostEntity);
 
-        if (!_UseDedicatedSpeaker)
+        hostData._IsUsingFixedSpeaker = _UseFixedSpeaker;
+
+        if (!_UseFixedSpeaker)
         {
-            _EntityManager.AddComponent<UsingDynamicSpeakers>(_HostEntity);
+            _EntityManager.RemoveComponent<UsingFixedSpeaker>(_HostEntity);
             _InListenerRadius = hostData._InListenerRadius;
-            _Connected = hostData._Connected;
-            if (hostData._SpeakerIndex < GrainSynth.Instance._Speakers.Count)
-            {               
-                _SpeakerIndex = hostData._SpeakerIndex; 
-                _SpeakerTransform = DynamicSpeaker.gameObject.transform;
+
+            if (GrainSynth.Instance.GetSpeakerFromIndex(hostData._SpeakerIndex, out SpeakerAuthoring speaker) != null)
+            {
+                _SpeakerTransform = speaker.gameObject.transform;
+                _SpeakerIndex = hostData._SpeakerIndex;
+                _Connected = hostData._Connected;
+            }
+            else
+            {
+                _SpeakerTransform = transform;
+                _SpeakerIndex = int.MaxValue;
+                _Connected = false;
             }
         }
         else
         {
-            _EntityManager.RemoveComponent<UsingDynamicSpeakers>(_HostEntity);
-            if (_DedicatedSpeaker != null)
+            _EntityManager.AddComponent<UsingFixedSpeaker>(_HostEntity);
+            _InListenerRadius = _ListenerDistance < GrainSynth.Instance._ListenerRadius;
+
+            if (_FixedSpeaker != null)
             {
-                _InListenerRadius = _ListenerDistance < GrainSynth.Instance._ListenerRadius;
                 hostData._InListenerRadius = _InListenerRadius;
-                hostData._Connected = _DedicatedSpeaker._Registered;
-                hostData._SpeakerIndex = _SpeakerIndex;
+                hostData._Connected = _FixedSpeaker._Registered;
+                _SpeakerIndex = _FixedSpeaker.SpeakerIndex;
+                _Connected = _FixedSpeaker._Registered;
             }
+            else
+            {
+                hostData._Connected = false;
+                _SpeakerTransform = transform;
+                _SpeakerIndex = int.MaxValue;
+                _Connected = false;
+            }
+
+            hostData._SpeakerIndex = _SpeakerIndex;
         }
         _EntityManager.SetComponentData(_HostEntity, hostData);
 
         #endregion
 
+        UpdateSpeakerAttachmentLine();
 
         #region PROCESS RIGIDITY VALUE FROM COLLIDING OBJECTS
 
@@ -234,14 +248,12 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         }
     }
     
-    public SpeakerAuthoring DynamicSpeaker { get { return GrainSynth.Instance._Speakers[_SpeakerIndex]; } }
-
     public int EntityIndex { get { return _HostEntity.Index; } }
 
     public void UpdateSpeakerAttachmentLine()
     {
         if (_AttachmentLine != null)
-            if (!_UseDedicatedSpeaker && _Connected && _SpeakerTransform != null && GrainSynth.Instance._DrawAttachmentLines)
+            if (!_UseFixedSpeaker && _Connected && _SpeakerTransform != null && GrainSynth.Instance._DrawAttachmentLines)
             {
                 _AttachmentLine._Active = true;
                 _AttachmentLine._TransformB = _SpeakerTransform;

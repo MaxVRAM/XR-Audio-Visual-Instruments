@@ -6,7 +6,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 using UnityEngine.Profiling;
-
+using Unity.VisualScripting;
 
 public class GrainData
 {
@@ -39,13 +39,14 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     #region -------------------------- VARIABLES  
     protected EntityManager _EntityManager;
     protected Entity _SpeakerEntity;
-    protected SpeakerComponent _SpeakerComponent;
     protected MeshRenderer _MeshRenderer;
-    protected GrainData[] _GrainDataArray;  
-    private AudioSource _AudioSource; 
+    protected GrainData[] _GrainDataArray;
+    private AudioSource _AudioSource;
     private int _SampleRate;
+    [SerializeField]
+    protected int _SpeakerIndex = int.MaxValue;
+    public int SpeakerIndex { get { return _SpeakerIndex; } }
 
-    public int _SpeakerIndex = int.MaxValue;
     public float _AttachmentRadius = 1;
     readonly int _GrainPoolSize = 100;
     public int _PooledGrainCount = 0;
@@ -58,78 +59,91 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public bool _Registered = false;
     public bool _DebugLog = false;
     [SerializeField]
-    private bool _IsActive = false;
+    private bool _DynamicSpeakerActive = false;
     protected bool _GrainPoolReady = false;
 
     int ActiveGrainPlaybackDataCount { get { return _GrainDataArray.Length - _PooledGrainCount; } }
-    public bool _IsDedicatedSpeaker = false;
-    public List<GameObject> _StaticallyPairedEmitters = new();
+    public bool _IsFixedSpeaker = false;
+    public List<HostAuthoring> _FixedHosts = new List<HostAuthoring>();
 
     #endregion
 
+
     public void Awake()
     {
+        Debug.Log($"Speaker {_SpeakerIndex} in AWAKE and about to check convert component");
         if (TryGetComponent(out ConvertToEntity converter))
-            converter.ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
-        else
         {
-            Debug.Log($"Cannot convert {name} to entity without component. Removing object.");
-            Destroy(this);
+            Debug.Log($"Speaker {_SpeakerIndex} HAS convert component");
+            converter.ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
         }
+        else
+            Debug.Log($"Speaker {_SpeakerIndex} DOES NOT HAVE convert component");
     }
 
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
+        Debug.Log($"Speaker {_SpeakerIndex} in CONVERT function. Fixed Speaker: {_IsFixedSpeaker}");
         _SpeakerEntity = entity;
-        _SpeakerIndex = GrainSynth.Instance.RegisterSpeaker(this);
-        if (_SpeakerIndex == -1)
-            return;
-
-        _Registered = true;
-
-        dstManager.AddComponentData(_SpeakerEntity, new SpeakerComponent { _SpeakerIndex = _SpeakerIndex });
+        dstManager.AddComponentData(_SpeakerEntity, new SpeakerComponent { _SpeakerIndex = SpeakerIndex });
 
         #if UNITY_EDITOR
-                dstManager.SetName(_SpeakerEntity, "Speaker " + _SpeakerIndex + " (" + (_IsDedicatedSpeaker ? "Dedicated" : "Dynamic") + ") ");
+                dstManager.SetName(_SpeakerEntity, "Speaker " + _SpeakerIndex + " (Dynamic) ");
         #endif
 
-        if (!_IsDedicatedSpeaker)
-            dstManager.AddComponentData(_SpeakerEntity, new PoolingComponent {
-                _State = PooledState.Pooled,
-                _AttachedHostCount = 0
-            });
+        dstManager.AddComponentData(_SpeakerEntity, new PoolingComponent {
+            _State = PooledState.Pooled,
+            _AttachedHostCount = 0
+        });
 
-        name = transform.parent.name + " - Speaker " + _SpeakerIndex;
         _Initialised = true;
     }
 
     public void Start()
     {
-        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        _SpeakerIndex = GrainSynth.Instance.RegisterSpeaker(this);
+        _Registered = true;
+        name = transform.parent.name + " - Speaker " + _SpeakerIndex;
+
         _SampleRate = AudioSettings.outputSampleRate;
         _MeshRenderer = gameObject.GetComponentInChildren<MeshRenderer>();
         _AudioSource = gameObject.GetComponent<AudioSource>();
         _AudioSource.rolloffMode = AudioRolloffMode.Custom;
         _AudioSource.maxDistance = 500;
-        //---   CREATE GRAIN DATA ARRAY - CURRENT MAXIMUM LENGTH SET TO ONE SECOND OF SAMPLES      
+
+        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+
+        if (_IsFixedSpeaker)
+        {
+            _Initialised = true;
+
+            if (_SpeakerEntity != null)
+            {
+                Debug.Log($"Speaker {_SpeakerIndex} in FIXED, but is associated with Entity. WHY!!");
+            }
+        }
+        else
+        {
+            if (_SpeakerEntity == null)
+            {
+                Debug.Log($"Speaker {_SpeakerIndex} in DYNAMIC, but has no Entity. PLEASE KILL ME!!");
+            }
+        }
+
+
         _GrainDataArray = new GrainData[_GrainPoolSize];
         for (int i = 0; i < _GrainPoolSize; i++)
             _GrainDataArray[i] = CreateNewGrain();
+
         _PooledGrainCount = _GrainDataArray.Length;
         _GrainPoolReady = true;
     }
 
-    public void AddEmitterLink(GameObject emitterGameObject)
+    public void AddEmitterHostLink(HostAuthoring host)
     {
-        _StaticallyPairedEmitters.Add(emitterGameObject);
+        _FixedHosts.Add(host);
     }
-  
-    public int RegisterAndGetIndex()
-    {     
-        GrainSynth.Instance.RegisterSpeaker(this);
-        return _SpeakerIndex;
-    }
-
+ 
     GrainData CreateNewGrain()
     {
         _DebugTotalGrainsCreated++;
@@ -142,19 +156,25 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             return;
 
         UpdateGrainObjectPool();
-        _SpeakerComponent = _EntityManager.GetComponentData<SpeakerComponent>(_SpeakerEntity);
 
-        // TODO - dynamic speakers might be better defined as those spawned by the GrainSynth, not if they are the "dedicated to host"  
-        #region ---   DYNAMIC EMITTER HOST ATTACHMENT
-        if (!_IsDedicatedSpeaker)
+        // Clear lingering null hosts previously attached to this speaker
+        _FixedHosts.RemoveAll(item => item == null);
+
+        #region ---   DYNAMIC SPEAKER STUFF
+        if (!_IsFixedSpeaker || _EntityManager == null)
         {
+            SpeakerComponent speakerComponent = _EntityManager.GetComponentData<SpeakerComponent>(_SpeakerEntity);
+            
+            if (SpeakerIndex != speakerComponent._SpeakerIndex)
+                _EntityManager.SetComponentData(_SpeakerEntity, new SpeakerComponent { _SpeakerIndex = SpeakerIndex });
+
             transform.position = _EntityManager.GetComponentData<Translation>(_SpeakerEntity).Value;
             _AttachmentRadius = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._AttachmentRadius;
             transform.localScale = Vector3.one * _AttachmentRadius;
 
-            bool currentActiveState = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._State == PooledState.Active;
             //---   Reset playback grain data pool when the speaker disconnects
-            if (_IsActive && !currentActiveState)
+            bool currentActiveState = _EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity)._State == PooledState.Active;
+            if (_DynamicSpeakerActive && !currentActiveState)
             {
                 for (int i = 0; i < _GrainDataArray.Length; i++)
                 {
@@ -171,13 +191,23 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             if (_MeshRenderer != null)
                 _MeshRenderer.enabled = currentActiveState;
 
-            _IsActive = currentActiveState;
+            _DynamicSpeakerActive = currentActiveState;
         }
         #endregion
     }
 
+    public int Reregister(int? index = null)
+    {
+        if (index.HasValue)
+            _SpeakerIndex = index.Value;
+        else
+            _SpeakerIndex = GrainSynth.Instance.RegisterSpeaker(this);
+        return SpeakerIndex;
+    }
+
 
     #region GRAIN DATA OBJECT POOL MANAGEMENT
+
     public GrainData GetEmptyGrainDataObject(out GrainData grainData)
     {
         grainData = null;
@@ -201,14 +231,13 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public void UpdateGrainObjectPool()
     {
         _PooledGrainCount = 0;
-        //---   Pool exhausted grain data objects for re-use.
+        //---   Move any exhausted grain data objects in the pool for re-use.
         for (int i = 0; i < _GrainDataArray.Length; i++)
             if (!_GrainDataArray[i]._IsPlaying)
             {
                 _GrainDataArray[i]._Pooled = true;
                 _PooledGrainCount++;
             }
-
         _GrainPoolReady = true;
     }
 
@@ -219,19 +248,18 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         _PooledGrainCount--;
         OnGrainEmitted?.Invoke(grainData, GrainSynth.Instance._CurrentDSPSample);
     }
+
     #endregion
 
 
-
     // TODO -  ADD SAMPLE BUFFER RMS ANALYSIS FOR SPEAKER VISUAL MODULATION
-    int _CurrentDSPSample;
     void OnAudioFilterRead(float[] data, int channels)
     {
         if (!_Initialised || _PooledGrainCount == _GrainPoolSize || _GrainDataArray == null)
             return;
         
         GrainData grainData;
-        _CurrentDSPSample = GrainSynth.Instance._CurrentDSPSample;
+        int _CurrentDSPSample = GrainSynth.Instance._CurrentDSPSample;
         // For length of audio buffer, populate with grain samples, maintaining index over successive buffers
         for (int dataIndex = 0; dataIndex < data.Length; dataIndex += channels)
             for (int i = 0; i < _GrainDataArray.Length; i++) 
@@ -258,19 +286,6 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             }
     }
 
-    void OnDrawGizmos()
-    {
-        // if (_IsActive)
-        // {
-        //     if(_SpeakerIndex == 0)
-        //         Gizmos.color = Color.blue;
-        //     else
-        //         Gizmos.color = Color.yellow;
-
-        //     Gizmos.DrawWireSphere(transform.position, _AttachmentRadius);
-        // }
-    }
-
     private void OnDestroy()
     {
         GrainSynth.Instance.DeRegisterSpeaker(this);
@@ -279,10 +294,11 @@ public class SpeakerAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     public void DestroyEntity()
     {
-        //print("Speaker DestroyEntity");
+        if (_IsFixedSpeaker || _SpeakerEntity == null)
+            return;
         try
         {
-            if (_EntityManager != null && World.All.Count != 0 && _SpeakerEntity != null)
+            if (_EntityManager != null && World.All.Count != 0)
                 _EntityManager.DestroyEntity(_SpeakerEntity);
         }
         catch (Exception ex) when (ex is NullReferenceException) { }

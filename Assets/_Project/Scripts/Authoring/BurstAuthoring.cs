@@ -130,10 +130,10 @@ public class BurstAuthoring : EmitterAuthoring
 
         dstManager.AddBuffer<DSPParametersElement>(_EmitterEntity);
         DynamicBuffer<DSPParametersElement> dspParams = dstManager.GetBuffer<DSPParametersElement>(_EmitterEntity);
+        
         for (int i = 0; i < _DSPChainParams.Length; i++)
-        {
             dspParams.Add(_DSPChainParams[i].GetDSPBufferElement());
-        }
+        
         dstManager.AddComponentData(entity, new QuadEntityType { _Type = QuadEntityType.QuadEntityTypeEnum.Emitter });
 
         _Initialised = true;

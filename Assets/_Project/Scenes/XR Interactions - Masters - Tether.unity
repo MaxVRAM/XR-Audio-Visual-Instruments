@@ -574,7 +574,7 @@ MonoBehaviour:
   _SpeakerPrefab: {fileID: 2519325204652697373, guid: 6844ced249a80dd4584a457e05fa1c66,
     type: 3}
   _PooledSpeakerPosition: {x: 0, y: -10, z: 0}
-  _MaxDynamicSpeakers: 20
+  _MaxDynamicSpeakers: 2
   _ListenerRadius: 20
   _SpeakerAttachArcDegrees: 12
   _SpeakerAttachPositionSmoothing: 0.5
@@ -589,7 +589,8 @@ MonoBehaviour:
   _BurstDebounceDurationMS: 50
   _Hosts: []
   _Emitters: []
-  _Speakers: []
+  _DynamicSpeakers: []
+  _FixedSpeakers: []
   _SampleRate: 0
   _CurrentDSPSample: 0
   _GrainProcessorCount: 0
@@ -608,7 +609,7 @@ Transform:
   m_Children:
   - {fileID: 632517003}
   m_Father: {fileID: 1221644288}
-  m_RootOrder: 4
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &49154439 stripped
 Transform:
@@ -1969,7 +1970,7 @@ Transform:
   - {fileID: 1904166339}
   - {fileID: 206160420}
   m_Father: {fileID: 1221644288}
-  m_RootOrder: 2
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!43 &185139523
 Mesh:
@@ -1977,7 +1978,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh87032
+  m_Name: pb_Mesh38000
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -2891,7 +2892,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 11
+  m_RootOrder: 10
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &402994015
 GameObject:
@@ -3726,7 +3727,7 @@ Transform:
   m_Children:
   - {fileID: 965930438}
   m_Father: {fileID: 1221644288}
-  m_RootOrder: 1
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &669638862 stripped
 Transform:
@@ -3860,7 +3861,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1221644288}
-  m_RootOrder: 3
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &761048849
 GameObject:
@@ -4233,7 +4234,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1329915419}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1221644288}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &825642113 stripped
@@ -4271,7 +4272,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 9
+  m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &905535401
 GameObject:
@@ -4738,7 +4739,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1221644288}
-  m_RootOrder: 0
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1068853613
 GameObject:
@@ -5394,7 +5395,7 @@ Transform:
   m_Children:
   - {fileID: 22275141}
   m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1115635780
 GameObject:
@@ -5652,7 +5653,7 @@ Transform:
   - {fileID: 825642113}
   - {fileID: 49154439}
   m_Father: {fileID: 0}
-  m_RootOrder: 8
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1174274066
 GameObject:
@@ -5999,11 +6000,13 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 741017676}
+  - {fileID: 24721014}
+  - {fileID: 1883974422}
+  - {fileID: 804422456}
   - {fileID: 975255380}
   - {fileID: 647745241}
   - {fileID: 170171481}
-  - {fileID: 741017676}
-  - {fileID: 24721014}
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -6154,7 +6157,7 @@ Transform:
   - {fileID: 669638862}
   - {fileID: 1115635784}
   m_Father: {fileID: 0}
-  m_RootOrder: 10
+  m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1329915418
 GameObject:
@@ -6609,7 +6612,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1539474453
 GameObject:
@@ -6956,7 +6959,7 @@ Transform:
   - {fileID: 1102653707}
   - {fileID: 1551187616}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1687210303
 GameObject:
@@ -7101,7 +7104,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 12
+  m_RootOrder: 11
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1716587902
 GameObject:
@@ -8351,6 +8354,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1818525762}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1883974421
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1883974422}
+  m_Layer: 0
+  m_Name: '|---v---<---<--[  VR, Scene & Visuals ]---'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &1883974422
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1883974421}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1221644288}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1891555374
 GameObject:
   m_ObjectHideFlags: 0
@@ -8946,7 +8980,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2060866324
 GameObject:
@@ -9596,6 +9630,27 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1639877265}
     m_Modifications:
+    - target: {fileID: 504654399819933224, guid: 5d7afc283b1571f4999ce7d45c25b12b,
+        type: 3}
+      propertyPath: _UseFixedSpeaker
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 504654399819933224, guid: 5d7afc283b1571f4999ce7d45c25b12b,
+        type: 3}
+      propertyPath: _InListenerRadius
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 504654399819933224, guid: 5d7afc283b1571f4999ce7d45c25b12b,
+        type: 3}
+      propertyPath: _FixedSpeakerPrefab
+      value: 
+      objectReference: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
+        type: 3}
+    - target: {fileID: 504654399819933224, guid: 5d7afc283b1571f4999ce7d45c25b12b,
+        type: 3}
+      propertyPath: _UseDedicatedSpeaker
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1920882317727243601, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: m_LightmapParameters

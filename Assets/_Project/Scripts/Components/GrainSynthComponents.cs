@@ -66,7 +66,7 @@ public struct PoolingComponent : IComponentData
 
 public struct ConnectedTag : IComponentData {}
 public struct InListenerRadiusTag : IComponentData {}
-public struct UsingDynamicSpeakers : IComponentData {}
+public struct UsingFixedSpeaker : IComponentData {}
 
 public struct EmitterHostComponent : IComponentData
 {
@@ -74,6 +74,7 @@ public struct EmitterHostComponent : IComponentData
     public bool _InListenerRadius;
     public bool _Connected;
     public int _SpeakerIndex;
+    public bool _IsUsingFixedSpeaker;
 }
 
 public struct ModulationComponent : IComponentData

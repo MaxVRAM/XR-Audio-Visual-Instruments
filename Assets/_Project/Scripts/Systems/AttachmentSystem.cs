@@ -40,7 +40,7 @@ public partial class AttachmentSystem : SystemBase
 
         EntityQueryDesc hostQueryDesc = new()
         {
-            All = new ComponentType[] { typeof(EmitterHostComponent), typeof(Translation), typeof(UsingDynamicSpeakers) }
+            All = new ComponentType[] { typeof(EmitterHostComponent), typeof(Translation)}
         };
         EntityQuery hostsQuery = GetEntityQuery(hostQueryDesc);
 
@@ -48,7 +48,7 @@ public partial class AttachmentSystem : SystemBase
         //----    UPDATE HOST IN-RANGE STATUSES
         NativeArray<PoolingComponent>.ReadOnly speakerPool = speakersQuery.ToComponentDataArray<PoolingComponent>(Allocator.TempJob).AsReadOnly();
         NativeArray<Translation>.ReadOnly speakerTranslations = speakersQuery.ToComponentDataArray<Translation>(Allocator.TempJob).AsReadOnly();
-        JobHandle updateHostRangeJob = Entities.WithName("UpdateHostRange").WithAny<UsingDynamicSpeakers>().ForEach
+        JobHandle updateHostRangeJob = Entities.WithName("UpdateHostRange").WithNone<UsingFixedSpeaker>().ForEach
         (
             (ref EmitterHostComponent host, in Translation translation) =>
             {
@@ -96,12 +96,16 @@ public partial class AttachmentSystem : SystemBase
                 int attachedHosts = 0;
                 
                 for (int e = 0; e < hostsToSitSpeakers.Length; e++)
+                {
+                    if (hostsToSitSpeakers[e]._IsUsingFixedSpeaker)
+                        continue;
+
                     if (hostsToSitSpeakers[e]._Connected && hostsToSitSpeakers[e]._SpeakerIndex == speaker._SpeakerIndex)
                     {
                         hostPosSum += hostTranslations[e].Value;
                         attachedHosts++;
                     }
-                
+                }
                 if (attachedHosts == 0)
                 {
                     pooling._AttachmentRadius = 0.1f;
@@ -143,12 +147,12 @@ public partial class AttachmentSystem : SystemBase
 
         //----    ATTACH HOST TO ACTIVE IN-RANGE SPEAKER
         NativeArray<Entity>.ReadOnly inRangeSpeaker = speakersQuery.ToEntityArray(Allocator.TempJob).AsReadOnly();
-        JobHandle linkToActiveSpeakerJob = Entities.WithName("LinkToActiveSpeaker").WithAny<UsingDynamicSpeakers>().ForEach
+        JobHandle linkToActiveSpeakerJob = Entities.WithName("LinkToActiveSpeaker").WithNone<UsingFixedSpeaker>().ForEach
         (
             (ref EmitterHostComponent host, in Translation translation) =>
             {
                 // Find hosts in listener radius not currently linked to a speaker
-                if (!host._Connected && host._InListenerRadius)
+                if (!host._Connected && !host._IsUsingFixedSpeaker && host._InListenerRadius)
                 {
                     float closestDist = float.MaxValue;
                     int closestSpeakerIndex = int.MaxValue;
@@ -199,7 +203,7 @@ public partial class AttachmentSystem : SystemBase
                     // Find an unlinked host to link with pooled speaker
                     for (int e = 0; e < hosts.Length; e++)
                     {
-                        if (hosts[e]._InListenerRadius && !hosts[e]._Connected)
+                        if (!hosts[e]._Connected && !hosts[e]._IsUsingFixedSpeaker && hosts[e]._InListenerRadius)
                         {
                             spawned = true;
 

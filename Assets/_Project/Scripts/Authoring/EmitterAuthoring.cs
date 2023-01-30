@@ -77,10 +77,9 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         Initialise();
         GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
     }
+    public virtual void Initialise() { }
 
     public virtual void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem) { }
-
-    public virtual void Initialise() {}
 
     public void UpdateTranslationAndTags()
     {
@@ -122,7 +121,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         {
             if (Time.fixedTime < _LastTriggeredAt + GrainSynth.Instance._BurstDebounceDurationMS * 0.001f)
                 return;
-            if (OtherMoreRigid(collision.collider, _Host.SurfaceRigidity, out float otherRigidity) && OnlyTriggerMostRigid)
+            if (ColliderMoreRigid(collision.collider, _Host.SurfaceRigidity, out float otherRigidity) && OnlyTriggerMostRigid)
                 return;
 
             _ContactSurfaceAttenuation = _ColliderRigidityVolumeScale ? (_Host.SurfaceRigidity + otherRigidity) / 2 : 1;
@@ -142,7 +141,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             _ContactSurfaceAttenuation = 1;
             _IsPlaying = _PlaybackCondition == Condition.NotColliding ? collision == null : collision != null;
         }
-        else if (OtherMoreRigid(collision.collider, _Host._CurrentCollidingRigidity, out float otherRigidity) && OnlyTriggerMostRigid)
+        else if (ColliderMoreRigid(collision.collider, _Host._CurrentCollidingRigidity, out float otherRigidity) && OnlyTriggerMostRigid)
         {        
             _IsPlaying = false;
         }
@@ -153,7 +152,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         }
     }
 
-    public static bool OtherMoreRigid(Collider collider, float rigidity, out float otherRigidity)
+    public static bool ColliderMoreRigid(Collider collider, float rigidity, out float otherRigidity)
     {
         otherRigidity = collider.TryGetComponent(out SurfaceProperties otherSurface) ? otherSurface._Rigidity : 0.5f;
         return otherSurface != null && otherSurface.IsEmitter && otherSurface._Rigidity >= rigidity;

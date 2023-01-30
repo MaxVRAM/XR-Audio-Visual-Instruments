@@ -1,12 +1,10 @@
 ﻿using Unity.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
-using Unity.Mathematics;
 using UnityEngine;
 using Unity.Collections.LowLevel.Unsafe;
 using System;
 using System.Runtime.InteropServices;
-using Mono.Cecil;
 
 
 // PROJECT AUDIO CONFIGURATION NOTES
@@ -86,7 +84,8 @@ public class GrainSynth :  MonoBehaviour
     protected int _HostCounter = 0;
     public List<EmitterAuthoring> _Emitters = new List<EmitterAuthoring>();
     protected int _EmitterCounter = 0;
-    public List<SpeakerAuthoring> _Speakers = new List<SpeakerAuthoring>();
+    public List<SpeakerAuthoring> _DynamicSpeakers = new List<SpeakerAuthoring>();
+    public List<SpeakerAuthoring> _FixedSpeakers = new List<SpeakerAuthoring>();
     protected List<AudioClip> _AudioClipList = new List<AudioClip>();
 
     [Header("Runtime Dynamics")]
@@ -104,13 +103,6 @@ public class GrainSynth :  MonoBehaviour
     {
         Instance = this;
         _MaxSpeakers = AudioSettings.GetConfiguration().numRealVoices;
-    }
-
-    public int RegisterAudioClip(AudioClip clip)
-    {
-        if (!_AudioClipList.Contains(clip))
-            _AudioClipList.Add(clip);
-        return _AudioClipList.IndexOf(clip);
     }
 
     public void Start()
@@ -228,15 +220,14 @@ public class GrainSynth :  MonoBehaviour
             GrainProcessorComponent grain = _EntityManager.GetComponentData<GrainProcessorComponent>(grainEntities[i]);
             int speakerIndex = grain._SpeakerIndex;
             //----  Remove old grains or any pointing to invalid/pooled speakers
-            if (speakerIndex >= _Speakers.Count || _Speakers[speakerIndex] == null || grain._StartSampleIndex < _CurrentDSPSample - _DiscardGrainsOlderThanMS * SamplesPerMS)
+            if (grain._StartSampleIndex < _CurrentDSPSample - _DiscardGrainsOlderThanMS * SamplesPerMS ||
+                speakerIndex == int.MaxValue || GetSpeakerFromIndex(speakerIndex, out SpeakerAuthoring speaker) == null)
             {
-                // TODO - tell emitter to reset its "LastSampleIndex"?    --- blocked until emitter index added to Grain component. 
-                // Debug.LogWarning($"KILLING GRAIN.    Speaker {speakerIndex}.    Current DSP index {_CurrentDSPSample}.   Queue Length Samples {QueueDurationSamples}.    Grain Start Index {grain._StartSampleIndex}.");
                 _EntityManager.DestroyEntity(grainEntities[i]);
                 _UnplayedGrainsDestroyed++;
                 continue;
             }
-            else if (_Speakers[grain._SpeakerIndex].GetEmptyGrainDataObject(out GrainData grainDataObject) != null)
+            else if (speaker.GetEmptyGrainDataObject(out GrainData grainDataObject) != null)
             {
                 // Populate empty GrainData object with fresh grain and pass it back to the speaker to play
                 NativeArray<float> grainSamples = _EntityManager.GetBuffer<GrainSampleBufferElement>(grainEntities[i]).Reinterpret<float>().ToNativeArray(Allocator.Temp);
@@ -249,7 +240,7 @@ public class GrainSynth :  MonoBehaviour
                     grainDataObject._SizeInSamples = grainSamples.Length;
                     grainDataObject._DSPStartTime = grain._StartSampleIndex;
                     grainDataObject._PlayheadNormalised = grain._PlayheadNorm;
-                    _Speakers[grain._SpeakerIndex].GrainDataAdded(grainDataObject);
+                    speaker.GrainDataAdded(grainDataObject);
                 }
                 catch (Exception ex) when (ex is ArgumentException || ex is NullReferenceException )
                 {
@@ -260,7 +251,7 @@ public class GrainSynth :  MonoBehaviour
             }
             else
             {
-                Debug.Log($"Speaker {_Speakers[grain._SpeakerIndex]} has no empty GrainData objects!");
+                Debug.Log($"Speaker {speakerIndex} has no empty GrainData objects!");
             }
         }
         grainEntities.Dispose();
@@ -273,24 +264,84 @@ public class GrainSynth :  MonoBehaviour
         Marshal.Copy((IntPtr)memoryPointer, targetArray, 0, SourceNativeArray.Length);
     }
 
+
+
+    //  __________              .__          __                
+    //  \______   \ ____   ____ |__| _______/  |_  ___________ 
+    //   |       _// __ \ / ___\|  |/  ___/\   __\/ __ \_  __ \
+    //   |    |   \  ___// /_/  >  |\___ \  |  | \  ___/|  | \/
+    //   |____|_  /\___  >___  /|__/____  > |__|  \___  >__|   
+    //          \/     \/_____/         \/            \/       
+
+    public int RegisterAudioClip(AudioClip clip)
+    {
+        if (!_AudioClipList.Contains(clip))
+            _AudioClipList.Add(clip);
+        return _AudioClipList.IndexOf(clip);
+    }
+
     public void CreateSpeaker(Vector3 pos)
     {
         Instantiate(_SpeakerPrefab, pos, Quaternion.identity, transform);    
     }
 
+    // NOTE: Fixed speakers have INVERTED indexes so they don't collide with dynamic speaker indexes.
+    // Since they're not used in systems and never converted to entities, their indexing is abitrary.
+    // Might be a dumb idea ¯\_(ツ)_/¯
     public int RegisterSpeaker(SpeakerAuthoring speaker)
     {
-        if (speaker._Registered || _Speakers.Contains(speaker))
-            return -1;
-        int index = _Speakers.Count;
-        _Speakers.Add(speaker);
-        return index;
+        if (speaker._IsFixedSpeaker)
+        {
+            if (!_FixedSpeakers.Contains(speaker))
+                _FixedSpeakers.Add(speaker);
+            return -1 - _FixedSpeakers.IndexOf(speaker);
+        }
+        else
+        {
+            if (!_DynamicSpeakers.Contains(speaker))
+                _DynamicSpeakers.Add(speaker);
+            return _DynamicSpeakers.IndexOf(speaker);
+        }
     }
 
-    public void DeRegisterSpeaker(SpeakerAuthoring speaker)
+    public SpeakerAuthoring GetSpeakerFromIndex(int index, out SpeakerAuthoring speaker)
     {
-        // TODO - fix dynamic indexing. Currently, removing speakers from list will cause issues with indexing.
-        _Speakers.Remove(speaker);
+        int i = index < 0 ? Math.Abs(index) - 1 : index;
+        if (index < 0)
+        {
+            if (i >= _FixedSpeakers.Count)
+                speaker = null;
+            else
+                speaker = _FixedSpeakers[i];
+        }
+        else
+        {
+            if (i >= _DynamicSpeakers.Count)
+                speaker = null;
+            else
+                speaker = _DynamicSpeakers[i];
+        }
+        return speaker;
+    }
+
+    public void DeRegisterSpeaker(SpeakerAuthoring speakerToRemove)
+    {
+        if (speakerToRemove._IsFixedSpeaker)
+        {
+            if (_FixedSpeakers.Remove(speakerToRemove))
+                for (int i = 0; i < _FixedSpeakers.Count; i++)
+                    _FixedSpeakers[i].Reregister();
+            else
+                Debug.Log($"FIXED speaker {speakerToRemove.SpeakerIndex} attempting to deregister but not in fixed speaker list.");
+        }
+        else
+        {
+            if (_DynamicSpeakers.Remove(speakerToRemove))
+                for (int i = 0; i < _DynamicSpeakers.Count; i++)
+                    _DynamicSpeakers[i].Reregister(i);
+            else
+                Debug.Log($"DYNAMIC speaker {speakerToRemove.SpeakerIndex} attempting to deregister but not in fixed speaker list.");
+        }
     }
 
     public int RegisterHost(HostAuthoring host)
