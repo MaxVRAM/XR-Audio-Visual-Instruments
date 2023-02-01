@@ -513,6 +513,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 575024e13d07ce244a554537f81bdf43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _SampleRate: 0
+  _CurrentDSPSample: 0
+  _GrainProcessorCount: 0
+  _DiscardedGrains: 0
+  _LastFrameSampleDuration: 0
+  _SpeakerPrefab: {fileID: 2519325204652697373, guid: 6844ced249a80dd4584a457e05fa1c66,
+    type: 3}
+  _MaxSpeakers: 0
+  _PooledSpeakerPosition: {x: 0, y: -10, z: 0}
+  _MaxDynamicSpeakers: 2
+  _ListenerRadius: 20
+  _SpeakerAttachArcDegrees: 12
+  _SpeakerAttachPositionSmoothing: 0.5
+  _DrawAttachmentLines: 1
+  _AttachmentLineWidth: 0.01
+  _AttachmentLineMat: {fileID: 2100000, guid: 9b11db608c7528743b0fd535e4db2ec6, type: 2}
+  _OnlyTriggerMostRigidSurface: 1
+  _QueueDurationMS: 24
+  _DelayPercentLastFrame: 10
+  _DiscardGrainsOlderThanMS: 30
+  _BurstStartOffsetRangeMS: 8
+  _BurstDebounceDurationMS: 50
+  _Hosts: []
+  _Emitters: []
+  _Speakers: []
   _AudioClips:
   - {fileID: 8300000, guid: 43c5dceb64c004840b1e1a81d7f42e94, type: 3}
   - {fileID: 8300000, guid: aa8ef79807eee3d49ae55eeee0759191, type: 3}
@@ -571,30 +596,6 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 308fa9beb3aa73943a5f407b8a5081c5, type: 3}
   - {fileID: 8300000, guid: 498da90aba050804a9acbc57ef2a5a4f, type: 3}
   - {fileID: 8300000, guid: b9c3d3d2da763fd488bacd296677499f, type: 3}
-  _SpeakerPrefab: {fileID: 2519325204652697373, guid: 6844ced249a80dd4584a457e05fa1c66,
-    type: 3}
-  _PooledSpeakerPosition: {x: 0, y: -10, z: 0}
-  _MaxDynamicSpeakers: 2
-  _ListenerRadius: 20
-  _SpeakerAttachArcDegrees: 12
-  _SpeakerAttachPositionSmoothing: 0.5
-  _DrawAttachmentLines: 1
-  _AttachmentLineWidth: 0.01
-  _AttachmentLineMat: {fileID: 2100000, guid: 9b11db608c7528743b0fd535e4db2ec6, type: 2}
-  _OnlyTriggerMostRigidSurface: 1
-  _QueueDurationMS: 24
-  _DelayByPercentageOfPreviousDuration: 10
-  _DiscardGrainsOlderThanMS: 30
-  _RandomiseBurstStartTimeMS: 8
-  _BurstDebounceDurationMS: 50
-  _Hosts: []
-  _Emitters: []
-  _DynamicSpeakers: []
-  _FixedSpeakers: []
-  _SampleRate: 0
-  _CurrentDSPSample: 0
-  _GrainProcessorCount: 0
-  _UnplayedGrainsDestroyed: 0
 --- !u!4 &24721014
 Transform:
   m_ObjectHideFlags: 0
@@ -9615,6 +9616,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: BasicEmtiter
       objectReference: {fileID: 0}
+    - target: {fileID: 7948423874160613286, guid: 02ec51453b34a444bb3fa1cd193668aa,
+        type: 3}
+      propertyPath: m_TagString
+      value: Speaker
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 02ec51453b34a444bb3fa1cd193668aa, type: 3}
 --- !u!1 &880635110509678897 stripped
@@ -9630,37 +9636,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1639877265}
     m_Modifications:
-    - target: {fileID: 504654399819933224, guid: 5d7afc283b1571f4999ce7d45c25b12b,
-        type: 3}
-      propertyPath: _UseFixedSpeaker
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 504654399819933224, guid: 5d7afc283b1571f4999ce7d45c25b12b,
-        type: 3}
-      propertyPath: _InListenerRadius
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 504654399819933224, guid: 5d7afc283b1571f4999ce7d45c25b12b,
-        type: 3}
-      propertyPath: _FixedSpeakerPrefab
-      value: 
-      objectReference: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
-        type: 3}
-    - target: {fileID: 504654399819933224, guid: 5d7afc283b1571f4999ce7d45c25b12b,
-        type: 3}
-      propertyPath: _UseDedicatedSpeaker
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1920882317727243601, guid: 5d7afc283b1571f4999ce7d45c25b12b,
-        type: 3}
-      propertyPath: m_LightmapParameters
-      value: 
-      objectReference: {fileID: 15200, guid: 0000000000000000f000000000000000, type: 0}
-    - target: {fileID: 1920882317727243601, guid: 5d7afc283b1571f4999ce7d45c25b12b,
-        type: 3}
-      propertyPath: m_ReflectionProbeUsage
-      value: 2
-      objectReference: {fileID: 0}
     - target: {fileID: 1920882317727243603, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: m_RootOrder
@@ -9720,41 +9695,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: MetalRamp
-      objectReference: {fileID: 0}
-    - target: {fileID: 1920882317727243615, guid: 5d7afc283b1571f4999ce7d45c25b12b,
-        type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2903093725423820502, guid: 5d7afc283b1571f4999ce7d45c25b12b,
-        type: 3}
-      propertyPath: _InputMax
-      value: 12
-      objectReference: {fileID: 0}
-    - target: {fileID: 6459493120756573070, guid: 5d7afc283b1571f4999ce7d45c25b12b,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6459493120756573070, guid: 5d7afc283b1571f4999ce7d45c25b12b,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.4
-      objectReference: {fileID: 0}
-    - target: {fileID: 6459493120756573070, guid: 5d7afc283b1571f4999ce7d45c25b12b,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -0.3
-      objectReference: {fileID: 0}
-    - target: {fileID: 6460663515429143904, guid: 5d7afc283b1571f4999ce7d45c25b12b,
-        type: 3}
-      propertyPath: _GrainSynth
-      value: 
-      objectReference: {fileID: 24721013}
-    - target: {fileID: 7158944157982555389, guid: 5d7afc283b1571f4999ce7d45c25b12b,
-        type: 3}
-      propertyPath: m_Enabled
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5d7afc283b1571f4999ce7d45c25b12b, type: 3}

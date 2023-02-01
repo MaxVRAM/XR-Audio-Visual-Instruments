@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 7082181874863104409}
   - component: {fileID: 4513045899119229682}
   - component: {fileID: 1731420856360394368}
-  - component: {fileID: 8740640641133531379}
   m_Layer: 0
   m_Name: SpeakerDynamic
   m_TagString: Speaker
@@ -50,14 +49,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _SpeakerIndex: 2147483647
-  _AttachmentRadius: 1
-  _PooledGrainCount: 0
   _Initialised: 0
-  _Registered: 0
-  _DebugLog: 0
-  _IsActive: 0
-  _IsDedicatedSpeaker: 0
-  _StaticallyPairedEmitters: []
+  _Active: 0
+  _GrainArrayReady: 0
+  _GrainArraySize: 100
+  _NumGrainsFree: 0
+  _TargetVolume: 0
+  _VolumeSmoothing: 4
+  _AttachmentRadius: 1
 --- !u!82 &4563112762925737388
 AudioSource:
   m_ObjectHideFlags: 0
@@ -261,16 +260,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &8740640641133531379
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2519325204652697371}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ea7d7495833204790ba1d3a8755397f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ConversionMode: 1

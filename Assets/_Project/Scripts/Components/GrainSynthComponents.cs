@@ -6,7 +6,7 @@ using Unity.Transforms;
 
 #region ---------- COMPONENTS
 
-public struct DSPTimerComponent : IComponentData
+public struct AudioTimerComponent : IComponentData
 {
     public int _LastActualDSPIndex;
     public int _NextFrameIndexEstimate;
@@ -26,7 +26,7 @@ public struct WindowingDataComponent : IComponentData
     public BlobAssetReference<FloatBlobAsset> _WindowingArray;   
 }
 
-public struct GrainProcessorComponent : IComponentData
+public struct GrainComponent : IComponentData
 {
     // TODO - add record of emitter index. Could be useful for fading out grains of destroyed emitters, etc.
     public AudioClipDataComponent _AudioClipDataComponent;
@@ -40,7 +40,7 @@ public struct GrainProcessorComponent : IComponentData
 }
 public struct SamplesProcessedTag : IComponentData {}
 
-public struct AttachParameterComponent : IComponentData
+public struct AttachmentComponent : IComponentData
 {
     public float3 _ListenerPos;
     public float _ListenerRadius;
@@ -48,9 +48,9 @@ public struct AttachParameterComponent : IComponentData
     public float _TranslationSmoothing;
     public float3 _PooledSpeakerPosition;
 }
-public struct SpeakerComponent : IComponentData
+public struct SpeakerIndex : IComponentData
 {
-    public int _SpeakerIndex;
+    public int Value;
 }
 public enum PooledState
 {
@@ -66,7 +66,6 @@ public struct PoolingComponent : IComponentData
 
 public struct ConnectedTag : IComponentData {}
 public struct InListenerRadiusTag : IComponentData {}
-public struct UsingFixedSpeaker : IComponentData {}
 
 public struct EmitterHostComponent : IComponentData
 {
@@ -74,9 +73,9 @@ public struct EmitterHostComponent : IComponentData
     public bool _InListenerRadius;
     public bool _Connected;
     public int _SpeakerIndex;
-    public bool _IsUsingFixedSpeaker;
 }
-
+public struct PlayingTag : IComponentData {}
+public struct PingPongTag : IComponentData { }
 public struct ModulationComponent : IComponentData
 {
     public float _StartValue;
@@ -93,8 +92,6 @@ public struct ModulationComponent : IComponentData
     public bool _LockEndValue;
     public float _InteractionInput;
 }
-public struct PlayingTag : IComponentData {}
-public struct PingPongTag : IComponentData {}
 
 public struct ContinuousComponent : IComponentData
 {

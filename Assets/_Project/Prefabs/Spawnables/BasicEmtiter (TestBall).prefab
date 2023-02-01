@@ -107,16 +107,16 @@ MonoBehaviour:
   _SpeakerIndex: 2147483647
   _InListenerRadius: 0
   _ListenerDistance: 0
-  _UseDedicatedSpeaker: 0
-  _SpeakerPrefab: {fileID: 0}
+  _UseFixedSpeaker: 0
+  _FixedSpeakerPrefab: {fileID: 0}
   _SpeakerContainer: {fileID: 7512436182910805329}
-  _DedicatedSpeaker: {fileID: 0}
+  _FixedSpeaker: {fileID: 0}
   _AttachmentLine: {fileID: 0}
   _Spawner: {fileID: 0}
+  _SpawnableManager: {fileID: 0}
   _LocalObject: {fileID: 3855671869938862447}
   _RemoteObject: {fileID: 0}
   _CollisionPipeComponent: {fileID: 0}
-  _SpawnableManager: {fileID: 0}
   _Behaviours: []
   _HostedEmitters:
   - {fileID: 6566134665840452837}
@@ -260,7 +260,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7512436182910805329}
-  - component: {fileID: 1748117392}
   m_Layer: 0
   m_Name: SpeakerContainer
   m_TagString: Untagged
@@ -283,19 +282,6 @@ Transform:
   m_Father: {fileID: 3855671869938862446}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1748117392
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7948423874160613286}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ea7d7495833204790ba1d3a8755397f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ConversionMode: 1
 --- !u!1 &9051407224724324999
 GameObject:
   m_ObjectHideFlags: 0
@@ -491,7 +477,7 @@ PrefabInstance:
     - target: {fileID: 4159845926919770585, guid: d48211afbb61fcd4688e7a0173dbb5da,
         type: 3}
       propertyPath: m_Name
-      value: BasicEmtiter (TestBall)
+      value: BasicEmtiter
       objectReference: {fileID: 0}
     - target: {fileID: 4159845926919770588, guid: d48211afbb61fcd4688e7a0173dbb5da,
         type: 3}

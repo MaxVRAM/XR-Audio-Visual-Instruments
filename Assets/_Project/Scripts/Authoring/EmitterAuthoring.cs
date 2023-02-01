@@ -9,15 +9,16 @@ using Random = UnityEngine.Random;
 public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
     public enum Condition { Always, Colliding, NotColliding };
+    public enum EmitterType { Continuous, Burst }
 
     [SerializeField]
     protected bool _Initialised = false;
-    public enum EmitterType {Continuous, Burst}
+
     protected Entity _EmitterEntity;
     protected EntityManager _EntityManager;
+    
     protected float[] _PerlinSeedArray;
-    [SerializeField]
-    protected float _LastTriggeredAt = 0;
+    [SerializeField] protected float _LastTriggeredAt = 0;
 
     [Header("Emitter Configuration")]
     [Tooltip("(generated) Host component managing this emitter.")]
@@ -28,11 +29,6 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public Condition _PlaybackCondition = Condition.Always;
     [Tooltip("Audio clip used as the emitter's content source.")]
     public int _ClipIndex = 0;
-
-    // TODO: Create AudioClipSource and AudioClipLibrary objects to add properties to source
-    // content, making it much easier to create emitter configurations. Adding properties like
-    // tagging/grouping, custom names/descriptions, and per-clip processing; like volume,
-    // compression, and eq; are feasible and would drastically benefit workflow.
 
     [Header("Playback Config")]
     [Range(0.001f, 1f)]
@@ -51,13 +47,12 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public float _TimeExisted = 0;
     public float _AdjustedDistance = 0;
     public float _DistanceAmplitude = 0;
-    [SerializeField]
-    protected float _ContactSurfaceAttenuation = 1;
-    protected int _LastSampleIndex = 0;
-    protected float _SamplesPerMS = 0;
-    protected bool OnlyTriggerMostRigid { get { return GrainSynth.Instance._OnlyTriggerMostRigidSurface; } }
+    [SerializeField] protected float _ContactSurfaceAttenuation = 1;
+    [SerializeField] protected int _LastSampleIndex = 0;
+    [SerializeField] protected float _SamplesPerMS = 0;
 
     public DSP_Class[] _DSPChainParams;
+
 
     void Start()
     {
@@ -75,20 +70,20 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     void Awake()
     {
         Initialise();
-        GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
+        //GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
     }
     public virtual void Initialise() { }
 
     public virtual void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem) { }
 
-    public void UpdateTranslationAndTags()
+    public void UpdateEntityTags()
     {
+        _TimeExisted += Time.deltaTime;
+
         if (!_Initialised)
             return;
 
-        _TimeExisted += Time.deltaTime;
-
-        if (_Host._InListenerRadius) _EntityManager.AddComponent<InListenerRadiusTag>(_EmitterEntity);
+        if (_Host.InListenerRadius) _EntityManager.AddComponent<InListenerRadiusTag>(_EmitterEntity);
         else _EntityManager.RemoveComponent<InListenerRadiusTag>(_EmitterEntity);
 
         if (_Host.IsConnected) _EntityManager.AddComponent<ConnectedTag>(_EmitterEntity);
@@ -151,6 +146,8 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             _IsPlaying = true;
         }
     }
+
+    protected bool OnlyTriggerMostRigid { get { return GrainSynth.Instance._OnlyTriggerMostRigidSurface; } }
 
     public static bool ColliderMoreRigid(Collider collider, float rigidity, out float otherRigidity)
     {

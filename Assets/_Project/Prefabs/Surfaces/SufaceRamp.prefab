@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3817821463973246623}
   - component: {fileID: 504654399819933224}
-  - component: {fileID: 169060174}
   m_Layer: 9
   m_Name: Host_MetalRamp
   m_TagString: Untagged
@@ -45,23 +44,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1dc6aac3ee08b846b7c9c82fe36fcc2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _HostIndex: 2147483647
   _Initialised: 0
-  _IsColliding: 0
   _Connected: 0
   _SpeakerIndex: 2147483647
   _InListenerRadius: 0
   _ListenerDistance: 0
-  _UseDedicatedSpeaker: 1
-  _SpeakerPrefab: {fileID: 2519325204652697373, guid: b46de1e33c7c38647882c6d1451339fd,
-    type: 3}
-  _SpeakerContainer: {fileID: 4998016120406899940}
-  _DedicatedSpeaker: {fileID: 0}
+  _IsColliding: 0
+  _SpeakerTarget: {fileID: 4998016120406899940}
+  _SpeakerTransform: {fileID: 4998016120406899940}
   _AttachmentLine: {fileID: 0}
   _Spawner: {fileID: 0}
+  _SpawnableManager: {fileID: 0}
   _LocalObject: {fileID: 1920882317727243615}
   _RemoteObject: {fileID: 0}
   _CollisionPipeComponent: {fileID: 0}
-  _DestroyTimer: {fileID: 0}
+  _SurfaceRigidity: 0.5
   _Behaviours: []
   _HostedEmitters: []
   _ModulationSources: []
@@ -70,19 +68,6 @@ MonoBehaviour:
   _RigiditySmoothUp: 0.5
   _CurrentCollidingRigidity: 0
   _TargetCollidingRigidity: 0
---- !u!114 &169060174
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1690714586038339022}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ea7d7495833204790ba1d3a8755397f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ConversionMode: 1
 --- !u!1 &1920882317727243615
 GameObject:
   m_ObjectHideFlags: 0
@@ -163,7 +148,7 @@ MeshRenderer:
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
+  m_ReflectionProbeUsage: 2
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
@@ -186,7 +171,7 @@ MeshRenderer:
   m_MinimumChartSize: 4
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
+  m_LightmapParameters: {fileID: 15200, guid: 0000000000000000f000000000000000, type: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0

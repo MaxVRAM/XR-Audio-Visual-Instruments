@@ -2,39 +2,44 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
 using Unity.Transforms;
+using System;
 
-[DisallowMultipleComponent]
-public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
+/// <summary>
+//      Multiple emitters are often spawned and attached to the same object and modulated by
+//      the same game-world interactions. Emitter Hosts manage emitters designed to create
+//      a single "profile" for an interactive sound object.
+/// <summary>
+
+public class HostAuthoring : MonoBehaviour
 {
-    protected Entity _HostEntity;
-    protected EntityManager _EntityManager;
-    protected Transform _HeadTransform;
-    protected BlankModulation _BlankInputComponent;
-        
+    #region FIELDS & PROPERTIES
+
+    private Entity _HostEntity;
+    private EntityManager _EntityManager;
+    private EntityArchetype _HostArchetype;
+
+    private Transform _HeadTransform;
+    private BlankModulation _BlankInputComponent;
+
+    [SerializeField] private int _HostIndex = int.MaxValue;
+    public int HostIndex { get { return _HostIndex; } }
+
     [Header("Runtime Dynamics")]
-    [SerializeField]
-    protected bool _Initialised = false;
-    public bool _IsColliding = false;
-    [SerializeField]
-    protected bool _Connected = false;
+    [SerializeField] private bool _Initialised = false;
+    [SerializeField] private bool _Connected = false;
     public bool IsConnected { get { return _Connected; } }
-    [SerializeField]
-    public int _SpeakerIndex = int.MaxValue;
-    protected Transform _SpeakerTransform;
-    public bool _InListenerRadius = false;
-    public float _ListenerDistance = 0;
+
+    [SerializeField] public int _SpeakerIndex = int.MaxValue;
+    [SerializeField] private bool _InListenerRadius = false;
+    public bool InListenerRadius { get { return _InListenerRadius; } }
+    [SerializeField] private float _ListenerDistance = 0;
+    [SerializeField] private bool _IsColliding = false;
 
     [Header("Speaker assignment")]
-    [Tooltip("Host will spawn a speaker prefab for itself if true, disabling attachment system functionality on both host and speaker entities.")]
-    public bool _UseFixedSpeaker = false;
-    public SpeakerAuthoring _FixedSpeakerPrefab;
-    [Tooltip("Parent transform to host dedicated speaker, defaults to parent. Cannot be this transform!")]
-    //  (may also be used as a location target for dynamic speakers)
-    public Transform _SpeakerContainer;
-    [SerializeField]
-    protected SpeakerAuthoring _FixedSpeaker;
-    [SerializeField]
-    protected AttachmentLine _AttachmentLine;
+    [Tooltip("Parent transform position for speakers to target for this host. Defaults to this transform.")]
+    [SerializeField] private Transform _SpeakerTarget;
+    [SerializeField] private Transform _SpeakerTransform;
+    [SerializeField] private AttachmentLine _AttachmentLine;
 
     [Header("Interactions")]
     public ObjectSpawner _Spawner;
@@ -44,12 +49,11 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public GameObject _RemoteObject;
     [Tooltip("(generated) Paired component that pipes collision data from the local object target to this host.")]
     public CollisionPipe _CollisionPipeComponent;
-    protected SurfaceProperties _SurfaceProperties;
-    protected float _SurfaceRigidity = 0.5f;
+    private SurfaceProperties _SurfaceProperties;
+    [SerializeField] private float _SurfaceRigidity = 0.5f;
     public float SurfaceRigidity { get { return _SurfaceRigidity; } }
     [Tooltip("List of attached behaviour scripts to use as modulation input sources.")]
-    [SerializeField]
-    protected List<BehaviourClass> _Behaviours;
+    [SerializeField] private List<BehaviourClass> _Behaviours;
 
     [Tooltip("(generated) Sibling emitters components for this host to manage.")]
     public EmitterAuthoring[] _HostedEmitters;
@@ -62,155 +66,160 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public float RigiditySmoothUp { get { return 1 / _RigiditySmoothUp; }}
     public float _CurrentCollidingRigidity = 0;
     public float _TargetCollidingRigidity = 0;
-    public bool ContactAllowed(GameObject other)
-    {
-        return _Spawner == null || _Spawner._AllowSiblingSurfaceContact || !_Spawner._ActiveObjects.Contains(other);
-    }
+
+    #endregion
+
+    #region GAME OBJECT MANAGEMENT
+
+    public int EntityIndex { get { return _HostEntity.Index; } }
 
     void Awake()
     {
-        GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
-        // Set up a blank input component for emitter properties that don't have one attached
         if (!TryGetComponent(out _BlankInputComponent))
             _BlankInputComponent = gameObject.AddComponent(typeof(BlankModulation)) as BlankModulation;
     }
 
-    public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
-    {
-        _HostEntity = entity;
-        int index = GrainSynth.Instance.RegisterHost(this);
-
-        dstManager.AddComponentData(_HostEntity, new EmitterHostComponent
-        {
-            _HostIndex = index,
-            _Connected = false,
-            _InListenerRadius = false,
-            _SpeakerIndex = _SpeakerIndex,
-            _IsUsingFixedSpeaker = _UseFixedSpeaker
-        });
-
-        name = $"Host {index}: {transform.parent.name}";
-
-        #if UNITY_EDITOR
-                dstManager.SetName(_HostEntity, name);
-        #endif
-
-        _Initialised = true;
-    }
-
     void Start()
     {
-        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _HeadTransform = FindObjectOfType<Camera>().transform;
+        _SpeakerTarget = _SpeakerTarget != null ? _SpeakerTarget : transform;
+        _SpeakerTransform = _SpeakerTarget;
 
         if (_LocalObject == null)
             _LocalObject = transform.parent.gameObject;
 
         _HostedEmitters = transform.parent.GetComponentsInChildren<EmitterAuthoring>();
-        _ModulationSources = transform.parent.GetComponentsInChildren<ModulationSource>();
-
-        if (!TryGetComponent(out _SurfaceProperties))
-            _SurfaceProperties = transform.parent.GetComponent<SurfaceProperties>();
-        if (_SurfaceProperties != null)
-            _SurfaceRigidity = _SurfaceProperties._Rigidity;
 
         foreach (EmitterAuthoring emitter in _HostedEmitters)
             emitter._Host = this;
+
+        _ModulationSources = transform.parent.GetComponentsInChildren<ModulationSource>();
+
+        if (_AttachmentLine = TryGetComponent(out _AttachmentLine) ? _AttachmentLine : gameObject.AddComponent<AttachmentLine>())
+            _AttachmentLine._TransformA = _SpeakerTarget;
+
+        if (TryGetComponent(out _SurfaceProperties) || transform.parent.TryGetComponent(out _SurfaceProperties))
+            _SurfaceRigidity = _SurfaceProperties._Rigidity;
 
         SetLocalInputSource(_LocalObject);
         SetRemoteInputSource(_RemoteObject);
         UpdateBehaviourModulationInputs();
 
-        if (_UseFixedSpeaker)
-        {
-            if (_FixedSpeaker == null && _FixedSpeakerPrefab != null)
-            {
-                _SpeakerContainer = _SpeakerContainer != null ? _SpeakerContainer : transform.parent;
-                _FixedSpeaker = Instantiate(_FixedSpeakerPrefab, _SpeakerContainer.position, Quaternion.identity, _SpeakerContainer);
-            }
-
-            _FixedSpeaker._IsFixedSpeaker = true;
-            _SpeakerIndex = _FixedSpeaker.SpeakerIndex;
-            _SpeakerTransform = _FixedSpeaker.transform;
-            _Connected = _FixedSpeaker._Registered;
-
-            _FixedSpeaker.AddEmitterHostLink(this);
-        }
-        else if (!TryGetComponent(out _AttachmentLine))
-        {
-            _AttachmentLine = gameObject.AddComponent<AttachmentLine>();
-            _AttachmentLine._TransformA = transform;
-        }
+        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        _HostArchetype = _EntityManager.CreateArchetype(
+            typeof(EmitterHostComponent),
+            typeof(Translation));
     }
 
-    void Update()
+    private void OnDestroy()
     {
+        if (GrainSynth.Instance != null)
+            GrainSynth.Instance.DeRegisterHost(this);
+        if (_CollisionPipeComponent != null)
+            _CollisionPipeComponent.RemoveHost(this);
+
+        DestroyEntity();
+    }
+
+    public void DestroyEntity()
+    {
+        if (World.All.Count != 0 && _HostEntity != null && _EntityManager != null)
+            _EntityManager.DestroyEntity(_HostEntity);
+    }
+
+    #endregion
+
+    #region ENTITY CALLS
+
+    public Entity CreateEntity()
+    {
+        _HostIndex = GrainSynth.Instance.RegisterHost(this);
+        name = $"Host.{_HostIndex}.{transform.parent.name}";
+        Debug.Log($"Host {name} creating new entity");
+
+        _SpeakerIndex = int.MaxValue;
+        _SpeakerTransform = _SpeakerTarget;
+
+        if (_HostEntity != Entity.Null)
+            _EntityManager.DestroyEntity(_HostEntity);
+
+        _HostEntity = _EntityManager.CreateEntity(_HostArchetype);
+
+        _EntityManager.SetComponentData(_HostEntity, new EmitterHostComponent
+        {
+            _Connected = false,
+            _HostIndex = _HostIndex,
+            _SpeakerIndex = int.MaxValue
+        });
+
+        _EntityManager.SetComponentData(_HostEntity, new Translation { Value = _SpeakerTarget.position });
+
+#if UNITY_EDITOR
+        _EntityManager.SetName(_HostEntity, name);
+#endif
+
+        _Initialised = true;
+        return _HostEntity;
+    }
+
+    public bool UpdateComponents()
+    {
+        if (!_Initialised || _EntityManager == null || _HostEntity == null)
+            CreateEntity();
+
         if (!_Initialised)
-            return;
+            return false;
 
-        // Update host translation component.
-        Translation translation = _EntityManager.GetComponentData<Translation>(_HostEntity);
-        _EntityManager.SetComponentData(_HostEntity, new Translation { Value = transform.position });
-        _ListenerDistance = Mathf.Abs((transform.position - _HeadTransform.position).magnitude);
-
-        #region START HOST COMPONENT
+        _EntityManager.SetComponentData(_HostEntity, new Translation { Value = _SpeakerTarget.position });
 
         EmitterHostComponent hostData = _EntityManager.GetComponentData<EmitterHostComponent>(_HostEntity);
-
-        hostData._IsUsingFixedSpeaker = _UseFixedSpeaker;
-
-        if (!_UseFixedSpeaker)
+        if (GrainSynth.Instance.GetSpeakerFromIndex(hostData._SpeakerIndex, out SpeakerAuthoring speaker))
         {
-            _EntityManager.RemoveComponent<UsingFixedSpeaker>(_HostEntity);
-            _InListenerRadius = hostData._InListenerRadius;
-
-            if (GrainSynth.Instance.GetSpeakerFromIndex(hostData._SpeakerIndex, out SpeakerAuthoring speaker) != null)
-            {
-                _SpeakerTransform = speaker.gameObject.transform;
-                _SpeakerIndex = hostData._SpeakerIndex;
-                _Connected = hostData._Connected;
-            }
-            else
-            {
-                _SpeakerTransform = transform;
-                _SpeakerIndex = int.MaxValue;
-                _Connected = false;
-            }
+            _SpeakerTransform = speaker.gameObject.transform;
+            _SpeakerIndex = hostData._SpeakerIndex;
+            _Connected = hostData._Connected;
         }
         else
         {
-            _EntityManager.AddComponent<UsingFixedSpeaker>(_HostEntity);
-            _InListenerRadius = _ListenerDistance < GrainSynth.Instance._ListenerRadius;
-
-            if (_FixedSpeaker != null)
-            {
-                hostData._InListenerRadius = _InListenerRadius;
-                hostData._Connected = _FixedSpeaker._Registered;
-                _SpeakerIndex = _FixedSpeaker.SpeakerIndex;
-                _Connected = _FixedSpeaker._Registered;
-            }
-            else
-            {
-                hostData._Connected = false;
-                _SpeakerTransform = transform;
-                _SpeakerIndex = int.MaxValue;
-                _Connected = false;
-            }
-
-            hostData._SpeakerIndex = _SpeakerIndex;
+            _Connected = false;
+            _SpeakerIndex = int.MaxValue;
+            _SpeakerTransform = _SpeakerTarget;
         }
-        _EntityManager.SetComponentData(_HostEntity, hostData);
 
-        #endregion
+        _InListenerRadius = hostData._InListenerRadius;
+        _EntityManager.SetComponentData(_HostEntity, hostData);
 
         UpdateSpeakerAttachmentLine();
 
-        #region PROCESS RIGIDITY VALUE FROM COLLIDING OBJECTS
+        float speakerAmplitudeFactor = AudioUtils.SpeakerOffsetFactor(
+            transform.position,
+            _HeadTransform.position,
+            _SpeakerTransform.position
+            );
 
+        _ListenerDistance = Mathf.Abs((transform.position - _HeadTransform.position).magnitude);
+
+        foreach (EmitterAuthoring emitter in _HostedEmitters)
+        {
+            emitter.UpdateDistanceAmplitude(_ListenerDistance / GrainSynth.Instance._ListenerRadius, speakerAmplitudeFactor);
+            emitter.UpdateEntityTags();
+            if (_Connected && InListenerRadius)
+                emitter.UpdateEmitterComponents();
+        }
+
+        return true;
+    }
+
+    #endregion
+
+    #region BEHAVIOUR UPDATES
+
+    public void ProcessRigidity()
+    {
         // Clear lingering null contact objects and add rigidity values to list
         _CollidingObjects.RemoveAll(item => item == null);
         _ContactRigidValues.Clear();
-        
+
         foreach (GameObject go in _CollidingObjects)
             if (go.TryGetComponent(out SurfaceProperties props))
                 _ContactRigidValues.Add(props._Rigidity);
@@ -227,33 +236,13 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
                 _CurrentCollidingRigidity = _CurrentCollidingRigidity.Lerp(_TargetCollidingRigidity, RigiditySmoothUp * Time.deltaTime);
         }
         if (_CurrentCollidingRigidity < 0.001f) _CurrentCollidingRigidity = 0;
-
-        #endregion
-
-
-        float speakerAmplitudeFactor = 0;
-
-        if (_Connected)
-            speakerAmplitudeFactor = AudioUtils.SpeakerOffsetFactor(
-                transform.position,
-                _HeadTransform.position,
-                _SpeakerTransform.position);
-
-        foreach (EmitterAuthoring emitter in _HostedEmitters)
-        {
-            emitter.UpdateDistanceAmplitude(_ListenerDistance / GrainSynth.Instance._ListenerRadius, speakerAmplitudeFactor);
-            emitter.UpdateTranslationAndTags();
-            if (_Connected && _InListenerRadius)
-                emitter.UpdateEmitterComponents();
-        }
     }
-    
-    public int EntityIndex { get { return _HostEntity.Index; } }
+
 
     public void UpdateSpeakerAttachmentLine()
     {
         if (_AttachmentLine != null)
-            if (!_UseFixedSpeaker && _Connected && _SpeakerTransform != null && GrainSynth.Instance._DrawAttachmentLines)
+            if (_Connected && _SpeakerTransform != _SpeakerTarget && GrainSynth.Instance._DrawAttachmentLines)
             {
                 _AttachmentLine._Active = true;
                 _AttachmentLine._TransformB = _SpeakerTransform;
@@ -305,7 +294,11 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
                     source.SetBehaviourInput(behaviour);
         }
     }
-    
+
+    #endregion
+
+    #region COLLISION HANDLING
+
     public void OnCollisionEnter(Collision collision)
     {
         GameObject other = collision.collider.gameObject;
@@ -357,22 +350,94 @@ public class HostAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         }
     }
 
-    protected void OnDrawGizmos()
+    public bool ContactAllowed(GameObject other)
     {
-        // Gizmos.color = _InListenerRadius ? Color.yellow : Color.blue;
-        // Gizmos.DrawSphere(transform.position, .1f);
-    }
-    
-    private void OnDestroy()
-    {
-        GrainSynth.Instance.DeRegisterHost(this);
-        if (_CollisionPipeComponent != null) _CollisionPipeComponent.RemoveHost(this);
-        DestroyEntity();
+        return _Spawner == null || _Spawner._AllowSiblingSurfaceContact || !_Spawner._ActiveObjects.Contains(other);
     }
 
-    public void DestroyEntity()
-    {
-        if (World.All.Count != 0 && _HostEntity != null)
-            _EntityManager.DestroyEntity(_HostEntity);
-    }
+    #endregion
 }
+
+
+
+
+
+
+
+
+
+
+//void Awake()
+//{
+//    GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
+//    // Set up a blank input component for emitter properties that don't have one attached
+//    if (!TryGetComponent(out _BlankInputComponent))
+//        _BlankInputComponent = gameObject.AddComponent(typeof(BlankModulation)) as BlankModulation;
+//}
+
+
+//public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
+//{
+//    _HostEntity = entity;
+//    int index = GrainSynth.Instance.RegisterHost(this);
+
+//    dstManager.AddComponentData(_HostEntity, new EmitterHostComponent
+//    {
+//        _HostIndex = index,
+//        _Connected = false,
+//        _InListenerRadius = false,
+//        _SpeakerIndex = _SpeakerIndex
+//    });
+
+
+//    #if UNITY_EDITOR
+//            dstManager.SetName(_HostEntity, name);
+//    #endif
+
+//    _EntityInitialised = true;
+//}
+
+
+
+//hostData._IsUsingFixedSpeaker = _UseFixedSpeaker;
+
+//if (!_UseFixedSpeaker)
+//{
+//    _EntityManager.RemoveComponent<UsingFixedSpeaker>(_HostEntity);
+//    InListenerRadius = hostData.InListenerRadius;
+
+//    if (GrainSynth.Instance.GetSpeakerFromIndex(hostData._SpeakerIndex, out SpeakerAuthoring speaker) != null)
+//    {
+//        _SpeakerTransform = speaker.gameObject.transform;
+//        _SpeakerIndex = hostData._SpeakerIndex;
+//        _Connected = hostData._Connected;
+//    }
+//    else
+//    {
+//        _SpeakerTransform = transform;
+//        _SpeakerIndex = int.MaxValue;
+//        _Connected = false;
+//    }
+//}
+//else
+//{
+//    _EntityManager.AddComponent<UsingFixedSpeaker>(_HostEntity);
+//    InListenerRadius = _ListenerDistance < GrainSynth.Instance._ListenerRadius;
+
+//    if (_FixedSpeaker != null)
+//    {
+//        hostData.InListenerRadius = InListenerRadius;
+//        hostData._Connected = _FixedSpeaker._Registered;
+//        _SpeakerIndex = _FixedSpeaker.SpeakerIndex;
+//        _Connected = _FixedSpeaker._Registered;
+//    }
+//    else
+//    {
+//        hostData._Connected = false;
+//        _SpeakerTransform = transform;
+//        _SpeakerIndex = int.MaxValue;
+//        _Connected = false;
+//    }
+
+//    hostData._SpeakerIndex = _SpeakerIndex;
+//}

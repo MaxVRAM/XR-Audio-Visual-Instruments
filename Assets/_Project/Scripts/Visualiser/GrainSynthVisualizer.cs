@@ -64,7 +64,6 @@ public class GrainSynthVisualizer : MonoBehaviour
     #endregion
 
     #region ------------------------------------- UNITY METHODS
-    // Start is called before the first frame update
     void Start()
     {     
         _SampleRate = AudioSettings.outputSampleRate;
@@ -269,7 +268,7 @@ public class GrainSynthVisualizer : MonoBehaviour
         return pos;
     }
    
-    public void EmitGrain(GrainData grainData, int currentDSPSample)
+    public void EmitGrain(Grain grainData, int currentDSPSample)
     {
         if (_DrawTimeline)
         {
