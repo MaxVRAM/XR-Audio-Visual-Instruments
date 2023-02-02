@@ -40,26 +40,26 @@ public struct GrainComponent : IComponentData
 }
 public struct SamplesProcessedTag : IComponentData {}
 
-public struct AttachmentComponent : IComponentData
+public struct AllocationParameters : IComponentData
 {
     public float3 _ListenerPos;
     public float _ListenerRadius;
-    public float _AttachArcDegrees;
+    public float _LocalisationArcDegrees;
     public float _TranslationSmoothing;
-    public float3 _PooledSpeakerPosition;
+    public float3 _DisconnectedPosition;
 }
 public struct SpeakerIndex : IComponentData
 {
     public int Value;
 }
-public enum PooledState
+public enum ConnectionState
 {
-    Pooled,
-    Active
+    Disconnected,
+    Connected
 }
-public struct PoolingComponent : IComponentData
+public struct SpeakerComponent : IComponentData
 {
-    public PooledState _State;
+    public ConnectionState _State;
     public int _AttachedHostCount;
     public float _AttachmentRadius;
 }
@@ -67,12 +67,12 @@ public struct PoolingComponent : IComponentData
 public struct ConnectedTag : IComponentData {}
 public struct InListenerRadiusTag : IComponentData {}
 
-public struct EmitterHostComponent : IComponentData
+public struct HostComponent : IComponentData
 {
     public int _HostIndex;
-    public bool _InListenerRadius;
     public bool _Connected;
     public int _SpeakerIndex;
+    public bool _InListenerRadius;
 }
 public struct PlayingTag : IComponentData {}
 public struct PingPongTag : IComponentData { }

@@ -164,7 +164,7 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
     private void OnDestroy()
     {
-        GrainSynth.Instance.DeRegisterEmitter(this);
+        GrainSynth.Instance.DeregisterEmitter(this);
         DestroyEntity();
     }
 

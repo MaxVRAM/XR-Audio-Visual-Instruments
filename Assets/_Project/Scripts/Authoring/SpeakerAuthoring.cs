@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
-using Unity.VisualScripting;
 
 
 #region GRAIN CLASS
@@ -33,27 +32,10 @@ public class Grain
 /// <summary>
 
 [RequireComponent(typeof(AudioSource))]
-public class SpeakerAuthoring : MonoBehaviour
+public class SpeakerAuthoring : SynthEntityBase
 {
     #region FIELDS & PROPERTIES
 
-    public delegate void GrainEmitted(Grain data, int currentDSPSample);
-    public event GrainEmitted OnGrainEmitted;
-
-    private EntityManager _EntityManager;
-    private Entity _SpeakerEntity;
-    private EntityArchetype _SpeakerArchetype;
-
-    private MeshRenderer _MeshRenderer;
-    private AudioSource _AudioSource;
-    private Grain[] _GrainArray;
-
-    [SerializeField] protected int _SpeakerIndex = int.MaxValue;
-    public int SpeakerIndex { get { return _SpeakerIndex; } }
-    private int _SampleRate;
-
-    [SerializeField] private bool _EntityInitialised = false;
-    [SerializeField] private bool _ManagerInitialised = false;
     [SerializeField] private bool _Active = false;
     [SerializeField] private bool _GrainArrayReady = false;
     [SerializeField] private int _GrainArraySize = 100;
@@ -61,11 +43,19 @@ public class SpeakerAuthoring : MonoBehaviour
     [SerializeField] private float _TargetVolume = 0;
     [SerializeField] private float _VolumeSmoothing = 4;
     [SerializeField] private float _AttachmentRadius = 1;
+    private int _SampleRate;
+
+    private MeshRenderer _MeshRenderer;
+    private AudioSource _AudioSource;
+    private Grain[] _GrainArray;
+
+    public delegate void GrainEmitted(Grain data, int currentDSPSample);
+    public event GrainEmitted OnGrainEmitted;
 
     #endregion
 
-    #region GAME OBJECT MANAGEMENT
-    
+    #region ENTITY-SPECIFIC START CALL
+
     private void Start()
     {
         _SampleRate = AudioSettings.outputSampleRate;
@@ -73,121 +63,55 @@ public class SpeakerAuthoring : MonoBehaviour
         _AudioSource = gameObject.GetComponent<AudioSource>();
         _AudioSource.rolloffMode = AudioRolloffMode.Custom;
         _AudioSource.maxDistance = 500;
-    }
+        InitialiseGrainArray();
 
-    private void OnDestroy()
-    {
-        GrainSynth.Instance.DeRegisterSpeaker(this);
-        DestroyEntity();
-    }
-
-    public void DestroyEntity()
-    {
-        try
-        {
-            if (_EntityManager != null && World.All.Count != 0)
-                _EntityManager.DestroyEntity(_SpeakerEntity);
-        }
-        catch (Exception ex) when (ex is NullReferenceException)
-        {
-            Warning.Info($"Speaker {name} ({_SpeakerIndex}) failed to destroy entity: {ex.Message}");
-        }
-    }
-
-    #endregion
-
-    #region ENTIY MANAGEMENT
-
-    public void UpdateIndex(int index)
-    {
-        if (index == int.MaxValue)
-            Destroy(gameObject);
-
-        if (_SpeakerIndex != index)
-        {
-            _SpeakerIndex = index;
-            name = $"Speaker.{index}.{transform.parent.name}";
-        }
-    }
-
-    public bool InitialiseManager()
-    {
-        if (!_ManagerInitialised)
-        {
-            _EntityInitialised = false;
-            _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-            _SpeakerArchetype = _EntityManager.CreateArchetype(
-                typeof(SpeakerIndex),
-                typeof(Translation),
-                typeof(PoolingComponent));
-            _ManagerInitialised = true;
-            return false;
-        }
-        else return true;
-    }
-
-    public bool InitialiseEntity()
-    {
-        if (!_EntityInitialised)
-        {
-            if (!InitialiseManager())
-                return false;
-
-            if (SpeakerIndex == int.MaxValue)
-                return false;
-
-            if (_SpeakerEntity != Entity.Null)
-                _EntityManager.DestroyEntity(_SpeakerEntity);
-
-            Debug.Log($"Speaker {name} creating new entity");
-            _SpeakerEntity = _EntityManager.CreateEntity(_SpeakerArchetype);
-            _EntityManager.SetComponentData(_SpeakerEntity, new SpeakerIndex { Value = SpeakerIndex });
-            _EntityManager.SetComponentData(_SpeakerEntity, new Translation { Value = transform.position });
-            _EntityManager.SetComponentData(_SpeakerEntity, new PoolingComponent
-            {
-                _State = PooledState.Pooled,
-                _AttachedHostCount = 0
-            });
-
-            InitialiseGrainArray();
-
-#if UNITY_EDITOR
-            _EntityManager.SetName(_SpeakerEntity, name);
-#endif
-
-            _EntityInitialised = true;
-            return false;
-        }
-        else return true;
-    }
-
-    public bool UpdateComponents()
-    {
-        if (!InitialiseEntity())
-            return false;
-
-        ProcessSpeakerIndexComponent(_EntityManager.GetComponentData<SpeakerIndex>(_SpeakerEntity));
-        ProcessPoolingComponent(_EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity));
-        ProcessTranslationComponent(_EntityManager.GetComponentData<Translation>(_SpeakerEntity));
-        return true;
+        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        _Archetype = _EntityManager.CreateArchetype(
+            typeof(SpeakerComponent),
+            typeof(SpeakerIndex),
+            typeof(Translation));
     }
 
     #endregion
 
     #region SECRET SPEAKER COMPONENT BUSINESS
 
-    public void ProcessSpeakerIndexComponent(SpeakerIndex index)
+    public override void SetEntityType()
     {
-        if (SpeakerIndex != index.Value)
-            _EntityManager.SetComponentData(_SpeakerEntity, new SpeakerIndex { Value = SpeakerIndex });
+        _EntityType = SynthEntityType.Speaker;
     }
 
-    public void ProcessPoolingComponent(PoolingComponent pooling)
+    public override void InitialiseComponents()
+    {
+        _EntityManager.SetComponentData(_Entity, new SpeakerIndex { Value = EntityIndex });
+        _EntityManager.SetComponentData(_Entity, new Translation { Value = transform.position });
+        _EntityManager.SetComponentData(_Entity, new SpeakerComponent
+        {
+            _State = ConnectionState.Disconnected,
+            _AttachmentRadius = _AttachmentRadius,
+            _AttachedHostCount = 0
+        });
+    }
+
+    public override void UpdateComponents()
+    {
+        ProcessSpeakerIndexComponent(_EntityManager.GetComponentData<SpeakerIndex>(_Entity));
+        ProcessPoolingComponent(_EntityManager.GetComponentData<SpeakerComponent>(_Entity));
+        ProcessTranslationComponent(_EntityManager.GetComponentData<Translation>(_Entity));
+    }
+
+    public void ProcessSpeakerIndexComponent(SpeakerIndex index)
+    {
+        if (EntityIndex != index.Value)
+            _EntityManager.SetComponentData(_Entity, new SpeakerIndex { Value = EntityIndex });
+    }
+
+    public void ProcessPoolingComponent(SpeakerComponent pooling)
     {
         _AttachmentRadius = pooling._AttachmentRadius;
         transform.localScale = Vector3.one * _AttachmentRadius;
 
-        bool newActiveState = pooling._State == PooledState.Active;
+        bool newActiveState = pooling._State == ConnectionState.Connected;
 
         if (_Active && !newActiveState)
             ResetGrainPool();
@@ -207,6 +131,11 @@ public class SpeakerAuthoring : MonoBehaviour
     public void ProcessTranslationComponent(Translation translation)
     {
         transform.position = translation.Value;
+    }
+
+    public override void Deregister()
+    {
+        GrainSynth.Instance.DeregisterSpeaker(this);
     }
 
     #endregion
@@ -342,15 +271,15 @@ public class SpeakerAuthoring : MonoBehaviour
 //public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
 //{
 //    Debug.Log($"Speaker {Value} in CONVERT function. Fixed Speaker: {_IsFixedSpeaker}");
-//    _SpeakerEntity = entity;
-//    dstManager.AddComponentData(_SpeakerEntity, new SpeakerIndex { Value = SpeakerIndex });
+//    _Entity = entity;
+//    dstManager.AddComponentData(_Entity, new EntityIndex { Value = EntityIndex });
 
 //    #if UNITY_EDITOR
-//            dstManager.SetName(_SpeakerEntity, "Speaker " + Value + " (Dynamic) ");
+//            dstManager.SetEntityName(_Entity, "Speaker " + Value + " (Dynamic) ");
 //    #endif
 
-//    dstManager.AddComponentData(_SpeakerEntity, new PoolingComponent {
-//        _State = PooledState.Pooled,
+//    dstManager.AddComponentData(_Entity, new SpeakerComponent {
+//        _State = ConnectionState.Disconnected,
 //        _AttachedHostCount = 0
 //    });
 
@@ -374,14 +303,14 @@ public class SpeakerAuthoring : MonoBehaviour
 //    {
 //        _EntityInitialised = true;
 
-//        if (_SpeakerEntity != null)
+//        if (_Entity != null)
 //        {
 //            Debug.Log($"Speaker {Value} in FIXED, but is associated with Entity. WHY!!");
 //        }
 //    }
 //    else
 //    {
-//        if (_SpeakerEntity == null)
+//        if (_Entity == null)
 //        {
 //            Debug.Log($"Speaker {Value} in DYNAMIC, but has no Entity. PLEASE KILL ME!!");
 //        }
@@ -397,10 +326,10 @@ public class SpeakerAuthoring : MonoBehaviour
 
 //    _FixedHosts.RemoveAll(item => item == null);
 
-//    if (_EntityManager == null || _SpeakerEntity == null)
+//    if (_EntityManager == null || _Entity == null)
 //        return;
 
-//    ProcessSpeakerIndexComponent(_EntityManager.GetComponentData<SpeakerIndex>(_SpeakerEntity));
-//    ProcessPoolingComponent(_EntityManager.GetComponentData<PoolingComponent>(_SpeakerEntity));
-//    ProcessTranslationComponent(_EntityManager.GetComponentData<Translation>(_SpeakerEntity));
+//    ProcessSpeakerIndexComponent(_EntityManager.GetComponentData<EntityIndex>(_Entity));
+//    ProcessPoolingComponent(_EntityManager.GetComponentData<SpeakerComponent>(_Entity));
+//    ProcessTranslationComponent(_EntityManager.GetComponentData<Translation>(_Entity));
 //}

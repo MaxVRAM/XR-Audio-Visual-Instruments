@@ -7,7 +7,6 @@ using UnityEngine;
 using Unity.Entities;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.VisualScripting;
 using static UnityEngine.EventSystems.EventTrigger;
 using Unity.Transforms;
 
@@ -56,21 +55,20 @@ public class GrainSynth : MonoBehaviour
 
     [Header(header: "Speaker Configuration")]
     public SpeakerAuthoring _SpeakerPrefab;
-    [SerializeField] private int _MaxSpeakers;
     [SerializeField] private Transform _SpeakerSpawnTransform;
-    [Range(0, 64)]
-    public int _MaxDynamicSpeakers = 32;
-    [Range(0.1f, 50)]
-    public float _ListenerRadius = 10;
-    [Range(0.1f, 45)]
-    public float _SpeakerAttachArcDegrees = 10;
-    [Range(0, 30)]
-    public float _SpeakerAttachPositionSmoothing = 0.1f;
+    [SerializeField] private int _MaxSpeakers = 0;
+    [Range(0, 255)] [SerializeField] private int _SpeakersAllocated = 32;
+    public int SpeakersAllocated { get { return Math.Min(_SpeakersAllocated, _MaxSpeakers); } }
+    [Range(0, 16)] [SerializeField] private int _MaxSpeakerAllocationPerFrame = 2;
+    private int _SpeakersAllocatedThisFrame = 0;
+
+    [Range(0.1f, 50)] public float _ListenerRadius = 10;
+    [Range(0.1f, 45)] public float _SpeakerAttachArcDegrees = 10;
+    [Range(0, 30)] public float _SpeakerAttachPositionSmoothing = 0.1f;
     public float AttachSmoothing { get { return 1 / _SpeakerAttachPositionSmoothing / 5; }}
     public bool _DrawAttachmentLines = false;
-    [Range(0, 0.05f)]
-    public float _AttachmentLineWidth = 0.002f;
     public Material _AttachmentLineMat;
+    [Range(0, 0.05f)] public float _AttachmentLineWidth = 0.002f;
 
     [Header(header: "Interaction Behaviour")]
     [Tooltip("During collision/contact between two emitter hosts, only trigger the emitter with the greatest surface rigidity, using an average of the two values.")]
@@ -117,18 +115,19 @@ public class GrainSynth : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        _SampleRate = AudioSettings.outputSampleRate;
         _MaxSpeakers = AudioSettings.GetConfiguration().numRealVoices;
+        CheckSpeakerAllocation();
     }
 
     public void Start()
     {
-        _SampleRate = AudioSettings.outputSampleRate;
         _Listener = FindObjectOfType<AudioListener>();
         if (_SpeakerSpawnTransform == null)
         {
-            GameObject go = new GameObject($"SpeakerContainer");
+            GameObject go = new GameObject($"SynthOutput");
             go.transform.parent = gameObject.transform;
-            go.transform.position = Vector3.down * 10;
+            go.transform.position = Vector3.up * 50;
             _SpeakerSpawnTransform = go.transform;
         }
 
@@ -145,12 +144,13 @@ public class GrainSynth : MonoBehaviour
     {
         _LastFrameSampleDuration = (int)(Time.deltaTime * _SampleRate);
 
+        CheckSpeakerAllocation();
+
         UpdateEntity(_AudioTimerEntity, EntityType.AudioTimer);
         UpdateEntity(_AttachmentEntity, EntityType.Attachment);
 
         SpeakerUpkeep();
         UpdateSpeakers();
-
         DistributeGrains();
 
         UpdateHosts();
@@ -221,23 +221,23 @@ public class GrainSynth : MonoBehaviour
 
     private void PopulateAttachmentEntity(Entity entity)
     {
-        if (_EntityManager.HasComponent<AttachmentComponent>(entity))
-            _EntityManager.SetComponentData(entity, new AttachmentComponent
+        if (_EntityManager.HasComponent<AllocationParameters>(entity))
+            _EntityManager.SetComponentData(entity, new AllocationParameters
             {
                 _ListenerPos = _Listener.transform.position,
                 _ListenerRadius = _ListenerRadius,
-                _AttachArcDegrees = _SpeakerAttachArcDegrees,
+                _LocalisationArcDegrees = _SpeakerAttachArcDegrees,
                 _TranslationSmoothing = AttachSmoothing,
-                _PooledSpeakerPosition = _SpeakerSpawnTransform.position
+                _DisconnectedPosition = _SpeakerSpawnTransform.position
             });
         else
-            _EntityManager.AddComponentData(entity, new AttachmentComponent
+            _EntityManager.AddComponentData(entity, new AllocationParameters
             {
                 _ListenerPos = _Listener.transform.position,
                 _ListenerRadius = _ListenerRadius,
-                _AttachArcDegrees = _SpeakerAttachArcDegrees,
+                _LocalisationArcDegrees = _SpeakerAttachArcDegrees,
                 _TranslationSmoothing = AttachSmoothing,
-                _PooledSpeakerPosition = _SpeakerSpawnTransform.position
+                _DisconnectedPosition = _SpeakerSpawnTransform.position
             });
     }
 
@@ -333,6 +333,10 @@ public class GrainSynth : MonoBehaviour
                     Debug.LogWarning($"Error while copying grain to managed array for speaker ({speakerIndex}). Destroying grain entity {i}.\n{ex}");
                 }
             }
+            else
+            {
+                _DiscardedGrains++;
+            }
             _EntityManager.DestroyEntity(grainEntities[i]);
         }
         grainEntities.Dispose();
@@ -351,50 +355,64 @@ public class GrainSynth : MonoBehaviour
     public void UpdateSpeakers()
     {
         foreach (SpeakerAuthoring speaker in _Speakers)
-        {
-            speaker.UpdateComponents();
-        }
+            if (speaker != null)
+                speaker.PrimaryUpdate();
     }
 
     public void UpdateHosts()
     {
         foreach (HostAuthoring host in _Hosts)
-        {
-            host.UpdateComponents();
-        }
+            if (host != null)
+                host.PrimaryUpdate();
     }
 
     #endregion
 
     #region SYNTH ELEMENT MANAGEMENT
 
-    public SpeakerAuthoring CreateSpeaker(Vector3 pos)
+    public void CheckSpeakerAllocation()
     {
-        if (_Speakers.Count < _MaxDynamicSpeakers)
-            return Instantiate(_SpeakerPrefab, _SpeakerSpawnTransform.position, Quaternion.identity, _SpeakerSpawnTransform);
+        _MaxSpeakers = AudioSettings.GetConfiguration().numRealVoices;
+        if (_SpeakersAllocated > _MaxSpeakers)
+        {
+            Debug.Log($"Warning: Number of world speakers ({_SpeakersAllocated}) cannot exceed number of audio voices {_MaxSpeakers} configured in the project settings.");
+            _SpeakersAllocated = _MaxSpeakers;
+        }
+        _SpeakersAllocatedThisFrame = 0;
+    }
+
+    public SpeakerAuthoring CreateSpeaker(int index)
+    {
+        if (_Speakers.Count < SpeakersAllocated)
+        {
+            SpeakerAuthoring newSpeaker = Instantiate(_SpeakerPrefab, _SpeakerSpawnTransform.position, Quaternion.identity, _SpeakerSpawnTransform);
+            newSpeaker.SetIndex(index);
+            return newSpeaker;
+        }
         return null;
     }
 
     public void SpeakerUpkeep()
     {
-        while (_Speakers.Count < _MaxDynamicSpeakers)
-                _Speakers.Add(CreateSpeaker(_SpeakerSpawnTransform.position));
-        while (_Speakers.Count > _MaxDynamicSpeakers)
+        while (_Speakers.Count < SpeakersAllocated && _SpeakersAllocatedThisFrame < _MaxSpeakerAllocationPerFrame)
+        {
+            _Speakers.Add(CreateSpeaker(_Speakers.Count - 1));
+            _SpeakersAllocatedThisFrame++;
+        }
+        while (_Speakers.Count > SpeakersAllocated && _SpeakersAllocatedThisFrame < _MaxSpeakerAllocationPerFrame)
+        {
+            Destroy(_Speakers[_Speakers.Count - 1].gameObject);
             _Speakers.RemoveAt(_Speakers.Count - 1);
+            _SpeakersAllocatedThisFrame++;
+        }
 
         for (int i = 0; i < _Speakers.Count; i++)
         {
             if (_Speakers[i] == null)
-                _Speakers[i] = CreateSpeaker(_SpeakerSpawnTransform.position);
-            _Speakers[i].UpdateIndex(i);
+                _Speakers[i] = CreateSpeaker(i);
+            if (_Speakers[i] != null && _Speakers[i].EntityIndex != i)
+                _Speakers[i].SetIndex(i);
         }
-    }
-
-    public int RegisterSpeaker(SpeakerAuthoring speaker)
-    {
-        if (!_Speakers.Contains(speaker))
-            _Speakers.Add(speaker);
-        return _Speakers.IndexOf(speaker);
     }
 
     public bool GetSpeakerFromIndex(int index, out SpeakerAuthoring speaker)
@@ -408,10 +426,9 @@ public class GrainSynth : MonoBehaviour
 
     public SpeakerAuthoring GetSpeakerForGrain(GrainComponent grain)
     {
-        if (!GetSpeakerFromIndex(grain._SpeakerIndex, out SpeakerAuthoring speaker) || grain._SpeakerIndex == int.MaxValue ||
-            grain._StartSampleIndex < GrainDiscardSampleIndex)
+        if (!GetSpeakerFromIndex(grain._SpeakerIndex, out SpeakerAuthoring speaker) ||
+            grain._SpeakerIndex == int.MaxValue || grain._StartSampleIndex < GrainDiscardSampleIndex)
         {
-            _DiscardedGrains++;
             return null;
         }
         return speaker;
@@ -425,12 +442,12 @@ public class GrainSynth : MonoBehaviour
         return _Speakers.IndexOf(speaker);
     }
 
-    public void DeRegisterSpeaker(SpeakerAuthoring speaker)
+    public void DeregisterSpeaker(SpeakerAuthoring speaker)
     {
         //if (_Speakers.Remove(speaker))
         //    Debug.Log($"{speaker.name} has been deregistered.");
         //else
-        //    Debug.Log($"{speaker.name} with index of {speaker.SpeakerIndex} attempting to deregister but not in list.");
+        //    Debug.Log($"{speaker.name} with index of {speaker.EntityIndex} attempting to deregister but not in list.");
     }
 
     public int RegisterHost(HostAuthoring host)
@@ -441,7 +458,7 @@ public class GrainSynth : MonoBehaviour
         return _HostCounter - 1;
     }
 
-    public void DeRegisterHost(HostAuthoring host)
+    public void DeregisterHost(HostAuthoring host)
     {
         _Hosts.Remove(host);
     }
@@ -453,7 +470,7 @@ public class GrainSynth : MonoBehaviour
         return _EmitterCounter - 1;
     }
 
-    public void DeRegisterEmitter(EmitterAuthoring emitter)
+    public void DeregisterEmitter(EmitterAuthoring emitter)
     {
         _Emitters.Remove(emitter);
     }

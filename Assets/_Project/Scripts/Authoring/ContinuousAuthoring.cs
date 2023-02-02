@@ -36,7 +36,7 @@ public class ContinuousAuthoring : EmitterAuthoring
             _IsPlaying = _PlaybackCondition != Condition.NotColliding,
             _EmitterIndex = index,
             _AudioClipIndex = _ClipIndex,
-            _SpeakerIndex = _Host._SpeakerIndex,
+            _SpeakerIndex = _Host._AttachedSpeakerIndex,
             _HostIndex = _Host.EntityIndex,
             _DistanceAmplitude = 1,
             _PingPong = _PingPongGrainPlayheads,
@@ -129,13 +129,13 @@ public class ContinuousAuthoring : EmitterAuthoring
             #region UPDATE EMITTER COMPONENT DATA
             
             // Reset grain offset if attached to a new speaker
-            if (_Host._SpeakerIndex != continuousData._SpeakerIndex)
+            if (_Host._AttachedSpeakerIndex != continuousData._SpeakerIndex)
                 continuousData._LastSampleIndex = -1;
             else _LastSampleIndex = continuousData._LastSampleIndex;
 
             continuousData._IsPlaying = _IsPlaying;
             continuousData._AudioClipIndex = _ClipIndex;
-            continuousData._SpeakerIndex = _Host._SpeakerIndex;
+            continuousData._SpeakerIndex = _Host._AttachedSpeakerIndex;
             continuousData._HostIndex = _Host.EntityIndex;
             continuousData._LastSampleIndex = _LastSampleIndex;
             continuousData._PingPong = _PingPongGrainPlayheads;

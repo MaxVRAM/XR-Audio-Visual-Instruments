@@ -37,7 +37,7 @@ public class BurstAuthoring : EmitterAuthoring
             _IsPlaying = false,
             _EmitterIndex = index,
             _AudioClipIndex = _ClipIndex,
-            _SpeakerIndex = _Host._SpeakerIndex,
+            _SpeakerIndex = _Host._AttachedSpeakerIndex,
             _HostIndex = _Host.EntityIndex,
             _DistanceAmplitude = 1,
             _PingPong = _PingPongGrainPlayheads,
@@ -148,7 +148,7 @@ public class BurstAuthoring : EmitterAuthoring
             #region UPDATE EMITTER COMPONENT DATA
             burstData._IsPlaying = true;
             burstData._AudioClipIndex = _ClipIndex;
-            burstData._SpeakerIndex = _Host._SpeakerIndex;
+            burstData._SpeakerIndex = _Host._AttachedSpeakerIndex;
             burstData._HostIndex = _Host.EntityIndex;
             burstData._PingPong = _PingPongGrainPlayheads;
             burstData._DistanceAmplitude = _DistanceAmplitude;
