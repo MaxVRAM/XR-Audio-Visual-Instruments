@@ -5,23 +5,17 @@ using UnityEngine;
 public class SpawnableManager : BehaviourClass
 {
     public float _Lifespan = -1;
-    [SerializeField]
-    protected float _SpawnTime;
-    [SerializeField]
-    protected int _SpawnTimeIndex;
-    [SerializeField]
-    protected float _Age = -1;
+    [SerializeField] protected float _SpawnTime;
+    [SerializeField] protected float _Age = -1;
+    [SerializeField] protected Vector3 _SpawnPosition;
     public float _DestroyRadius = 20;
-    [SerializeField]
-    protected Vector3 _SpawnPosition;
     public float CurrentAge { get => _Age; }
     public float CurrentAgeNorm { get => Mathf.Clamp(_Age / _Lifespan, 0, 1); }
 
     void Start()
     {
         _SpawnTime = Time.time;
-        _SpawnTimeIndex = GrainSynth.Instance._CurrentDSPSample;
-        if (_Lifespan == -1)
+        if (_Lifespan < 0)
             _Lifespan = float.MaxValue;
         _SpawnPosition = transform.position;
     }
@@ -33,17 +27,17 @@ public class SpawnableManager : BehaviourClass
             Destroy(gameObject);
     }
 
-    public int GetFadeoutStartIndex(float normFadeStart)
+    public float GetFadeoutStartTime(float normFadeStart)
     {
-        if (_Lifespan == -1)
+        if (_Lifespan < 0 || _Lifespan == float.MaxValue)
             return -1;
-        return _SpawnTimeIndex + (int)(_Lifespan * GrainSynth.Instance._SampleRate * normFadeStart);
+        return _SpawnTime + (int)(_Lifespan * normFadeStart);
     }
 
-    public int GetFadeoutEndIndex()
+    public float GetFadeoutEndTime()
     {
-        if (_Lifespan == -1)
+        if (_Lifespan < 0 || _Lifespan == float.MaxValue)
             return -1;
-        return _SpawnTimeIndex + (int)(_Lifespan * GrainSynth.Instance._SampleRate);
+        return _SpawnTime + (int)(_Lifespan);
     }
 }

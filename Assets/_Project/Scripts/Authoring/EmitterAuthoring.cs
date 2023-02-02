@@ -1,24 +1,26 @@
 ﻿using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
-using Unity.Transforms;
 using Random = UnityEngine.Random;
 
 
-[DisallowMultipleComponent]
-public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
+public class EmitterAuthoring : SynthEntityBase
 {
+    #region FIELDS & PROPERTIES
+
     public enum Condition { Always, Colliding, NotColliding };
     public enum EmitterType { Continuous, Burst }
 
-    [SerializeField]
-    protected bool _Initialised = false;
-
-    protected Entity _EmitterEntity;
-    protected EntityManager _EntityManager;
-    
     protected float[] _PerlinSeedArray;
+
+    [Header("Runtime Dynamics")]
+    public bool _IsPlaying = true;
+    public float _TimeExisted = 0;
+    public float _AdjustedDistance = 0;
+    public float _DistanceAmplitude = 0;
+    [SerializeField] protected float _ContactSurfaceAttenuation = 1;
     [SerializeField] protected float _LastTriggeredAt = 0;
+    [SerializeField] protected int _LastSampleIndex = 0;
 
     [Header("Emitter Configuration")]
     [Tooltip("(generated) Host component managing this emitter.")]
@@ -36,28 +38,23 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     public float _DistanceAttenuationFactor = 1f;
     [Tooltip("Normalised age to begin fadeout of spawned emitter if a DestroyTimer component is attached.")]
     [Range(0,1)]
-    public float _NormalisedAgeFadeout = .9f;  // TODO - not implemented yet
+    public float _AgeFadeout = .9f;  // TODO - not implemented yet
     [Tooltip("Reverses the playhead of an individual grain if it reaches the end of the clip during playback instead of outputting 0s.")]
     public bool _PingPongGrainPlayheads = true;
     [Tooltip("Multiplies the emitter's output by the rigidity value of the colliding surface.")]
     public bool _ColliderRigidityVolumeScale = false;
-
-    [Header("Runtime Dynamics")]
-    public bool _IsPlaying = true;
-    public float _TimeExisted = 0;
-    public float _AdjustedDistance = 0;
-    public float _DistanceAmplitude = 0;
-    [SerializeField] protected float _ContactSurfaceAttenuation = 1;
-    [SerializeField] protected int _LastSampleIndex = 0;
-    [SerializeField] protected float _SamplesPerMS = 0;
-
     public DSP_Class[] _DSPChainParams;
+    protected int _SampleRate;
+    protected float _SamplesPerMS = 0;
 
+    #endregion
+
+    #region ENTITY-SPECIFIC START CALL
 
     void Start()
     {
-        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-        _SamplesPerMS = AudioSettings.outputSampleRate * 0.001f;
+        _SampleRate = AudioSettings.outputSampleRate;
+        _SamplesPerMS = _SampleRate * 0.001f;
 
         _PerlinSeedArray = new float[10];
         for (int i = 0; i < _PerlinSeedArray.Length; i++)
@@ -65,44 +62,58 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             float offset = Random.Range(0, 1000);
             _PerlinSeedArray[i] = Mathf.PerlinNoise(offset, offset * 0.5f);
         }
+
+        _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+
+        SetIndex(GrainSynth.Instance.RegisterEmitter(this));
+        UpdateContactStatus(null);
     }
 
-    void Awake()
-    {
-        Initialise();
-        //GetComponent<ConvertToEntity>().ConversionMode = ConvertToEntity.Mode.ConvertAndInjectGameObject;
-    }
-    public virtual void Initialise() { }
+    #endregion
 
-    public virtual void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem) { }
+    #region ERRORNOUS EMITTER COMPONENT BUSINESS
 
     public void UpdateEntityTags()
     {
         _TimeExisted += Time.deltaTime;
 
-        if (!_Initialised)
-            return;
+        if (_Host.InListenerRadius != _EntityManager.HasComponent<InListenerRadiusTag>(_Entity))
+        {
+            if (_Host.InListenerRadius) _EntityManager.AddComponent<InListenerRadiusTag>(_Entity);
+            else _EntityManager.RemoveComponent<InListenerRadiusTag>(_Entity);
+        }
 
-        if (_Host.InListenerRadius) _EntityManager.AddComponent<InListenerRadiusTag>(_EmitterEntity);
-        else _EntityManager.RemoveComponent<InListenerRadiusTag>(_EmitterEntity);
+        if (_Host.IsConnected != _EntityManager.HasComponent<ConnectedTag>(_Entity))
+        {
+            if (_Host.IsConnected) _EntityManager.AddComponent<ConnectedTag>(_Entity);
+            else _EntityManager.RemoveComponent<ConnectedTag>(_Entity);
+        }
 
-        if (_Host.IsConnected) _EntityManager.AddComponent<ConnectedTag>(_EmitterEntity);
-        else _EntityManager.RemoveComponent<ConnectedTag>(_EmitterEntity);
+        if (_IsPlaying != _EntityManager.HasComponent<PlayingTag>(_Entity))
+        {
+            if (_IsPlaying) _EntityManager.AddComponent<PlayingTag>(_Entity);
+            else _EntityManager.RemoveComponent<PlayingTag>(_Entity);
+        }
 
-        if (_IsPlaying) _EntityManager.AddComponent<PlayingTag>(_EmitterEntity);
-        else _EntityManager.RemoveComponent<PlayingTag>(_EmitterEntity);
     }
-
-    public virtual void UpdateEmitterComponents() { }
 
     protected void UpdateDSPEffectsBuffer(bool clear = true)
     {
         //--- TODO not sure if clearing and adding again is the best way to do this.
-        DynamicBuffer<DSPParametersElement> dspBuffer = _EntityManager.GetBuffer<DSPParametersElement>(_EmitterEntity);
+        DynamicBuffer<DSPParametersElement> dspBuffer = _EntityManager.GetBuffer<DSPParametersElement>(_Entity);
         if (clear) dspBuffer.Clear();
         for (int i = 0; i < _DSPChainParams.Length; i++)
             dspBuffer.Add(_DSPChainParams[i].GetDSPBufferElement());
     }
+
+    public override void Deregister()
+    {
+        GrainSynth.Instance.DeregisterEmitter(this);
+    }
+
+    #endregion
+
+    #region EMITTER CONTACT PROCESSING
 
     public void UpdateDistanceAmplitude(float distance, float speakerFactor)
     {
@@ -162,16 +173,6 @@ public class EmitterAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             (Time.time + _PerlinSeedArray[parameterIndex]) * 0.5f);
     }
 
-    private void OnDestroy()
-    {
-        GrainSynth.Instance.DeregisterEmitter(this);
-        DestroyEntity();
-    }
-
-    public void DestroyEntity()
-    {
-        if (World.All.Count != 0 && _EmitterEntity != null)
-            _EntityManager.DestroyEntity(_EmitterEntity);
-    }
+    #endregion
 
 }

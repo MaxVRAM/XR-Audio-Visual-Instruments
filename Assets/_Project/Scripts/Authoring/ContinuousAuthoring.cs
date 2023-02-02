@@ -1,6 +1,8 @@
 ﻿using Unity.Entities;
 using UnityEngine;
 
+#region CONTINUOUS PARAMETERS
+
 [System.Serializable]
 public class ContinuousProperties
 {
@@ -11,37 +13,35 @@ public class ContinuousProperties
     public ContinuousVolume _Volume;
 }
 
+#endregion
+
 public class ContinuousAuthoring : EmitterAuthoring
 {
     public ContinuousProperties _Properties;
 
-    public override void Initialise()
+    #region CRAZY CONTINUOUS COMPONENT INIT
+
+    public override void SetEntityType()
     {
         _EmitterType = EmitterType.Continuous;
+        _EntityType = SynthEntityType.Emitter;
+        _Archetype = _EntityManager.CreateArchetype(typeof(ContinuousComponent));
+        _IsPlaying = false;
     }
 
-    public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
+    public override void InitialiseComponents()
     {
-        if (_Host == null || !_Host.enabled)
-            return;
-
-        _EmitterEntity = entity;
-        int index = GrainSynth.Instance.RegisterEmitter(this);
-        
-
-        #region ADD EMITTER COMPONENT DATA
-
-        dstManager.AddComponentData(_EmitterEntity, new ContinuousComponent
+        _EntityManager.AddComponentData(_Entity, new ContinuousComponent
         {
             _IsPlaying = _PlaybackCondition != Condition.NotColliding,
-            _EmitterIndex = index,
+            _EmitterIndex = _EntityIndex,
             _AudioClipIndex = _ClipIndex,
             _SpeakerIndex = _Host._AttachedSpeakerIndex,
             _HostIndex = _Host.EntityIndex,
             _DistanceAmplitude = 1,
             _PingPong = _PingPongGrainPlayheads,
-            _FadeoutStartIndex = _Host._SpawnableManager.GetFadeoutStartIndex(_NormalisedAgeFadeout),
-            _FadeoutEndIndex = _Host._SpawnableManager.GetFadeoutEndIndex(),
+            _FadeoutStartIndex = (int)_Host._SpawnLife.GetFadeoutStartTime(_AgeFadeout) * _SampleRate,
+            _FadeoutEndIndex = (int)_Host._SpawnLife.GetFadeoutEndTime() * _SampleRate,
             _LastSampleIndex = GrainSynth.Instance._CurrentDSPSample,
             _OutputSampleRate = AudioSettings.outputSampleRate,
 
@@ -97,36 +97,26 @@ public class ContinuousAuthoring : EmitterAuthoring
             }
         });
 
-        #if UNITY_EDITOR
-                dstManager.SetName(entity, "Emitter " + index + " (Continuous): " + name + "     Parent: " + transform.parent.name);
-        #endif
+        _EntityManager.AddBuffer<DSPParametersElement>(_Entity);
+        DynamicBuffer<DSPParametersElement> dspParams = _EntityManager.GetBuffer<DSPParametersElement>(_Entity);
 
-
-        #endregion
-
-
-        #region ADD DSP EFFECT COMPONENT DATA
-
-        dstManager.AddBuffer<DSPParametersElement>(_EmitterEntity);
-        DynamicBuffer<DSPParametersElement> dspParams = dstManager.GetBuffer<DSPParametersElement>(_EmitterEntity);
-        
         for (int i = 0; i < _DSPChainParams.Length; i++)
             dspParams.Add(_DSPChainParams[i].GetDSPBufferElement());
 
-        dstManager.AddComponentData(entity, new QuadEntityType { _Type = QuadEntityType.QuadEntityTypeEnum.Emitter });
-
-        #endregion
-
-        _Initialised = true;
+        _EntityManager.AddComponentData(_Entity, new QuadEntityType { _Type = QuadEntityType.QuadEntityTypeEnum.Emitter });
     }
 
-    public override void UpdateEmitterComponents()
-    {
-        if (_IsPlaying && _Initialised)
-        {
-            ContinuousComponent continuousData = _EntityManager.GetComponentData<ContinuousComponent>(_EmitterEntity);
+    #endregion
 
-            #region UPDATE EMITTER COMPONENT DATA
+    #region CRAZY CONTINUOUS COMPONENT UPDATE
+
+    public override void UpdateComponents()
+    {
+        UpdateEntityTags();
+
+        if (_IsPlaying)
+        {
+            ContinuousComponent continuousData = _EntityManager.GetComponentData<ContinuousComponent>(_Entity);
             
             // Reset grain offset if attached to a new speaker
             if (_Host._AttachedSpeakerIndex != continuousData._SpeakerIndex)
@@ -139,10 +129,10 @@ public class ContinuousAuthoring : EmitterAuthoring
             continuousData._HostIndex = _Host.EntityIndex;
             continuousData._LastSampleIndex = _LastSampleIndex;
             continuousData._PingPong = _PingPongGrainPlayheads;
-            continuousData._FadeoutStartIndex = _Host._SpawnableManager.GetFadeoutStartIndex(_NormalisedAgeFadeout);
-            continuousData._FadeoutEndIndex = _Host._SpawnableManager.GetFadeoutEndIndex();
+            continuousData._FadeoutStartIndex = (int)_Host._SpawnLife.GetFadeoutStartTime(_AgeFadeout) * _SampleRate;
+            continuousData._FadeoutEndIndex = (int)_Host._SpawnLife.GetFadeoutEndTime() * _SampleRate;
             continuousData._DistanceAmplitude = _DistanceAmplitude;
-            continuousData._OutputSampleRate = AudioSettings.outputSampleRate;
+            continuousData._OutputSampleRate = _SampleRate;
 
             continuousData._Playhead = new ModulationComponent
             {
@@ -204,11 +194,12 @@ public class ContinuousAuthoring : EmitterAuthoring
                 _Max = _Properties._Volume._Max,
                 _InteractionInput = _Properties._Volume.GetValue() * _ContactSurfaceAttenuation
             };
-            _EntityManager.SetComponentData(_EmitterEntity, continuousData);
+            _EntityManager.SetComponentData(_Entity, continuousData);
 
-            #endregion
 
             UpdateDSPEffectsBuffer();
         }
     }
+
+    #endregion
 }

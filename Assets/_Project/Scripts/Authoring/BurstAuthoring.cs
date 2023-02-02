@@ -1,6 +1,9 @@
 ﻿using Unity.Entities;
 using UnityEngine;
 
+
+#region BURST PARAMETERS
+
 [System.Serializable]
 public class BurstParameters
 {
@@ -12,36 +15,34 @@ public class BurstParameters
     public BurstVolume _Volume;
 }
 
+#endregion
+
 public class BurstAuthoring : EmitterAuthoring
 {
     public BurstParameters _Properties;
 
-    public override void Initialise()
+    #region EMBOLDENED BURST COMPONENT INIT
+
+    public override void SetEntityType()
     {
-        _IsPlaying = false;
         _EmitterType = EmitterType.Burst;
+        _EntityType = SynthEntityType.Emitter;
+        _Archetype = _EntityManager.CreateArchetype(typeof(BurstComponent));
+        _IsPlaying = false;
     }
 
-    public override void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
+    public override void InitialiseComponents()
     {
-        if (_Host == null || !_Host.enabled)
-            return;
-
-        _EmitterEntity = entity;
-        int index = GrainSynth.Instance.RegisterEmitter(this);
-
-        #region ADD EMITTER COMPONENT DATA
-
-        dstManager.AddComponentData(_EmitterEntity, new BurstComponent
+        _EntityManager.AddComponentData(_Entity, new BurstComponent
         {
             _IsPlaying = false,
-            _EmitterIndex = index,
+            _EmitterIndex = _EntityIndex,
             _AudioClipIndex = _ClipIndex,
             _SpeakerIndex = _Host._AttachedSpeakerIndex,
             _HostIndex = _Host.EntityIndex,
             _DistanceAmplitude = 1,
             _PingPong = _PingPongGrainPlayheads,
-            _OutputSampleRate = AudioSettings.outputSampleRate,
+            _OutputSampleRate = _SampleRate,
 
             _BurstDuration = new ModulationComponent
             {
@@ -122,37 +123,34 @@ public class BurstAuthoring : EmitterAuthoring
             }
         });
 
-        #if UNITY_EDITOR
-                dstManager.SetName(entity, "Emitter " + index + " (Burst): " + name + "     Parent: " + transform.parent.name);
-        #endif
+        _EntityManager.AddBuffer<DSPParametersElement>(_Entity);
+        DynamicBuffer<DSPParametersElement> dspParams = _EntityManager.GetBuffer<DSPParametersElement>(_Entity);
 
-        #endregion
-
-        dstManager.AddBuffer<DSPParametersElement>(_EmitterEntity);
-        DynamicBuffer<DSPParametersElement> dspParams = dstManager.GetBuffer<DSPParametersElement>(_EmitterEntity);
-        
         for (int i = 0; i < _DSPChainParams.Length; i++)
             dspParams.Add(_DSPChainParams[i].GetDSPBufferElement());
-        
-        dstManager.AddComponentData(entity, new QuadEntityType { _Type = QuadEntityType.QuadEntityTypeEnum.Emitter });
 
-        _Initialised = true;
+        _EntityManager.AddComponentData(_Entity, new QuadEntityType { _Type = QuadEntityType.QuadEntityTypeEnum.Emitter });
     }
 
-    public override void UpdateEmitterComponents()
-    {
-        if (_IsPlaying && _Initialised)
-        {
-            BurstComponent burstData = _EntityManager.GetComponentData<BurstComponent>(_EmitterEntity);
+    #endregion
 
-            #region UPDATE EMITTER COMPONENT DATA
+    #region EMBOLDENED BURST COMPONENT UPDATE
+
+    public override void UpdateComponents()
+    {
+        UpdateEntityTags();
+
+        if (_IsPlaying)
+        {
+            BurstComponent burstData = _EntityManager.GetComponentData<BurstComponent>(_Entity);
+
             burstData._IsPlaying = true;
             burstData._AudioClipIndex = _ClipIndex;
             burstData._SpeakerIndex = _Host._AttachedSpeakerIndex;
             burstData._HostIndex = _Host.EntityIndex;
             burstData._PingPong = _PingPongGrainPlayheads;
             burstData._DistanceAmplitude = _DistanceAmplitude;
-            burstData._OutputSampleRate = AudioSettings.outputSampleRate;
+            burstData._OutputSampleRate = _SampleRate;
                 
             burstData._BurstDuration = new ModulationComponent
             {
@@ -237,14 +235,14 @@ public class BurstAuthoring : EmitterAuthoring
                 _LockEndValue = _Properties._Volume._LockEndValue,
                 _InteractionInput = _Properties._Volume.GetValue() * _ContactSurfaceAttenuation
             };
-            _EntityManager.SetComponentData(_EmitterEntity, burstData);
+            _EntityManager.SetComponentData(_Entity, burstData);
 
-            #endregion
-            
             UpdateDSPEffectsBuffer();
-
-            // Burst emitters only need a single pass to generate grain data for its duration.
+            // Burst emitters generate their entire output in one pass, so switching off
             _IsPlaying = false;
         }
     }
+
+    #endregion
+
 }

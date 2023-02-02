@@ -48,9 +48,35 @@ public class GrainSynth : MonoBehaviour
     [Header("Runtime Dynamics")]
     [SerializeField] public int _SampleRate = 44100; // TODO make private and create property
     [SerializeField] public int _CurrentDSPSample; // TODO make private and create property
-    [SerializeField] private int _GrainProcessorCount = 0;
-    [SerializeField] private int _DiscardedGrains = 0;
+    [SerializeField] private int _NextFrameIndexEstimate;
     [SerializeField] private int _LastFrameSampleDuration = 0;
+    [SerializeField] private int _GrainsPerFrame = 0;
+    [SerializeField] private int _DiscardedGrains = 0;
+    [SerializeField] private float _AverageGrainAgeMS = 0;
+    private int _AverageGrainAge = 0;
+
+    [Header("DSP Config")]
+    [Tooltip("Additional ms to calculate and queue grains each frame. Set to 0, the grainComponent queue equals the previous frame's duration. Adds latency, but help to avoid underrun. Recommended values > 20ms.")]
+    [Range(0, 100)] public float _QueueDurationMS = 22;
+
+    [Tooltip("Percentage of previous frame duration to delay grainComponent start times of next frame. Adds a more predictable amount of latency to help avoid timing issues when the framerate slows.")]
+    [Range(0, 100)] public float _DelayPercentLastFrame = 10;
+
+    [Tooltip("Discard unplayed grains with a DSP start index more than this value (ms) in the past. Prevents clustered grainComponent playback when resources are near their limit.")]
+    [Range(0, 60)] public float _DiscardGrainsOlderThanMS = 10;
+
+    [Tooltip("Delay bursts triggered on the same frame by a random amount. Helps avoid phasing issues caused by identical emitters triggered together.")]
+    [Range(0, 40)] public float _BurstStartOffsetRangeMS = 8;
+
+    [Tooltip("Burst emitters ignore subsequent collisions for this duration to avoid fluttering from weird physics.")]
+    [Range(0, 50)] public float _BurstDebounceDurationMS = 25;
+
+    private int _SamplesPerMS = 0;
+    public int SamplesPerMS { get { return _SamplesPerMS; } }
+    public int QueueDurationSamples { get { return (int)(_QueueDurationMS * SamplesPerMS); } }
+    public int BurstStartOffsetRange { get { return (int)(_BurstStartOffsetRangeMS * SamplesPerMS); } }
+    public int GrainDiscardSampleIndex { get { return _CurrentDSPSample - (int)(_DiscardGrainsOlderThanMS * SamplesPerMS); } }
+    public int NextFrameIndexEstimate { get { return _CurrentDSPSample + (int)(_LastFrameSampleDuration * (1 + _DelayPercentLastFrame / 100)); } }
 
 
     [Header(header: "Speaker Configuration")]
@@ -74,29 +100,6 @@ public class GrainSynth : MonoBehaviour
     [Tooltip("During collision/contact between two emitter hosts, only trigger the emitter with the greatest surface rigidity, using an average of the two values.")]
     public bool _OnlyTriggerMostRigidSurface = true;
 
-    [Header("DSP Config")]
-    [Tooltip("Additional ms to calculate and queue grains each frame. Set to 0, the grainComponent queue equals the previous frame's duration. Adds latency, but help to avoid underrun. Recommended values > 20ms.")]
-    [Range(0, 100)] public float _QueueDurationMS = 22;
-
-    [Tooltip("Percentage of previous frame duration to delay grainComponent start times of next frame. Adds a more predictable amount of latency to help avoid timing issues when the framerate slows.")]
-    [Range(0, 100)] public float _DelayPercentLastFrame = 10;
-
-    [Tooltip("Discard unplayed grains with a DSP start index more than this value (ms) in the past. Prevents clustered grainComponent playback when resources are near their limit.")]
-    [Range(0, 60)] public float _DiscardGrainsOlderThanMS = 10;
-
-    [Tooltip("Delay bursts triggered on the same frame by a random amount. Helps avoid phasing issues caused by identical emitters triggered together.")]
-    [Range(0, 40)] public float _BurstStartOffsetRangeMS = 8;
-
-    [Tooltip("Burst emitters ignore subsequent collisions for this duration to avoid fluttering from weird physics.")]
-    [Range(0, 50)] public float _BurstDebounceDurationMS = 25;
-
-    private int _SamplesPerMS = 0;
-    public int SamplesPerMS { get { return _SamplesPerMS; } set { _SamplesPerMS = (int)(_SampleRate * .001f); } }
-    public int QueueDurationSamples { get { return (int)(_QueueDurationMS * SamplesPerMS); } }
-    public int BurstStartOffsetRange { get { return (int)(_BurstStartOffsetRangeMS * SamplesPerMS); } }
-    public int GrainDiscardSampleIndex { get { return _CurrentDSPSample - (int)(_DiscardGrainsOlderThanMS * SamplesPerMS); } }
-    public int NextFrameIndexEstimate { get { return _CurrentDSPSample + (int)(_LastFrameSampleDuration * (1 + _DelayPercentLastFrame / 100)); } }
-
     [Header("Registered Synth Elements")]
     public List<HostAuthoring> _Hosts = new List<HostAuthoring>();
     private int _HostCounter = 0;
@@ -116,6 +119,7 @@ public class GrainSynth : MonoBehaviour
     {
         Instance = this;
         _SampleRate = AudioSettings.outputSampleRate;
+        _SamplesPerMS = (int)(_SampleRate * .001f);
         _MaxSpeakers = AudioSettings.GetConfiguration().numRealVoices;
         CheckSpeakerAllocation();
     }
@@ -143,10 +147,10 @@ public class GrainSynth : MonoBehaviour
     private void Update()
     {
         _LastFrameSampleDuration = (int)(Time.deltaTime * _SampleRate);
+        _NextFrameIndexEstimate = NextFrameIndexEstimate;
 
         CheckSpeakerAllocation();
 
-        UpdateEntity(_AudioTimerEntity, EntityType.AudioTimer);
         UpdateEntity(_AttachmentEntity, EntityType.Attachment);
 
         SpeakerUpkeep();
@@ -154,6 +158,8 @@ public class GrainSynth : MonoBehaviour
         DistributeGrains();
 
         UpdateHosts();
+
+        UpdateEntity(_AudioTimerEntity, EntityType.AudioTimer);
     }
 
     #endregion
@@ -206,7 +212,8 @@ public class GrainSynth : MonoBehaviour
                 _NextFrameIndexEstimate = NextFrameIndexEstimate,
                 _GrainQueueSampleDuration = QueueDurationSamples,
                 _PreviousFrameSampleDuration = _LastFrameSampleDuration,
-                _RandomiseBurstStartIndex = BurstStartOffsetRange
+                _RandomiseBurstStartIndex = BurstStartOffsetRange,
+                _AverageGrainAge = _AverageGrainAge
             });
         else
             _EntityManager.AddComponentData(entity, new AudioTimerComponent
@@ -215,7 +222,8 @@ public class GrainSynth : MonoBehaviour
                 _NextFrameIndexEstimate = NextFrameIndexEstimate,
                 _GrainQueueSampleDuration = QueueDurationSamples,
                 _PreviousFrameSampleDuration = _LastFrameSampleDuration,
-                _RandomiseBurstStartIndex = BurstStartOffsetRange
+                _RandomiseBurstStartIndex = BurstStartOffsetRange,
+                _AverageGrainAge = _AverageGrainAge
             });
     }
 
@@ -297,45 +305,49 @@ public class GrainSynth : MonoBehaviour
 
     private void DistributeGrains()
     {
-        if (_Speakers.Count == 0)
+        NativeArray<Entity> grainEntities = _GrainQuery.ToEntityArray(Allocator.TempJob);
+        int grainCount = grainEntities.Length;
+        _GrainsPerFrame = (int)Mathf.Lerp(_GrainsPerFrame, grainCount, Time.deltaTime * 10f);
+
+        if (_Speakers.Count == 0 && grainCount > 0)
         {
-            _EntityManager.DestroyEntity(_GrainQuery);
+            Debug.Log($"No speakers registered. Destroying {grainCount} grains.");
+            _DiscardedGrains += grainCount;
+            grainEntities.Dispose();
             return;
         }
 
-        NativeArray<Entity> grainEntities = _GrainQuery.ToEntityArray(Allocator.TempJob);
-        _GrainProcessorCount = (int)Mathf.Lerp(_GrainProcessorCount, grainEntities.Length, Time.deltaTime * 10f);
+        GrainComponent grain;
 
-        GrainComponent grainComponent;
-
-        for (int i = 0; i < grainEntities.Length; i++)
+        for (int i = 0; i < grainCount; i++)
         {
-            grainComponent = _EntityManager.GetComponentData<GrainComponent>(grainEntities[i]);
-            int speakerIndex = grainComponent._SpeakerIndex;
+            grain = _EntityManager.GetComponentData<GrainComponent>(grainEntities[i]);
+            SpeakerAuthoring speaker = GetSpeakerForGrain(grain);
+            _AverageGrainAge = (int)Mathf.Lerp(_AverageGrainAge, _CurrentDSPSample - grain._StartSampleIndex, Time.deltaTime * 10f);
+            _AverageGrainAgeMS = _AverageGrainAge / SamplesPerMS;
 
-            SpeakerAuthoring speaker = GetSpeakerForGrain(grainComponent);
-            if (speaker != null && speaker.GetEmptyGrain(out Grain grain) != null)
+            if (speaker == null || grain._StartSampleIndex < GrainDiscardSampleIndex || speaker.GetEmptyGrain(out Grain grainOutput) == null)
             {
-                try
-                {
-                    NativeArray<float> grainSamples = _EntityManager.GetBuffer<GrainSampleBufferElement>(grainEntities[i]).Reinterpret<float>().ToNativeArray(Allocator.Temp);
-                    NativeToManagedCopyMemory(grain._SampleData, grainSamples);
-                    grain._Pooled = false;
-                    grain._IsPlaying = true;
-                    grain._PlayheadIndex = 0;
-                    grain._SizeInSamples = grainSamples.Length;
-                    grain._DSPStartTime = grainComponent._StartSampleIndex;
-                    grain._PlayheadNormalised = grainComponent._PlayheadNorm;
-                    speaker.GrainAdded(grain);
-                }
-                catch (Exception ex) when (ex is ArgumentException || ex is NullReferenceException)
-                {
-                    Debug.LogWarning($"Error while copying grain to managed array for speaker ({speakerIndex}). Destroying grain entity {i}.\n{ex}");
-                }
-            }
-            else
-            {
+                _EntityManager.DestroyEntity(grainEntities[i]);
                 _DiscardedGrains++;
+                continue;
+            }
+
+            try
+            {
+                NativeArray<float> grainSamples = _EntityManager.GetBuffer<GrainSampleBufferElement>(grainEntities[i]).Reinterpret<float>().ToNativeArray(Allocator.Temp);
+                NativeToManagedCopyMemory(grainOutput._SampleData, grainSamples);
+                grainOutput._Pooled = false;
+                grainOutput._IsPlaying = true;
+                grainOutput._PlayheadIndex = 0;
+                grainOutput._SizeInSamples = grainSamples.Length;
+                grainOutput._DSPStartTime = grain._StartSampleIndex;
+                grainOutput._PlayheadNormalised = grain._PlayheadNorm;
+                speaker.GrainAdded(grainOutput);
+            }
+            catch (Exception ex) when (ex is ArgumentException || ex is NullReferenceException)
+            {
+                Debug.LogWarning($"Error while copying grain to managed array for speaker ({grain._SpeakerIndex}). Destroying grain entity {i}.\n{ex}");
             }
             _EntityManager.DestroyEntity(grainEntities[i]);
         }
@@ -366,9 +378,17 @@ public class GrainSynth : MonoBehaviour
                 host.PrimaryUpdate();
     }
 
+    public void UpdateEmitters()
+    {
+        foreach (EmitterAuthoring emitter in _Emitters)
+            if (emitter != null)
+                emitter.PrimaryUpdate();
+    }
+
+
     #endregion
 
-    #region SYNTH ELEMENT MANAGEMENT
+    #region SPEAKER MANAGEMENT
 
     public void CheckSpeakerAllocation()
     {
@@ -383,17 +403,21 @@ public class GrainSynth : MonoBehaviour
 
     public SpeakerAuthoring CreateSpeaker(int index)
     {
-        if (_Speakers.Count < SpeakersAllocated)
-        {
-            SpeakerAuthoring newSpeaker = Instantiate(_SpeakerPrefab, _SpeakerSpawnTransform.position, Quaternion.identity, _SpeakerSpawnTransform);
-            newSpeaker.SetIndex(index);
-            return newSpeaker;
-        }
-        return null;
+        SpeakerAuthoring newSpeaker = Instantiate(_SpeakerPrefab, _SpeakerSpawnTransform.position, Quaternion.identity, _SpeakerSpawnTransform);
+        newSpeaker.SetIndex(index);
+        return newSpeaker;
     }
 
     public void SpeakerUpkeep()
     {
+        for (int i = 0; i < _Speakers.Count; i++)
+        {
+            if (_Speakers[i] == null)
+                _Speakers[i] = CreateSpeaker(i);
+            if (_Speakers[i] != null && _Speakers[i].EntityIndex != i)
+                _Speakers[i].SetIndex(i);
+        }
+
         while (_Speakers.Count < SpeakersAllocated && _SpeakersAllocatedThisFrame < _MaxSpeakerAllocationPerFrame)
         {
             _Speakers.Add(CreateSpeaker(_Speakers.Count - 1));
@@ -405,17 +429,9 @@ public class GrainSynth : MonoBehaviour
             _Speakers.RemoveAt(_Speakers.Count - 1);
             _SpeakersAllocatedThisFrame++;
         }
-
-        for (int i = 0; i < _Speakers.Count; i++)
-        {
-            if (_Speakers[i] == null)
-                _Speakers[i] = CreateSpeaker(i);
-            if (_Speakers[i] != null && _Speakers[i].EntityIndex != i)
-                _Speakers[i].SetIndex(i);
-        }
     }
 
-    public bool GetSpeakerFromIndex(int index, out SpeakerAuthoring speaker)
+    public bool IsSpeakerAtIndex(int index, out SpeakerAuthoring speaker)
     {
         if (index >= _Speakers.Count)
             speaker = null;
@@ -426,8 +442,8 @@ public class GrainSynth : MonoBehaviour
 
     public SpeakerAuthoring GetSpeakerForGrain(GrainComponent grain)
     {
-        if (!GetSpeakerFromIndex(grain._SpeakerIndex, out SpeakerAuthoring speaker) ||
-            grain._SpeakerIndex == int.MaxValue || grain._StartSampleIndex < GrainDiscardSampleIndex)
+        if (!IsSpeakerAtIndex(grain._SpeakerIndex, out SpeakerAuthoring speaker) ||
+            grain._SpeakerIndex == int.MaxValue)
         {
             return null;
         }
@@ -441,6 +457,11 @@ public class GrainSynth : MonoBehaviour
             return -1;
         return _Speakers.IndexOf(speaker);
     }
+
+
+    #endregion
+
+    #region SYNTH ELEMENT REGISTRATION
 
     public void DeregisterSpeaker(SpeakerAuthoring speaker)
     {
@@ -465,6 +486,7 @@ public class GrainSynth : MonoBehaviour
 
     public int RegisterEmitter(EmitterAuthoring emitter)
     {
+        _Emitters.Remove(emitter);
         _EmitterCounter++;
         _Emitters.Add(emitter);
         return _EmitterCounter - 1;

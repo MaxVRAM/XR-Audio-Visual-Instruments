@@ -4,6 +4,7 @@ using Unity.Transforms;
 using Unity.Collections;
 using Unity.Jobs;
 using System;
+using static UnityEngine.EventSystems.EventTrigger;
 
 // https://docs.unity3d.com/Packages/com.unity.entities@0.51/api/
 
@@ -13,8 +14,20 @@ using System;
 [UpdateAfter(typeof(DOTS_QuadrantSystem))]
 public partial class AttachmentSystem : SystemBase
 {
+    private EndSimulationEntityCommandBufferSystem _CommandBufferSystem;
+
+    protected override void OnCreate()
+    {
+        base.OnCreate();
+        _CommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+    }
+
     protected override void OnUpdate()
     {
+        // Acquire an ECB and convert it to a concurrent one to be able to use it from a parallel job.
+        EntityCommandBuffer.ParallelWriter ecb = _CommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
+
+
         EntityQueryDesc speakerQueryDesc = new()
         {
             All = new ComponentType[] { typeof(SpeakerIndex), typeof(SpeakerComponent), typeof(Translation) }
@@ -36,7 +49,7 @@ public partial class AttachmentSystem : SystemBase
 
         JobHandle updateHostRangeJob = Entities.WithName("UpdateHostRange").WithReadOnly(speakerPool).WithReadOnly(speakerTranslations).ForEach
         (
-            (ref HostComponent host, in Translation translation) =>
+            (int entityInQueryIndex, Entity entity, ref HostComponent host, in Translation translation) =>
             {
                 // Calculate if host is currently in-range
                 float listenerDistance = math.distance(translation.Value, attachParameters._ListenerPos);
@@ -45,11 +58,16 @@ public partial class AttachmentSystem : SystemBase
                 // Update in-range status of host from the listener.
                 if (!inListenerRadiusNow)
                 {
+                    ecb.RemoveComponent<InListenerRadiusTag>(entityInQueryIndex, entity);
                     host._Connected = false;
                     host._InListenerRadius = false;
                     host._SpeakerIndex = int.MaxValue;
                 }
-                else host._InListenerRadius = true;
+                else
+                {
+                    ecb.AddComponent(entityInQueryIndex, entity, new InListenerRadiusTag());
+                    host._InListenerRadius = true;
+                }
 
                 // Unlink hosts outside speaker attachment radius.
                 if (host._Connected)
@@ -58,6 +76,7 @@ public partial class AttachmentSystem : SystemBase
                     if (speakerPool[host._SpeakerIndex]._State == ConnectionState.Disconnected ||
                         emitterToSpeakerDist > speakerPool[host._SpeakerIndex]._AttachmentRadius)
                     {
+                        ecb.RemoveComponent<ConnectedTag>(entityInQueryIndex, entity);
                         host._Connected = false;
                         host._SpeakerIndex = int.MaxValue;
                     }
@@ -69,6 +88,8 @@ public partial class AttachmentSystem : SystemBase
 
         updateHostRangeJob.Complete();
 
+        // Make sure that the ECB system knows about our job
+        _CommandBufferSystem.AddJobHandleForProducer(updateHostRangeJob);
 
 
         //----     CALCULATE SPEAKER ATTACHMENT RADIUS, SET MOVE TO AVERAGE POSITION OF ATTACHED HOST, OR POOL IF NO LONGER ATTACHED
@@ -121,15 +142,18 @@ public partial class AttachmentSystem : SystemBase
         .ScheduleParallel(updateHostRangeJob);
         updateSpeakerPoolJob.Complete();
 
+        // Make sure that the ECB system knows about our job
+        _CommandBufferSystem.AddJobHandleForProducer(updateSpeakerPoolJob);
 
 
         //----    ATTACH HOST TO ACTIVE IN-RANGE SPEAKER
         NativeArray<Entity> inRangeSpeaker = speakersQuery.ToEntityArray(Allocator.TempJob);
-        JobHandle linkToActiveSpeakerJob = Entities.WithName("LinkToActiveSpeaker").WithReadOnly(inRangeSpeaker).ForEach
+
+        JobHandle linkToActiveSpeakerJob = Entities.WithName("LinkToActiveSpeaker").
+            WithNone<ConnectedTag>().WithAll<InListenerRadiusTag>().WithReadOnly(inRangeSpeaker).ForEach
         (
-            (ref HostComponent host, in Translation translation) =>
+            (int entityInQueryIndex, Entity entity, ref HostComponent host, in Translation translation) =>
             {
-                // Find hosts in listener radius not currently linked to a speaker
                 if (!host._Connected && host._InListenerRadius)
                 {
                     float closestDist = float.MaxValue;
@@ -151,6 +175,7 @@ public partial class AttachmentSystem : SystemBase
                     // Attach the host to the nearest valid speaker
                     if (closestSpeakerIndex != int.MaxValue)
                     {
+                        ecb.AddComponent(entityInQueryIndex, entity, new ConnectedTag());
                         host._Connected = true;
                         host._SpeakerIndex = closestSpeakerIndex;
                     }
@@ -161,6 +186,8 @@ public partial class AttachmentSystem : SystemBase
 
         linkToActiveSpeakerJob.Complete();
 
+        // Make sure that the ECB system knows about our job
+        _CommandBufferSystem.AddJobHandleForProducer(linkToActiveSpeakerJob);
 
 
         //----     SPAWN A POOLED SPEAKER ON A HOST IF NO NEARBY SPEAKERS WERE FOUND
@@ -213,6 +240,10 @@ public partial class AttachmentSystem : SystemBase
         .Schedule(linkToActiveSpeakerJob);
 
         speakerActivation.Complete();
+
+        // Make sure that the ECB system knows about our job
+        _CommandBufferSystem.AddJobHandleForProducer(speakerActivation);
+
 
         Dependency = speakerActivation;
     }

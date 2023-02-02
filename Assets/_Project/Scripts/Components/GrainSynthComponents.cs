@@ -13,6 +13,7 @@ public struct AudioTimerComponent : IComponentData
     public int _GrainQueueSampleDuration;
     public int _PreviousFrameSampleDuration;
     public int _RandomiseBurstStartIndex;
+    public int _AverageGrainAge;
 }
 
 public struct AudioClipDataComponent :IComponentData

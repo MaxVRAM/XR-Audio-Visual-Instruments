@@ -215,7 +215,7 @@ public class SpeakerAuthoring : SynthEntityBase
     // TODO -  ADD SAMPLE BUFFER RMS ANALYSIS FOR SPEAKER VISUAL MODULATION
     void OnAudioFilterRead(float[] data, int channels)
     {
-        if (!_EntityInitialised || _NumGrainsFree == _GrainArraySize || _GrainArray == null)
+        if (!_EntityInitialised || _GrainArray == null || _NumGrainsFree == _GrainArraySize)
             return;
         
         Grain grainData;
@@ -235,7 +235,6 @@ public class SpeakerAuthoring : SynthEntityBase
                     if (grainData._PlayheadIndex >= grainData._SizeInSamples)
                     {
                         grainData._IsPlaying = false;
-                        _GrainArrayReady = false;
                     }
                     else
                     {

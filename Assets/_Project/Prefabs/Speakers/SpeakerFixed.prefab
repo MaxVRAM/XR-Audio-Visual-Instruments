@@ -48,14 +48,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 688e5dfc58d903e4e9071cb2f4363c8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _EntityType: 0
+  _EntityIndex: 2147483647
+  _EntityInitialised: 0
+  _ManagerInitialised: 0
+  _Active: 0
+  _GrainArrayReady: 0
+  _GrainArraySize: 100
+  _NumGrainsFree: 0
+  _TargetVolume: 0
+  _VolumeSmoothing: 4
   _AttachmentRadius: 1
-  _PooledGrainCount: 0
-  _Initialised: 0
-  _Registered: 0
-  _DebugLog: 0
-  _DynamicSpeakerActive: 0
-  _IsFixedSpeaker: 1
-  _FixedHosts: []
 --- !u!82 &4563112762925737388
 AudioSource:
   m_ObjectHideFlags: 0
@@ -237,7 +240,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 7ed5d924141a6024481379d71e8eb51d, type: 2}
+  - {fileID: 2100000, guid: 96663e35961d281459bbcc36e6b84157, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

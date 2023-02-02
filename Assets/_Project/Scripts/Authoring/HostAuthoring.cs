@@ -35,7 +35,7 @@ public class HostAuthoring : SynthEntityBase
 
     [Header("Interactions")]
     public ObjectSpawner _Spawner;
-    public SpawnableManager _SpawnableManager;
+    public SpawnableManager _SpawnLife;
     public GameObject _LocalObject;
     [Tooltip("Additional object used to generate 'relative' values with against the interaction object. E.g. distance, relative speed, etc.")]
     public GameObject _RemoteObject;
@@ -129,7 +129,7 @@ public class HostAuthoring : SynthEntityBase
         hostData._HostIndex = _EntityIndex;
         _EntityManager.SetComponentData(_Entity, hostData);
 
-        bool connected = GrainSynth.Instance.GetSpeakerFromIndex(hostData._SpeakerIndex, out SpeakerAuthoring speaker);
+        bool connected = GrainSynth.Instance.IsSpeakerAtIndex(hostData._SpeakerIndex, out SpeakerAuthoring speaker);
         _InListenerRadius = hostData._InListenerRadius;
         _SpeakerTransform = connected ? speaker.gameObject.transform : _SpeakerTarget;
         _AttachedSpeakerIndex = connected ? hostData._SpeakerIndex : int.MaxValue;
@@ -140,16 +140,14 @@ public class HostAuthoring : SynthEntityBase
         float speakerAmplitudeFactor = AudioUtils.SpeakerOffsetFactor(
             transform.position,
             _HeadTransform.position,
-            _SpeakerTransform.position
-            );
+            _SpeakerTransform.position);
 
         _ListenerDistance = Mathf.Abs((_SpeakerTarget.position - _HeadTransform.position).magnitude);
+
         foreach (EmitterAuthoring emitter in _HostedEmitters)
         {
             emitter.UpdateDistanceAmplitude(_ListenerDistance / GrainSynth.Instance._ListenerRadius, speakerAmplitudeFactor);
-            emitter.UpdateEntityTags();
-            if (_Connected && InListenerRadius)
-                emitter.UpdateEmitterComponents();
+            emitter.PrimaryUpdate();
         }
     }
 
@@ -239,7 +237,7 @@ public class HostAuthoring : SynthEntityBase
         foreach (BehaviourClass behaviour in _Behaviours)
         {
             if (behaviour is SpawnableManager manager)
-                _SpawnableManager = manager;
+                _SpawnLife = manager;
             foreach (ModulationSource source in _ModulationSources)
                 if (source is InputBehaviour)
                     source.SetBehaviourInput(behaviour);

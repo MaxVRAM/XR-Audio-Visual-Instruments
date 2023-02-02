@@ -103,7 +103,7 @@ public class SynthEntityBase : MonoBehaviour
 
             if (_Entity == Entity.Null)
             {
-                Debug.Log($"Creating new entity: {name}");
+                // Debug.Log($"Creating new entity: {name}");
                 _Entity = _EntityManager.CreateEntity(_Archetype);
                 return false;
             }
