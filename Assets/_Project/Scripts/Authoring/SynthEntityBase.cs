@@ -38,12 +38,12 @@ public class SynthEntityBase : MonoBehaviour
         if (!EntityReady())
             return false;
 
-        UpdateComponents();
+        ProcessComponents();
         return true;
     }
 
     public virtual void InitialiseComponents() { }
-    public virtual void UpdateComponents() { }
+    public virtual void ProcessComponents() { }
 
     #endregion
 
@@ -86,7 +86,7 @@ public class SynthEntityBase : MonoBehaviour
         {
             _ManagerInitialised = true;
             _EntityInitialised = false;
-            return false; // force additional frame wait before populating
+            return false;
         }
         return true;
     }
@@ -103,7 +103,6 @@ public class SynthEntityBase : MonoBehaviour
 
             if (_Entity == Entity.Null)
             {
-                // Debug.Log($"Creating new entity: {name}");
                 _Entity = _EntityManager.CreateEntity(_Archetype);
                 return false;
             }

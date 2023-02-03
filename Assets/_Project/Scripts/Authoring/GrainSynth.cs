@@ -46,28 +46,28 @@ public class GrainSynth : MonoBehaviour
     private AudioListener _Listener;
 
     [Header("Runtime Dynamics")]
-    [SerializeField] public int _SampleRate = 44100; // TODO make private and create property
-    [SerializeField] public int _CurrentDSPSample; // TODO make private and create property
+    [SerializeField] public int _SampleRate = 44100; // TODO create property
+    [SerializeField] public int _CurrentDSPSample; // TODO create property
     [SerializeField] private int _NextFrameIndexEstimate;
     [SerializeField] private int _LastFrameSampleDuration = 0;
     [SerializeField] private int _GrainsPerFrame = 0;
     [SerializeField] private int _DiscardedGrains = 0;
     [SerializeField] private float _AverageGrainAgeMS = 0;
+    [Tooltip("Maximum number of speakers possible, defined by 'numRealVoices' in the project settings audio tab.")]
+    [SerializeField] private int _MaxSpeakers = 0;
+
     private int _AverageGrainAge = 0;
+    private int _SpeakersAllocatedThisFrame = 0;
 
     [Header("DSP Config")]
     [Tooltip("Additional ms to calculate and queue grains each frame. Set to 0, the grainComponent queue equals the previous frame's duration. Adds latency, but help to avoid underrun. Recommended values > 20ms.")]
     [Range(0, 100)] public float _QueueDurationMS = 22;
-
     [Tooltip("Percentage of previous frame duration to delay grainComponent start times of next frame. Adds a more predictable amount of latency to help avoid timing issues when the framerate slows.")]
     [Range(0, 100)] public float _DelayPercentLastFrame = 10;
-
     [Tooltip("Discard unplayed grains with a DSP start index more than this value (ms) in the past. Prevents clustered grainComponent playback when resources are near their limit.")]
     [Range(0, 60)] public float _DiscardGrainsOlderThanMS = 10;
-
     [Tooltip("Delay bursts triggered on the same frame by a random amount. Helps avoid phasing issues caused by identical emitters triggered together.")]
     [Range(0, 40)] public float _BurstStartOffsetRangeMS = 8;
-
     [Tooltip("Burst emitters ignore subsequent collisions for this duration to avoid fluttering from weird physics.")]
     [Range(0, 50)] public float _BurstDebounceDurationMS = 25;
 
@@ -81,17 +81,26 @@ public class GrainSynth : MonoBehaviour
 
     [Header(header: "Speaker Configuration")]
     public SpeakerAuthoring _SpeakerPrefab;
-    [SerializeField] private Transform _SpeakerSpawnTransform;
-    [SerializeField] private int _MaxSpeakers = 0;
+    [Tooltip("Transform to contain spawned speakers.")]
+    [SerializeField] private Transform _SpeakerParentTransform;
+    [Tooltip("World coordinates to store pooled speakers.")]
+    [SerializeField] private Vector3 _SpeakerPoolingPosition = Vector3.down * 20;
+    [Tooltip("Target number of speakers to be spawned and managed by the synth system.")]
     [Range(0, 255)] [SerializeField] private int _SpeakersAllocated = 32;
-    public int SpeakersAllocated { get { return Math.Min(_SpeakersAllocated, _MaxSpeakers); } }
+    [Tooltip("(TODO): Minimum time (seconds) to instantiate/destroy speakers. Affects performance only during start time or when altering the 'Speakers Allocated' value above.")]
     [Range(0, 16)] [SerializeField] private int _MaxSpeakerAllocationPerFrame = 2;
-    private int _SpeakersAllocatedThisFrame = 0;
-
-    [Range(0.1f, 50)] public float _ListenerRadius = 10;
+    [Tooltip("Maximum distance from the listener to enable emitters and allocate speakers.")]
+    [Range(0.1f, 50)] public float _ListenerRadius = 20;
+    [Tooltip("Arc length in degrees from the listener position that emitters can be attached to a speaker.")]
     [Range(0.1f, 45)] public float _SpeakerAttachArcDegrees = 10;
-    [Range(0, 30)] public float _SpeakerAttachPositionSmoothing = 0.1f;
-    public float AttachSmoothing { get { return 1 / _SpeakerAttachPositionSmoothing / 5; }}
+    [Tooltip("How quicklyt speakers follow their targets. 0 = Speakers remain in position once spawned. 100 = Speakers will almost perfectly track their target position.")]
+    [Range(0, 100)] public float _SpeakerTrackingSpeed = 50;
+    [Tooltip("Length of time in milliseconds before pooling a speaker after its last emitter has disconnected. Allows speakers to be reused without destroying remaining grains from destroyed emitters.")]
+    [Range(0, 500)] public float _SpeakerLingerTime = 100;
+    public int SpeakersAllocated { get { return Math.Min(_SpeakersAllocated, _MaxSpeakers); } }
+    public float AttachSmoothing { get { return Time.deltaTime * _SpeakerTrackingSpeed; }}
+
+    [Header(header: "Visual Feedback")]
     public bool _DrawAttachmentLines = false;
     public Material _AttachmentLineMat;
     [Range(0, 0.05f)] public float _AttachmentLineWidth = 0.002f;
@@ -100,7 +109,7 @@ public class GrainSynth : MonoBehaviour
     [Tooltip("During collision/contact between two emitter hosts, only trigger the emitter with the greatest surface rigidity, using an average of the two values.")]
     public bool _OnlyTriggerMostRigidSurface = true;
 
-    [Header("Registered Synth Elements")]
+    [Header("Registered Elements")]
     public List<HostAuthoring> _Hosts = new List<HostAuthoring>();
     private int _HostCounter = 0;
     public List<EmitterAuthoring> _Emitters = new List<EmitterAuthoring>();
@@ -127,12 +136,12 @@ public class GrainSynth : MonoBehaviour
     public void Start()
     {
         _Listener = FindObjectOfType<AudioListener>();
-        if (_SpeakerSpawnTransform == null)
+        if (_SpeakerParentTransform == null)
         {
-            GameObject go = new GameObject($"SynthOutput");
-            go.transform.parent = gameObject.transform;
-            go.transform.position = Vector3.up * 50;
-            _SpeakerSpawnTransform = go.transform;
+            GameObject go = new GameObject($"_Pooling");
+            go.transform.parent = transform;
+            go.transform.position = transform.position;
+            _SpeakerParentTransform = go.transform;
         }
 
         _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
@@ -150,7 +159,6 @@ public class GrainSynth : MonoBehaviour
         _NextFrameIndexEstimate = NextFrameIndexEstimate;
 
         CheckSpeakerAllocation();
-
         UpdateEntity(_AttachmentEntity, EntityType.Attachment);
 
         SpeakerUpkeep();
@@ -229,23 +237,25 @@ public class GrainSynth : MonoBehaviour
 
     private void PopulateAttachmentEntity(Entity entity)
     {
-        if (_EntityManager.HasComponent<AllocationParameters>(entity))
-            _EntityManager.SetComponentData(entity, new AllocationParameters
+        if (_EntityManager.HasComponent<AttachmentParameters>(entity))
+            _EntityManager.SetComponentData(entity, new AttachmentParameters
             {
                 _ListenerPos = _Listener.transform.position,
                 _ListenerRadius = _ListenerRadius,
                 _LocalisationArcDegrees = _SpeakerAttachArcDegrees,
                 _TranslationSmoothing = AttachSmoothing,
-                _DisconnectedPosition = _SpeakerSpawnTransform.position
+                _DisconnectedPosition = _SpeakerPoolingPosition,
+                _SpeakerLingerTime = _SpeakerLingerTime / 1000
             });
         else
-            _EntityManager.AddComponentData(entity, new AllocationParameters
+            _EntityManager.AddComponentData(entity, new AttachmentParameters
             {
                 _ListenerPos = _Listener.transform.position,
                 _ListenerRadius = _ListenerRadius,
                 _LocalisationArcDegrees = _SpeakerAttachArcDegrees,
                 _TranslationSmoothing = AttachSmoothing,
-                _DisconnectedPosition = _SpeakerSpawnTransform.position
+                _DisconnectedPosition = _SpeakerPoolingPosition,
+                _SpeakerLingerTime = _SpeakerLingerTime / 1000
             });
     }
 
@@ -307,7 +317,7 @@ public class GrainSynth : MonoBehaviour
     {
         NativeArray<Entity> grainEntities = _GrainQuery.ToEntityArray(Allocator.TempJob);
         int grainCount = grainEntities.Length;
-        _GrainsPerFrame = (int)Mathf.Lerp(_GrainsPerFrame, grainCount, Time.deltaTime * 10f);
+        _GrainsPerFrame = (int)Mathf.Lerp(_GrainsPerFrame, grainCount, Time.deltaTime);
 
         if (_Speakers.Count == 0 && grainCount > 0)
         {
@@ -323,7 +333,7 @@ public class GrainSynth : MonoBehaviour
         {
             grain = _EntityManager.GetComponentData<GrainComponent>(grainEntities[i]);
             SpeakerAuthoring speaker = GetSpeakerForGrain(grain);
-            _AverageGrainAge = (int)Mathf.Lerp(_AverageGrainAge, _CurrentDSPSample - grain._StartSampleIndex, Time.deltaTime * 10f);
+            _AverageGrainAge = (int)Mathf.Lerp(_AverageGrainAge, _CurrentDSPSample - grain._StartSampleIndex, Time.deltaTime);
             _AverageGrainAgeMS = _AverageGrainAge / SamplesPerMS;
 
             if (speaker == null || grain._StartSampleIndex < GrainDiscardSampleIndex || speaker.GetEmptyGrain(out Grain grainOutput) == null)
@@ -395,7 +405,7 @@ public class GrainSynth : MonoBehaviour
         _MaxSpeakers = AudioSettings.GetConfiguration().numRealVoices;
         if (_SpeakersAllocated > _MaxSpeakers)
         {
-            Debug.Log($"Warning: Number of world speakers ({_SpeakersAllocated}) cannot exceed number of audio voices {_MaxSpeakers} configured in the project settings.");
+            Debug.Log($"Warning: Number of synth speakers ({_SpeakersAllocated}) cannot exceed number of audio voices {_MaxSpeakers} configured in the project settings.");
             _SpeakersAllocated = _MaxSpeakers;
         }
         _SpeakersAllocatedThisFrame = 0;
@@ -403,7 +413,7 @@ public class GrainSynth : MonoBehaviour
 
     public SpeakerAuthoring CreateSpeaker(int index)
     {
-        SpeakerAuthoring newSpeaker = Instantiate(_SpeakerPrefab, _SpeakerSpawnTransform.position, Quaternion.identity, _SpeakerSpawnTransform);
+        SpeakerAuthoring newSpeaker = Instantiate(_SpeakerPrefab, _SpeakerPoolingPosition, Quaternion.identity, _SpeakerParentTransform);
         newSpeaker.SetIndex(index);
         return newSpeaker;
     }
@@ -415,9 +425,10 @@ public class GrainSynth : MonoBehaviour
             if (_Speakers[i] == null)
                 _Speakers[i] = CreateSpeaker(i);
             if (_Speakers[i] != null && _Speakers[i].EntityIndex != i)
+            {
                 _Speakers[i].SetIndex(i);
+            }
         }
-
         while (_Speakers.Count < SpeakersAllocated && _SpeakersAllocatedThisFrame < _MaxSpeakerAllocationPerFrame)
         {
             _Speakers.Add(CreateSpeaker(_Speakers.Count - 1));
@@ -461,7 +472,7 @@ public class GrainSynth : MonoBehaviour
 
     #endregion
 
-    #region SYNTH ELEMENT REGISTRATION
+    #region SYNTH ENTITY REGISTRATION
 
     public void DeregisterSpeaker(SpeakerAuthoring speaker)
     {

@@ -41,28 +41,32 @@ public struct GrainComponent : IComponentData
 }
 public struct SamplesProcessedTag : IComponentData {}
 
-public struct AllocationParameters : IComponentData
+public struct AttachmentParameters : IComponentData
 {
     public float3 _ListenerPos;
     public float _ListenerRadius;
     public float _LocalisationArcDegrees;
     public float _TranslationSmoothing;
     public float3 _DisconnectedPosition;
+    public float _SpeakerLingerTime;
 }
 public struct SpeakerIndex : IComponentData
 {
     public int Value;
 }
+
 public enum ConnectionState
 {
     Disconnected,
-    Connected
+    Connected,
+    Lingering
 }
 public struct SpeakerComponent : IComponentData
 {
     public ConnectionState _State;
     public int _AttachedHostCount;
     public float _AttachmentRadius;
+    public float _InactiveDuration;
 }
 
 public struct ConnectedTag : IComponentData {}

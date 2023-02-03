@@ -145,9 +145,11 @@ public class EmitterAuthoring : SynthEntityBase
         if (_PlaybackCondition == Condition.NotColliding || collision == null)
         {
             _ContactSurfaceAttenuation = 1;
-            _IsPlaying = _PlaybackCondition == Condition.NotColliding ? collision == null : collision != null;
+            _IsPlaying = _PlaybackCondition == Condition.NotColliding ? collision == null : false;
+            return;
         }
-        else if (ColliderMoreRigid(collision.collider, _Host._CurrentCollidingRigidity, out float otherRigidity) && OnlyTriggerMostRigid)
+
+        if (ColliderMoreRigid(collision.collider, _Host._CurrentCollidingRigidity, out float otherRigidity) && OnlyTriggerMostRigid)
         {        
             _IsPlaying = false;
         }

@@ -45,7 +45,6 @@ public partial class GrainSynthSystem : SystemBase
         // Acquire an ECB and convert it to a concurrent one to be able to use it from a parallel job.
         EntityCommandBuffer.ParallelWriter ecb = _CommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
 
-
         // ----------------------------------- EMITTER UPDATE
         // Get all audio clip data components
         NativeArray<AudioClipDataComponent> audioClipData =

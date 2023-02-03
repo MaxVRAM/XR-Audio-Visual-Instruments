@@ -136,7 +136,7 @@ public class BurstAuthoring : EmitterAuthoring
 
     #region EMBOLDENED BURST COMPONENT UPDATE
 
-    public override void UpdateComponents()
+    public override void ProcessComponents()
     {
         UpdateEntityTags();
 

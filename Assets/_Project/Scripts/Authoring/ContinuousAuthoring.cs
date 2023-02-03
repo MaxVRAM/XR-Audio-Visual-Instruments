@@ -110,7 +110,7 @@ public class ContinuousAuthoring : EmitterAuthoring
 
     #region CRAZY CONTINUOUS COMPONENT UPDATE
 
-    public override void UpdateComponents()
+    public override void ProcessComponents()
     {
         UpdateEntityTags();
 
