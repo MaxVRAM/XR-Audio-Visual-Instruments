@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.XR.Oculus;
 using UnityEngine;
 
 public class SpawnableManager : BehaviourClass
 {
-    public float _Lifespan = -1;
+    private int _SampleRate;
+    public float _Lifespan = int.MaxValue;
     [SerializeField] protected float _SpawnTime;
     [SerializeField] protected float _Age = -1;
     [SerializeField] protected Vector3 _SpawnPosition;
@@ -14,9 +16,8 @@ public class SpawnableManager : BehaviourClass
 
     void Start()
     {
+        _SampleRate = AudioSettings.outputSampleRate;
         _SpawnTime = Time.time;
-        if (_Lifespan < 0)
-            _Lifespan = float.MaxValue;
         _SpawnPosition = transform.position;
     }
 
@@ -27,17 +28,19 @@ public class SpawnableManager : BehaviourClass
             Destroy(gameObject);
     }
 
-    public float GetFadeoutStartTime(float normFadeStart)
+    public int SamplesUntilFade(float normFadeStart)
     {
-        if (_Lifespan < 0 || _Lifespan == float.MaxValue)
-            return -1;
-        return _SpawnTime + (int)(_Lifespan * normFadeStart);
+        if (_Lifespan == int.MaxValue)
+            return int.MaxValue;
+        else
+            return (int)((_Lifespan * normFadeStart - _Age) * _SampleRate);
     }
 
-    public float GetFadeoutEndTime()
+    public int SamplesUntilDeath()
     {
-        if (_Lifespan < 0 || _Lifespan == float.MaxValue)
-            return -1;
-        return _SpawnTime + (int)(_Lifespan);
+        if (_Lifespan == int.MaxValue)
+            return int.MaxValue;
+        else
+            return (int)((_Lifespan - _Age) * _SampleRate);
     }
 }

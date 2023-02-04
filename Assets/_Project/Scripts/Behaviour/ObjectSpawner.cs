@@ -49,7 +49,7 @@ public class ObjectSpawner : MonoBehaviour
     [Tooltip("Apply random amount of spread to the direction for each spawn.")]
     [Range(0, 1)] public float _EjectionDirectionVariance = 0;
     [Tooltip("Default speed that spawnables leave the anchor.")]
-    [Range(0, 10)] public float _EjectionSpeed = 0;
+    [Range(0, 100)] public float _EjectionSpeed = 0;
 
     [Header("Emitter Behaviour")]
     public bool _AllowSiblingSurfaceContact = true;

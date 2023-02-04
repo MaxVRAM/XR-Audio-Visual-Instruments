@@ -36,16 +36,24 @@ public class SpeakerAuthoring : SynthEntityBase
 {
     #region FIELDS & PROPERTIES
 
-    [SerializeField] private ConnectionState _State = ConnectionState.Disconnected;
+    [SerializeField] private ConnectionState _State = ConnectionState.Pooled;
     [SerializeField] private bool _GrainArrayReady = false;
     [SerializeField] private int _GrainArraySize = 100;
     [SerializeField] private int _NumGrainsFree = 0;
+    [SerializeField] private float _GrainLoad = 0;
+    [SerializeField] private int _ConnectedHosts = 0;
+    [SerializeField] private float _InactiveDuration = 0;
+    [SerializeField] private float _ConnectionRadius = 1;
     [SerializeField] private float _TargetVolume = 0;
-    [SerializeField] private float _VolumeSmoothing = 4;
-    [SerializeField] private float _AttachmentRadius = 1;
+    
+    private float _VolumeSmoothing = 4;
     private int _SampleRate;
 
     private MeshRenderer _MeshRenderer;
+    private Material _Material;
+    private Color _ActiveColor = Color.white;
+    private Color _OverloadColor = Color.red;
+    private Color _CurrentColour;
     private AudioSource _AudioSource;
     private Grain[] _GrainArray;
 
@@ -60,6 +68,7 @@ public class SpeakerAuthoring : SynthEntityBase
     {
         _SampleRate = AudioSettings.outputSampleRate;
         _MeshRenderer = gameObject.GetComponentInChildren<MeshRenderer>();
+        if (_MeshRenderer != null ) _Material = _MeshRenderer.material;
         _AudioSource = gameObject.GetComponent<AudioSource>();
         _AudioSource.rolloffMode = AudioRolloffMode.Custom;
         _AudioSource.maxDistance = 500;
@@ -87,9 +96,9 @@ public class SpeakerAuthoring : SynthEntityBase
         _EntityManager.SetComponentData(_Entity, new Translation { Value = transform.position });
         _EntityManager.SetComponentData(_Entity, new SpeakerComponent
         {
-            _State = ConnectionState.Disconnected,
-            _AttachmentRadius = _AttachmentRadius,
-            _AttachedHostCount = 0
+            _State = ConnectionState.Pooled,
+            _ConnectionRadius = _ConnectionRadius,
+            _ConnectedHostCount = 0
         });
     }
 
@@ -108,28 +117,35 @@ public class SpeakerAuthoring : SynthEntityBase
 
     public void ProcessPooling(SpeakerComponent pooling)
     {
-        _AttachmentRadius = pooling._AttachmentRadius;
-        transform.localScale = Vector3.one * _AttachmentRadius;
+        _ConnectionRadius = pooling._ConnectionRadius;
+        _ConnectedHosts = pooling._ConnectedHostCount;
+        _InactiveDuration = pooling._InactiveDuration;
+        transform.localScale = Vector3.one * _ConnectionRadius;
 
-        bool updatedState = _State != pooling._State;
-        _State = pooling._State;
-
-        if (updatedState)
-            ResetGrainPool();
+        UpdateGrainPool();
+        if (_GrainLoad < 0.005f)
+            _GrainLoad = 0;
+        else if (_GrainLoad > 0.995f)
+            _GrainLoad = 1;
         else
-            UpdateGrainPool();
+            _GrainLoad = Mathf.Lerp(_GrainLoad, (_GrainArraySize - _NumGrainsFree) / (float)_GrainArraySize, Time.deltaTime * 10);
 
-        _TargetVolume = _State != ConnectionState.Disconnected ? 1 : 0;
+        _State = pooling._State;
+        _TargetVolume = _State != ConnectionState.Pooled ? 1 : 0;
 
-        if (_TargetVolume == 0 && _AudioSource.volume < .005f)
-            _AudioSource.volume = 0;
-        else if (_TargetVolume == 1 && _AudioSource.volume > .995f)
-            _AudioSource.volume = 1;
+        if (Mathf.Abs(_AudioSource.volume - _TargetVolume) < 0.005f)
+            _AudioSource.volume = _TargetVolume;
         else
             _AudioSource.volume = Mathf.Lerp(_AudioSource.volume, _TargetVolume, Time.deltaTime * _VolumeSmoothing);
 
         if (_MeshRenderer != null)
-            _MeshRenderer.enabled = _State != ConnectionState.Disconnected;
+        {
+
+            _MeshRenderer.enabled = _State != ConnectionState.Pooled;
+            _CurrentColour = Color.Lerp(_ActiveColor, _OverloadColor, _GrainLoad);
+            _CurrentColour.a = _AudioSource.volume / 30;
+            _Material.color = _CurrentColour;
+        }
     }
 
     public void ProcessTranslation(Translation translation)
@@ -170,6 +186,7 @@ public class SpeakerAuthoring : SynthEntityBase
             _GrainArray[i]._IsPlaying = false;
         }
         _NumGrainsFree = _GrainArray.Length;
+        _GrainArrayReady = true;
     }
  
     public void UpdateGrainPool()
@@ -181,7 +198,6 @@ public class SpeakerAuthoring : SynthEntityBase
                 _GrainArray[i]._Pooled = true;
                 _NumGrainsFree++;
             }
-        _GrainArrayReady = true;
     }
 
     public void GrainAdded(Grain grainData)
@@ -197,9 +213,9 @@ public class SpeakerAuthoring : SynthEntityBase
         grain = null;
         if (_EntityInitialised)
         {
-            // If we're desperate, go through the GrainPool to check if any grains have finished
-            if (_NumGrainsFree == 0 && !_GrainArrayReady)
-                UpdateGrainPool();
+            //// If we're desperate, go through the GrainPool to check if any grains have finished
+            //if (_NumGrainsFree == 0)
+            //    UpdateGrainPool();
             // Get first pooled grain data object
             if (_NumGrainsFree > 0)
                 for (int i = 0; i < _GrainArray.Length; i++)

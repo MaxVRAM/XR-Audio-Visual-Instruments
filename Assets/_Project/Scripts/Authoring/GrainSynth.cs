@@ -37,7 +37,7 @@ public class GrainSynth : MonoBehaviour
 
     public static class EntityType
     {
-        public readonly static string Attachment = "_AttachmentParameters";
+        public readonly static string Connection = "_AttachmentParameters";
         public readonly static string Windowing = "_WindowingBlob";
         public readonly static string AudioTimer = "_AudioTimer";
         public readonly static string AudioClip = "_AudioClip";
@@ -50,7 +50,7 @@ public class GrainSynth : MonoBehaviour
     [SerializeField] public int _CurrentDSPSample; // TODO create property
     [SerializeField] private int _NextFrameIndexEstimate;
     [SerializeField] private int _LastFrameSampleDuration = 0;
-    [SerializeField] private int _GrainsPerFrame = 0;
+    [SerializeField] private float _GrainsPerFrame = 0;
     [SerializeField] private int _DiscardedGrains = 0;
     [SerializeField] private float _AverageGrainAgeMS = 0;
     [Tooltip("Maximum number of speakers possible, defined by 'numRealVoices' in the project settings audio tab.")]
@@ -93,12 +93,12 @@ public class GrainSynth : MonoBehaviour
     [Range(0.1f, 50)] public float _ListenerRadius = 20;
     [Tooltip("Arc length in degrees from the listener position that emitters can be attached to a speaker.")]
     [Range(0.1f, 45)] public float _SpeakerAttachArcDegrees = 10;
-    [Tooltip("How quicklyt speakers follow their targets. 0 = Speakers remain in position once spawned. 100 = Speakers will almost perfectly track their target position.")]
-    [Range(0, 100)] public float _SpeakerTrackingSpeed = 50;
+    [Tooltip("How quicklyt speakers follow their targets. Increasing this value helps the speaker track its target, but can start invoking inappropriate doppler if tracking high numbers of ephemeral emitters.")]
+    [Range(0, 50)] public float _SpeakerTrackingSpeed = 20;
     [Tooltip("Length of time in milliseconds before pooling a speaker after its last emitter has disconnected. Allows speakers to be reused without destroying remaining grains from destroyed emitters.")]
     [Range(0, 500)] public float _SpeakerLingerTime = 100;
     public int SpeakersAllocated { get { return Math.Min(_SpeakersAllocated, _MaxSpeakers); } }
-    public float AttachSmoothing { get { return Time.deltaTime * _SpeakerTrackingSpeed; }}
+    public float AttachSmoothing { get { return Mathf.Clamp(Time.deltaTime * _SpeakerTrackingSpeed, 0, 1); }}
 
     [Header(header: "Visual Feedback")]
     public bool _DrawAttachmentLines = false;
@@ -149,7 +149,7 @@ public class GrainSynth : MonoBehaviour
 
         _WindowingEntity = UpdateEntity(_WindowingEntity, EntityType.Windowing);
         _AudioTimerEntity = UpdateEntity(_AudioTimerEntity, EntityType.AudioTimer);
-        _AttachmentEntity = UpdateEntity(_AttachmentEntity, EntityType.Attachment);
+        _AttachmentEntity = UpdateEntity(_AttachmentEntity, EntityType.Connection);
         PopulateAudioClipEntities(EntityType.AudioClip);
     }
 
@@ -159,7 +159,7 @@ public class GrainSynth : MonoBehaviour
         _NextFrameIndexEstimate = NextFrameIndexEstimate;
 
         CheckSpeakerAllocation();
-        UpdateEntity(_AttachmentEntity, EntityType.Attachment);
+        UpdateEntity(_AttachmentEntity, EntityType.Connection);
 
         SpeakerUpkeep();
         UpdateSpeakers();
@@ -203,8 +203,8 @@ public class GrainSynth : MonoBehaviour
 
         if (entityType == EntityType.Windowing)
             PopulateWindowingEntity(entity);
-        else if (entityType == EntityType.Attachment)
-            PopulateAttachmentEntity(entity);
+        else if (entityType == EntityType.Connection)
+            PopulateConnectionEntity(entity);
         else if (entityType == EntityType.AudioTimer)
             PopulateTimerEntity(entity);
 
@@ -235,24 +235,26 @@ public class GrainSynth : MonoBehaviour
             });
     }
 
-    private void PopulateAttachmentEntity(Entity entity)
+    private void PopulateConnectionEntity(Entity entity)
     {
-        if (_EntityManager.HasComponent<AttachmentParameters>(entity))
-            _EntityManager.SetComponentData(entity, new AttachmentParameters
+        if (_EntityManager.HasComponent<ConnectionConfig>(entity))
+            _EntityManager.SetComponentData(entity, new ConnectionConfig
             {
+                _DeltaTime = Time.deltaTime,
                 _ListenerPos = _Listener.transform.position,
                 _ListenerRadius = _ListenerRadius,
-                _LocalisationArcDegrees = _SpeakerAttachArcDegrees,
+                _ArcDegrees = _SpeakerAttachArcDegrees,
                 _TranslationSmoothing = AttachSmoothing,
                 _DisconnectedPosition = _SpeakerPoolingPosition,
                 _SpeakerLingerTime = _SpeakerLingerTime / 1000
             });
         else
-            _EntityManager.AddComponentData(entity, new AttachmentParameters
+            _EntityManager.AddComponentData(entity, new ConnectionConfig
             {
+                _DeltaTime = 0,
                 _ListenerPos = _Listener.transform.position,
                 _ListenerRadius = _ListenerRadius,
-                _LocalisationArcDegrees = _SpeakerAttachArcDegrees,
+                _ArcDegrees = _SpeakerAttachArcDegrees,
                 _TranslationSmoothing = AttachSmoothing,
                 _DisconnectedPosition = _SpeakerPoolingPosition,
                 _SpeakerLingerTime = _SpeakerLingerTime / 1000
@@ -317,7 +319,7 @@ public class GrainSynth : MonoBehaviour
     {
         NativeArray<Entity> grainEntities = _GrainQuery.ToEntityArray(Allocator.TempJob);
         int grainCount = grainEntities.Length;
-        _GrainsPerFrame = (int)Mathf.Lerp(_GrainsPerFrame, grainCount, Time.deltaTime);
+        _GrainsPerFrame = Mathf.Lerp(_GrainsPerFrame, grainCount, Time.deltaTime * 10);
 
         if (_Speakers.Count == 0 && grainCount > 0)
         {
@@ -333,7 +335,7 @@ public class GrainSynth : MonoBehaviour
         {
             grain = _EntityManager.GetComponentData<GrainComponent>(grainEntities[i]);
             SpeakerAuthoring speaker = GetSpeakerForGrain(grain);
-            _AverageGrainAge = (int)Mathf.Lerp(_AverageGrainAge, _CurrentDSPSample - grain._StartSampleIndex, Time.deltaTime);
+            _AverageGrainAge = (int)Mathf.Lerp(_AverageGrainAge, _CurrentDSPSample - grain._StartSampleIndex, Time.deltaTime * 10);
             _AverageGrainAgeMS = _AverageGrainAge / SamplesPerMS;
 
             if (speaker == null || grain._StartSampleIndex < GrainDiscardSampleIndex || speaker.GetEmptyGrain(out Grain grainOutput) == null)

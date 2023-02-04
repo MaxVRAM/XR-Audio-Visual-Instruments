@@ -89,7 +89,7 @@ public partial class GrainSynthSystem : SystemBase
                 float transpose = ComputeEmitterParameter(emitter._Transpose, randomTranspose);
                 float pitch = Mathf.Pow(2, Mathf.Clamp(transpose, -4f, 4f));
 
-                float fadeFactor = FadeFactor(sampleIndexNextGrainStart, emitter._FadeoutStartIndex, emitter._FadeoutEndIndex);
+                float fadeFactor = FadeFactor(sampleIndexNextGrainStart - dspTimer._NextFrameIndexEstimate, emitter._SamplesUntilFade, emitter._SamplesUntilDeath);
                 float volume = ComputeEmitterParameter(emitter._Volume, randomVolume) * emitter._DistanceAmplitude * fadeFactor;
 
                 // Create new grain
@@ -157,7 +157,7 @@ public partial class GrainSynthSystem : SystemBase
                     transpose = ComputeEmitterParameter(emitter._Transpose, randomTranspose);
                     pitch = Mathf.Pow(2, Mathf.Clamp(transpose, -4f, 4f));
 
-                    fadeFactor = FadeFactor(sampleIndexNextGrainStart, emitter._FadeoutStartIndex, emitter._FadeoutEndIndex);
+                    fadeFactor = FadeFactor(sampleIndexNextGrainStart - dspTimer._NextFrameIndexEstimate, emitter._SamplesUntilFade, emitter._SamplesUntilDeath);
                     volume = ComputeEmitterParameter(emitter._Volume, randomVolume) * emitter._DistanceAmplitude * fadeFactor;
                 }
             }
@@ -437,10 +437,13 @@ public partial class GrainSynthSystem : SystemBase
         return Mathf.Clamp(mod._StartValue + modulationOverTime + interaction + random, mod._Min, mod._Max);
     }
 
-    public static float FadeFactor(int index, int start, int end)
+    public static float FadeFactor(int currentIndex, int fadeStart, int fadeEnd)
     {
-        if (start < 0 || end < 0) return 1;
-        return Mathf.Clamp(Map(index, start, end, 1, 0), 0, 1);
+        if (fadeStart == int.MaxValue || fadeEnd == int.MaxValue || fadeEnd <= 0)
+            return 0;
+        return 1 - Mathf.Clamp((currentIndex - fadeStart) / fadeEnd, 0, 1);
+        //if (start < 0 || end < 0) return 1;
+        //return Mathf.Clamp(Map(index, start, end, 1, 0), 0, 1);
     }
 
     #endregion

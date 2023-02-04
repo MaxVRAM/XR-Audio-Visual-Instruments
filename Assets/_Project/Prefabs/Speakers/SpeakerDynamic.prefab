@@ -52,13 +52,15 @@ MonoBehaviour:
   _EntityIndex: 2147483647
   _EntityInitialised: 0
   _ManagerInitialised: 0
-  _Active: 0
+  _State: 0
   _GrainArrayReady: 0
   _GrainArraySize: 100
   _NumGrainsFree: 0
+  _GrainLoad: 0
+  _ConnectedHosts: 0
+  _InactiveDuration: 0
+  _ConnectionRadius: 1
   _TargetVolume: 0
-  _VolumeSmoothing: 4
-  _AttachmentRadius: 1
 --- !u!82 &4563112762925737388
 AudioSource:
   m_ObjectHideFlags: 0
@@ -205,7 +207,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enableSpatialization: 1
-  gain: 10
+  gain: 5
   useInvSqr: 0
   near: 0.2
   far: 50

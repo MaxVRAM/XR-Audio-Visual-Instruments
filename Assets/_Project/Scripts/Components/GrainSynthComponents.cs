@@ -41,14 +41,15 @@ public struct GrainComponent : IComponentData
 }
 public struct SamplesProcessedTag : IComponentData {}
 
-public struct AttachmentParameters : IComponentData
+public struct ConnectionConfig : IComponentData
 {
-    public float3 _ListenerPos;
+    public float _DeltaTime;
+    public float _ArcDegrees;
     public float _ListenerRadius;
-    public float _LocalisationArcDegrees;
+    public float _SpeakerLingerTime;
     public float _TranslationSmoothing;
     public float3 _DisconnectedPosition;
-    public float _SpeakerLingerTime;
+    public float3 _ListenerPos;
 }
 public struct SpeakerIndex : IComponentData
 {
@@ -57,15 +58,15 @@ public struct SpeakerIndex : IComponentData
 
 public enum ConnectionState
 {
-    Disconnected,
-    Connected,
+    Pooled,
+    Active,
     Lingering
 }
 public struct SpeakerComponent : IComponentData
 {
     public ConnectionState _State;
-    public int _AttachedHostCount;
-    public float _AttachmentRadius;
+    public int _ConnectedHostCount;
+    public float _ConnectionRadius;
     public float _InactiveDuration;
 }
 
@@ -75,8 +76,8 @@ public struct InListenerRadiusTag : IComponentData {}
 public struct HostComponent : IComponentData
 {
     public int _HostIndex;
-    public bool _Connected;
     public int _SpeakerIndex;
+    public bool _Connected;
     public bool _InListenerRadius;
 }
 public struct PlayingTag : IComponentData {}
@@ -110,8 +111,8 @@ public struct ContinuousComponent : IComponentData
     public float _DistanceAmplitude;
     public int _LastSampleIndex;
     public int _PreviousGrainDuration;
-    public int _FadeoutStartIndex;
-    public int _FadeoutEndIndex;
+    public int _SamplesUntilFade;
+    public int _SamplesUntilDeath;
     public ModulationComponent _Playhead;
     public ModulationComponent _Density;
     public ModulationComponent _Duration;

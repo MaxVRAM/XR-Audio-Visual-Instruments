@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 2138677392}
-  m_IndirectSpecularColor: {r: 0.3776903, g: 0.45564848, b: 0.8330078, a: 1}
+  m_IndirectSpecularColor: {r: 262.36157, g: 325.07837, b: 430.26367, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -344,7 +344,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 22275140}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 5, z: 4}
+  m_LocalPosition: {x: 0, y: 1, z: 10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -372,17 +372,17 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _RandomPrefab: 0
   _ActiveObjects: []
-  _SpawnablesAllocated: 2
-  _SpawnPeriodSeconds: 1
+  _SpawnablesAllocated: 1
+  _SpawnPeriodSeconds: 0.2
   _AutoSpawn: 1
   _AutoRemove: 1
   _ObjectLifespan: 4
   _LifespanVariance: 0
   _DestroyRadius: 30
-  _EjectionRadius: 0.5
-  _EjectionDirection: {x: 1, y: 0, z: 0}
+  _EjectionRadius: 2.5
+  _EjectionDirection: {x: 0, y: -1, z: 0}
   _EjectionDirectionVariance: 0.25
-  _EjectionSpeed: 0
+  _EjectionSpeed: 10
   _AllowSiblingSurfaceContact: 1
   _AllowSiblingCollisionBurst: 1
   _SpawnableHost: {fileID: 129053208}
@@ -521,21 +521,21 @@ MonoBehaviour:
   _DiscardedGrains: 0
   _AverageGrainAgeMS: 0
   _MaxSpeakers: 0
-  _QueueDurationMS: 20
+  _QueueDurationMS: 30
   _DelayPercentLastFrame: 10
-  _DiscardGrainsOlderThanMS: 30
+  _DiscardGrainsOlderThanMS: 40
   _BurstStartOffsetRangeMS: 8
   _BurstDebounceDurationMS: 50
   _SpeakerPrefab: {fileID: 2519325204652697373, guid: 6844ced249a80dd4584a457e05fa1c66,
     type: 3}
   _SpeakerParentTransform: {fileID: 1810087969}
-  _SpeakerPoolingPosition: {x: 0, y: -20, z: 0}
-  _SpeakersAllocated: 4
+  _SpeakerPoolingPosition: {x: 0, y: -100, z: 0}
+  _SpeakersAllocated: 20
   _MaxSpeakerAllocationPerFrame: 1
-  _ListenerRadius: 20
+  _ListenerRadius: 30
   _SpeakerAttachArcDegrees: 10
-  _SpeakerTrackingSpeed: 50
-  _SpeakerLingerTime: 500
+  _SpeakerTrackingSpeed: 40
+  _SpeakerLingerTime: 300
   _DrawAttachmentLines: 1
   _AttachmentLineMat: {fileID: 2100000, guid: 9b11db608c7528743b0fd535e4db2ec6, type: 2}
   _AttachmentLineWidth: 0.01
@@ -609,7 +609,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 24721011}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -100, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5577,7 +5577,7 @@ Camera:
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 0
-  m_AllowMSAA: 1
+  m_AllowMSAA: 0
   m_AllowDynamicResolution: 0
   m_ForceIntoRT: 0
   m_OcclusionCulling: 1
@@ -6870,7 +6870,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1639877265
 Transform:
   m_ObjectHideFlags: 0
@@ -9796,7 +9796,7 @@ PrefabInstance:
     - target: {fileID: 1920882317727243615, guid: 5d7afc283b1571f4999ce7d45c25b12b,
         type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5d7afc283b1571f4999ce7d45c25b12b, type: 3}
