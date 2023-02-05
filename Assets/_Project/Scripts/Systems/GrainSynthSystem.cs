@@ -4,7 +4,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using Unity.Jobs.LowLevel.Unsafe;
-
+using MaxVRAM;
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 class RandomSystem : ComponentSystem
@@ -180,7 +180,7 @@ public partial class GrainSynthSystem : SystemBase
                 // int currentDSPTime = dspTimer._CurrentSampleIndex + dspTimer._GrainQueueDuration;
                 int currentDSPTime = dspTimer._NextFrameIndexEstimate + (int)(randomGen.NextFloat(0, 1) * dspTimer._RandomiseBurstStartIndex);
                 int burstDurationRange = (int)(burst._BurstDuration._Max - burst._BurstDuration._Min);
-                int burstDurationInteraction = (int)(Map(burst._BurstDuration._InteractionInput,
+                int burstDurationInteraction = (int)(Mathx.Map(burst._BurstDuration._InteractionInput,
                     0, 1, 0, 1, burst._BurstDuration._Shape) * burst._BurstDuration._InteractionAmount);
                 int burstDurationRandom = (int)(randomGen.NextFloat(-1, 1) * burst._BurstDuration._Noise * burstDurationRange);
                 int totalBurstSampleCount = (int)Mathf.Clamp(burst._BurstDuration._StartValue + burstDurationInteraction + burstDurationRandom,
@@ -302,7 +302,7 @@ public partial class GrainSynthSystem : SystemBase
                         // Adjusted for volume and windowing
                         sourceValue *= grain._Volume;
                         sourceValue *= windowingData._WindowingArray.Value.array[
-                            (int)Map(i, 0, grain._SampleCount, 0, windowingData._WindowingArray.Value.array.Length)];
+                            (int)Mathx.Map(i, 0, grain._SampleCount, 0, windowingData._WindowingArray.Value.array.Length)];
                         sampleOutputBuffer.Add(new GrainSampleBufferElement { Value = sourceValue });
                     }
                     dspBuffer.Add(new DSPSampleBufferElement { Value = 0 });
@@ -348,7 +348,7 @@ public partial class GrainSynthSystem : SystemBase
                     // Adjusted for volume and windowing
                     sourceValue *= grain._Volume;
                     sourceValue *= windowingData._WindowingArray.Value.array[
-                        (int)Map(i, 0, grain._SampleCount, 0, windowingData._WindowingArray.Value.array.Length)];
+                        (int)Mathx.Map(i, 0, grain._SampleCount, 0, windowingData._WindowingArray.Value.array.Length)];
                     sampleOutputBuffer.Add(new GrainSampleBufferElement { Value = sourceValue });
                     dspBuffer.Add(new DSPSampleBufferElement { Value = 0 });
                 }
@@ -406,14 +406,7 @@ public partial class GrainSynthSystem : SystemBase
 
 
     #region HELPERS
-    public static float Map(float val, float inMin, float inMax, float outMin, float outMax)
-    {
-        return outMin + (outMax - outMin) / (inMax - inMin) * (val - inMin);
-    }
-    public static float Map(float val, float inMin, float inMax, float outMin, float outMax, float exp)
-    {
-        return Mathf.Pow((val - inMin) / (inMax - inMin), exp) * (outMax - outMin) + outMin;
-    }
+
     public static float ComputeEmitterParameter(ModulationComponent mod, float r)
     {
         float interaction = Mathf.Pow(mod._InteractionInput / 1, mod._Shape) * mod._InteractionAmount;
@@ -424,6 +417,7 @@ public partial class GrainSynthSystem : SystemBase
             random = r * mod._Noise * Mathf.Abs(mod._Max - mod._Min);
         return Mathf.Clamp(mod._StartValue + interaction + random, mod._Min, mod._Max);
     }
+
     public static float ComputeBurstParameter(ModulationComponent mod, float t, float n, float r)
     {
         float timeShaped = Mathf.Pow(t / n, mod._Shape);
@@ -442,8 +436,6 @@ public partial class GrainSynthSystem : SystemBase
         if (fadeStart == int.MaxValue || fadeEnd == int.MaxValue || fadeEnd <= 0)
             return 0;
         return 1 - Mathf.Clamp((currentIndex - fadeStart) / fadeEnd, 0, 1);
-        //if (start < 0 || end < 0) return 1;
-        //return Mathf.Clamp(Map(index, start, end, 1, 0), 0, 1);
     }
 
     #endregion

@@ -9,6 +9,8 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using static UnityEngine.EventSystems.EventTrigger;
 using Unity.Transforms;
+using UnityEngine.UI;
+using TMPro;
 
 // PROJECT AUDIO CONFIGURATION NOTES
 // ---------------------------------
@@ -46,17 +48,19 @@ public class GrainSynth : MonoBehaviour
     private AudioListener _Listener;
 
     [Header("Runtime Dynamics")]
-    [SerializeField] public int _SampleRate = 44100; // TODO create property
-    [SerializeField] public int _CurrentDSPSample; // TODO create property
-    [SerializeField] private int _NextFrameIndexEstimate;
-    [SerializeField] private int _LastFrameSampleDuration = 0;
-    [SerializeField] private float _GrainsPerFrame = 0;
-    [SerializeField] private int _DiscardedGrains = 0;
-    [SerializeField] private float _AverageGrainAgeMS = 0;
-    [Tooltip("Maximum number of speakers possible, defined by 'numRealVoices' in the project settings audio tab.")]
-    [SerializeField] private int _MaxSpeakers = 0;
-
+    public int _SampleRate = 44100; // TODO create property
+    public int _CurrentDSPSample; // TODO create property
+    private int _NextFrameIndexEstimate;
+    private int _LastFrameSampleDuration = 0;
+    private float _GrainsPerFrame = 0;
+    private int _GrainsPerSecond = 0;
+    private int _GrainsPerSecondPeak = 0;
+    private int _GrainsDiscarded = 0;
     private int _AverageGrainAge = 0;
+    private float _AverageGrainAgeMS = 0;
+    [Tooltip("Maximum number of speakers possible, defined by 'numRealVoices' in the project settings audio tab.")]
+    private int _MaxSpeakers = 0;
+
     private int _SpeakersAllocatedThisFrame = 0;
 
     [Header("DSP Config")]
@@ -101,6 +105,8 @@ public class GrainSynth : MonoBehaviour
     public float AttachSmoothing { get { return Mathf.Clamp(Time.deltaTime * _SpeakerTrackingSpeed, 0, 1); }}
 
     [Header(header: "Visual Feedback")]
+    public TextMeshProUGUI _StatsValuesText;
+    public TextMeshProUGUI _StatsValuesPeakText;
     public bool _DrawAttachmentLines = false;
     public Material _AttachmentLineMat;
     [Range(0, 0.05f)] public float _AttachmentLineWidth = 0.002f;
@@ -168,6 +174,8 @@ public class GrainSynth : MonoBehaviour
         UpdateHosts();
 
         UpdateEntity(_AudioTimerEntity, EntityType.AudioTimer);
+
+        UpdateStatsUI();
     }
 
     #endregion
@@ -319,12 +327,14 @@ public class GrainSynth : MonoBehaviour
     {
         NativeArray<Entity> grainEntities = _GrainQuery.ToEntityArray(Allocator.TempJob);
         int grainCount = grainEntities.Length;
-        _GrainsPerFrame = Mathf.Lerp(_GrainsPerFrame, grainCount, Time.deltaTime * 10);
+        _GrainsPerFrame = Mathf.Lerp(_GrainsPerFrame, grainCount, Time.deltaTime * 5);
+        _GrainsPerSecond = (int)Mathf.Lerp(_GrainsPerSecond, grainCount / Time.deltaTime, Time.deltaTime * 2);
+        _GrainsPerSecondPeak = Math.Max(_GrainsPerSecondPeak, _GrainsPerSecond);
 
         if (_Speakers.Count == 0 && grainCount > 0)
         {
             Debug.Log($"No speakers registered. Destroying {grainCount} grains.");
-            _DiscardedGrains += grainCount;
+            _GrainsDiscarded += grainCount;
             grainEntities.Dispose();
             return;
         }
@@ -335,13 +345,13 @@ public class GrainSynth : MonoBehaviour
         {
             grain = _EntityManager.GetComponentData<GrainComponent>(grainEntities[i]);
             SpeakerAuthoring speaker = GetSpeakerForGrain(grain);
-            _AverageGrainAge = (int)Mathf.Lerp(_AverageGrainAge, _CurrentDSPSample - grain._StartSampleIndex, Time.deltaTime * 10);
-            _AverageGrainAgeMS = _AverageGrainAge / SamplesPerMS;
+            _AverageGrainAge = (int)Mathf.Lerp(_AverageGrainAge, _CurrentDSPSample - grain._StartSampleIndex, Time.deltaTime * 2);
+            _AverageGrainAgeMS = (float)_AverageGrainAge / SamplesPerMS;
 
             if (speaker == null || grain._StartSampleIndex < GrainDiscardSampleIndex || speaker.GetEmptyGrain(out Grain grainOutput) == null)
             {
                 _EntityManager.DestroyEntity(grainEntities[i]);
-                _DiscardedGrains++;
+                _GrainsDiscarded++;
                 continue;
             }
 
@@ -521,6 +531,24 @@ public class GrainSynth : MonoBehaviour
     }
 
     #endregion
+
+    #region STATS UI UPDATE
+
+    public void UpdateStatsUI()
+    {
+        if (_StatsValuesText != null)
+        {
+            _StatsValuesText.text = $"{_GrainsPerSecond}\n{_GrainsDiscarded}\n{_AverageGrainAgeMS.ToString("F2")}";
+        }
+        if (_StatsValuesText != null )
+        {
+            _StatsValuesPeakText.text = $"{_GrainsPerSecondPeak}";
+        }
+
+    }
+
+    #endregion
+
 
     #region GIZMOS
 

@@ -105,8 +105,8 @@ public class SpeakerAuthoring : SynthEntityBase
     public override void ProcessComponents()
     {
         ProcessIndex(_EntityManager.GetComponentData<SpeakerIndex>(_Entity));
-        ProcessPooling(_EntityManager.GetComponentData<SpeakerComponent>(_Entity));
         ProcessTranslation(_EntityManager.GetComponentData<Translation>(_Entity));
+        ProcessPooling(_EntityManager.GetComponentData<SpeakerComponent>(_Entity));
     }
 
     public void ProcessIndex(SpeakerIndex index)

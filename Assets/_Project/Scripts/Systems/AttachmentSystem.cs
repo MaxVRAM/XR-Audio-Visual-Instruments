@@ -83,11 +83,14 @@ public partial class AttachmentSystem : SystemBase
                     ecb.AddComponent(entityInQueryIndex, entity, new InListenerRadiusTag());
                 }
 
-                if (host._SpeakerIndex < speakerPool.Length && math.distance(translation.Value,
-                    speakerTranslations[host._SpeakerIndex].Value) < speakerPool[host._SpeakerIndex]._ConnectionRadius)
+                if (host._SpeakerIndex < speakerPool.Length)
                 {
-                    host._Connected = true;
-                    ecb.AddComponent(entityInQueryIndex, entity, new ConnectedTag());
+                    if (math.distance(translation.Value, speakerTranslations[host._SpeakerIndex].Value) <
+                        speakerPool[host._SpeakerIndex]._ConnectionRadius)
+                    {
+                        host._Connected = true;
+                        ecb.AddComponent(entityInQueryIndex, entity, new ConnectedTag());
+                    }
                 }
                 else
                 {
@@ -161,7 +164,7 @@ public partial class AttachmentSystem : SystemBase
                 
                 for (int e = 0; e < hostsToSitSpeakers.Length; e++)
                 {
-                    if (hostsToSitSpeakers[e]._Connected && hostsToSitSpeakers[e]._SpeakerIndex == index.Value)
+                    if (hostsToSitSpeakers[e]._SpeakerIndex == index.Value)
                     {
                         hostPosSum += hostTranslations[e].Value;
                         attachedHosts++;
@@ -192,13 +195,19 @@ public partial class AttachmentSystem : SystemBase
                     // Debug.Log($"Speaker {index.Value} has {attachedHosts} attached hosts and state {speaker._State}");
                     speaker._State = ConnectionState.Active;
                     speaker._InactiveDuration = 0;
-                    // Use lerped movement towards target if within attachment radius, otherwise snap to position.
-                    float3 targetPos = hostPosSum / attachedHosts;
-                    float3 lerpPos = math.lerp(currentPos, targetPos, connectionConfig._TranslationSmoothing);
-                    if (math.distance(currentPos, lerpPos) > speaker._ConnectionRadius)
-                        currentPos = targetPos;
+                    if (speaker._ConnectedHostCount == 1)
+                    {
+                        currentPos = hostPosSum;
+                    }
                     else
-                        currentPos = lerpPos;
+                    {
+                        float3 targetPos = hostPosSum / attachedHosts;
+                        float3 lerpPos = math.lerp(currentPos, targetPos, connectionConfig._TranslationSmoothing);
+                        if (math.distance(currentPos, lerpPos) > speaker._ConnectionRadius)
+                            currentPos = targetPos;
+                        else
+                            currentPos = lerpPos;
+                    }
 
                     speaker._ConnectionRadius = CalculateSpeakerRadius(connectionConfig._ListenerPos, currentPos, connectionConfig._ArcDegrees);
                 }
@@ -215,7 +224,7 @@ public partial class AttachmentSystem : SystemBase
 
 
         //----     SPAWN A POOLED SPEAKER ON A HOST IF NO NEARBY SPEAKERS WERE FOUND
-        // TODO: Check if we can use "connected" host and speaker flags component to optimise search
+        // TODO: Use speaker "WithNone<ActiveTag>" to optimise search
         hostsQuery = GetEntityQuery(hostDisconnectedQueryDesc);
         NativeArray<Entity> hostEntities = hostsQuery.ToEntityArray(Allocator.TempJob);
         NativeArray<Translation> hostTrans = hostsQuery.ToComponentDataArray<Translation>(Allocator.TempJob);
@@ -229,7 +238,7 @@ public partial class AttachmentSystem : SystemBase
             {
                 for (int s = 0; s < speakers.Length; s++)
                 {
-                    if (speakers[s]._State == ConnectionState.Pooled)
+                    if (speakers[s]._State != ConnectionState.Active)
                     {
                         // Update host component with speaker link
                         ecb.AddComponent(h, hostEntities, new ConnectedTag());
@@ -250,41 +259,11 @@ public partial class AttachmentSystem : SystemBase
                         pooledObj._ConnectedHostCount = 1;
                         pooledObj._InactiveDuration = 0;
                         SetComponent(speakerEntities[s], pooledObj);
+                        break;
                     }
                 }
 
             }
-            //// Find a pooled speaker
-            //for (int s = 0; s < speakers.Length; s++)
-            //{
-            //    bool spawned = false;
-            //    if (!spawned && speakers[s]._State == ConnectionState.Pooled)
-            //    {
-            //        // Find an unlinked host to link with pooled speaker
-            //        if (hosts.Length > 0)
-            //        {
-            //            spawned = true;
-
-            //            // Update host component with speaker link
-            //            ecb.AddComponent(0, hostEntities, new ConnectedTag());
-            //            HostComponent host = GetComponent<HostComponent>(hostEntities[0]);
-            //            host._SpeakerIndex = GetComponent<SpeakerIndex>(speakerEntities[s]).Value;
-            //            host._Connected = true;
-            //            SetComponent(hostEntities[0], host);
-
-            //            // Update speaker position
-            //            Translation speakerTranslation = GetComponent<Translation>(speakerEntities[s]);
-            //            speakerTranslation.Value = hostTrans[0].Value;
-            //            SetComponent(speakerEntities[s], speakerTranslation);
-
-            //            // Set active pooled status and update attachment radius
-            //            SpeakerComponent pooledObj = GetComponent<SpeakerComponent>(speakerEntities[s]);
-            //            pooledObj._ConnectionRadius = CalculateSpeakerRadius(connectionConfig._ListenerPos, speakerTranslation.Value, connectionConfig._ArcDegrees);
-            //            pooledObj._State = ConnectionState.Active;
-            //            SetComponent(speakerEntities[s], pooledObj);
-            //        }
-            //    }
-            //}
         }).WithDisposeOnCompletion(hostEntities).WithDisposeOnCompletion(hosts).WithDisposeOnCompletion(hostTrans)
         .WithDisposeOnCompletion(speakerEntities).WithDisposeOnCompletion(speakers)
         .Schedule(updateSpeakerPoolJob);

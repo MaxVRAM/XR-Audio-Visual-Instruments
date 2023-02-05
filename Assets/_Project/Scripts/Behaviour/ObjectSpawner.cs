@@ -2,10 +2,9 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using Random = UnityEngine.Random;
-using Unity.Entities.UniversalDelegates;
-using System.Reflection;
-using UnityEditor.Rendering;
 using System;
+using UnityEditor;
+using MaxVRAM;
 
 public enum SiblingCollision { All, Single, None };
 
@@ -16,22 +15,26 @@ public class ObjectSpawner : MonoBehaviour
 {
     [Header("Runtime Dynamics")]
     [SerializeField] private bool _Initialised = false;
-    [SerializeField] protected int _ObjectCounter = 0;
-    [SerializeField] protected float _SecondsSinceSpawn = 0;
+    [SerializeField] private int _ObjectCounter = 0;
+    [SerializeField] private float _SecondsSinceSpawn = 0;
     [SerializeField] public HashSet<GameObject> _CollidedThisUpdate;
 
     [Header("Spawnable Prefab Selection")]
     [Tooltip("Currently selected prefab to spawn.")]
-    public GameObject _PrefabToSpawn;
-    public List<GameObject> _SpawnablePrefabs;
-    public bool _RandomPrefab = false;
+    [SerializeField] private GameObject _PrefabToSpawn;
+    [SerializeField] private List<GameObject> _SpawnablePrefabs;
+    [SerializeField] private bool _RandomPrefab = false;
     public List<GameObject> _ActiveObjects = new List<GameObject>();
 
     [Header("Spawning Limits")]
-    [Range(0, 100)] public int _SpawnablesAllocated = 10;
-    [Range(0.01f, 2f)] public float _SpawnPeriodSeconds = 0.1f;
-    public bool _AutoSpawn = true;
-    public bool _AutoRemove = true;
+    [Tooltip("Number of seconds after this ObjectSpawner is created before it starts spawning loop.")]
+    [SerializeField] private float _WaitBeforeSpawning = 2;
+    private float _StartTime = int.MaxValue;
+    private bool _StartTimeReached = false;
+    [SerializeField] [Range(0, 100)] private int _SpawnablesAllocated = 10;
+    [SerializeField] [Range(0.01f, 2f)] private float _SpawnPeriodSeconds = 0.1f;
+    [SerializeField] private bool _AutoSpawn = true;
+    [SerializeField] private bool _AutoRemove = true;
 
     [Header("Spawnable Lifetime")]
     [Tooltip("Duration in seconds before destroying spawned object (0 = do not destroy based on duration).")]
@@ -41,15 +44,21 @@ public class ObjectSpawner : MonoBehaviour
     [Tooltip("Destroy object outside this radius from its spawning position.")]
     public float _DestroyRadius = 20f;
     
-    [Header("Spawning Transform")]
+    [Header("Ejection Position")]
     [Tooltip("Distance from the anchor that objects will be spawned.")]
     [Range(0f, 10f)] public float _EjectionRadius = 0.5f;
-    [Tooltip("Default direction spawnables leave the anchor.")]
-    public Vector3 _EjectionDirection = new Vector3(0,-1,0);
-    [Tooltip("Apply random amount of spread to the direction for each spawn.")]
-    [Range(0, 1)] public float _EjectionDirectionVariance = 0;
+    [Tooltip("Randomise spawn position. 0 = objects will always spawn at the Ejection Position. 0.5 = objects spawn randomly within one hemisphere of the Ejection Position")]
+    [Range(0, 1)] public float _EjectionPositionVariance = 0;
+    [Tooltip("Normalised default position that spawnables leave the anchor.")]
+    public Vector3 _EjectionPosition = new Vector3(0, -1, 0);
+
+    [Header("Ejection Velocity")]
     [Tooltip("Default speed that spawnables leave the anchor.")]
     [Range(0, 100)] public float _EjectionSpeed = 0;
+    [Tooltip("Apply random amount of spread to the direction for each spawn.")]
+    [Range(0, 1)] public float _EjectionDirectionVariance = 0;
+    [Tooltip("Normalised velocity that spawnables have at the spawn time.")]
+    public Vector3 _EjectionDirection = new Vector3(0, 0, 0);
 
     [Header("Emitter Behaviour")]
     public bool _AllowSiblingSurfaceContact = true;
@@ -60,11 +69,15 @@ public class ObjectSpawner : MonoBehaviour
     public GameObject _SpawnableHost;
     [Tooltip("Object providing the spawn location and controller behaviour.")]
     public GameObject _ControllerObject;
+    [SerializeField] private Renderer _ControllerRenderer;
+    [SerializeField] private float _EmissiveIntensity = 0;
+    [SerializeField] private Color _EmissiveColour;
 
 
     void Start()
     {
-        InitialiseSpawner();
+        if (!InitialiseSpawner())
+            gameObject.SetActive(false);
     }
 
     void Awake()
@@ -90,17 +103,28 @@ public class ObjectSpawner : MonoBehaviour
         if (ReadyToSpawn())
         {
             if (_ActiveObjects.Count < _SpawnablesAllocated && _AutoSpawn)
-                CreateNewSpawnable();
+                if (CreateNewSpawnable())
+                {
+                    _EmissiveIntensity = 10;
+                }
             else if (_ActiveObjects.Count > _SpawnablesAllocated && _AutoRemove)
                 RemoveOverSpawnTarget();
         }
         _ActiveObjects.RemoveAll(item => item == null);
+        UpdateShaderModulation();
     }
 
     public bool ReadyToSpawn()
     {
         if (!_Initialised)
             return false;
+        if (!_StartTimeReached)
+        {
+            if (_SecondsSinceSpawn > _StartTime)
+                _StartTimeReached = true;
+            else
+                return false;
+        }
         if ((_ControllerObject == null | _PrefabToSpawn == null) && !InitialiseSpawner())
             return false;
         if (_ActiveObjects.Count == _SpawnablesAllocated || _SecondsSinceSpawn < _SpawnPeriodSeconds)
@@ -114,6 +138,12 @@ public class ObjectSpawner : MonoBehaviour
 
         if (_ControllerObject == null)
             _ControllerObject = gameObject;
+
+        _ControllerRenderer = GetComponentInChildren<Renderer>();
+        if (_ControllerRenderer != null)
+        {
+            _EmissiveColour = _ControllerRenderer.material.GetColor("_EmissiveColor");
+        }
 
         if (_SpawnableHost == null)
             _SpawnableHost = gameObject;
@@ -132,15 +162,16 @@ public class ObjectSpawner : MonoBehaviour
         }
 
         _Initialised = true;
+        _StartTime = Time.time + _WaitBeforeSpawning;
         return true;
     }
 
-    public void CreateNewSpawnable()
+    public bool CreateNewSpawnable()
     {
         if (!InstantiatePrefab(out GameObject newObject))
         {
             _Initialised = false;
-            return;
+            return false;
         }
 
         SpawnableManager spawnableManager = AttachSpawnableManager(newObject);
@@ -152,6 +183,7 @@ public class ObjectSpawner : MonoBehaviour
         _ActiveObjects.Add(newObject);
         _SecondsSinceSpawn = 0;
         _ObjectCounter++;
+        return true;
     }
 
     public bool InstantiatePrefab(out GameObject newObject)
@@ -159,15 +191,34 @@ public class ObjectSpawner : MonoBehaviour
         int index = (!_RandomPrefab || _SpawnablePrefabs.Count < 2) ? Random.Range(0, _SpawnablePrefabs.Count) : 0;
         GameObject objectToSpawn = _SpawnablePrefabs[index];
 
-        Vector3 spawnOnSphere = Random.insideUnitSphere.normalized;
-        Vector3 spawnDirection = Vector3.Slerp(_EjectionDirection.normalized, spawnOnSphere, _EjectionDirectionVariance).normalized;
-        Vector3 spawnPosition = _ControllerObject.transform.position + spawnDirection * _EjectionRadius;
-        newObject = Instantiate(objectToSpawn, spawnPosition, Quaternion.Euler(spawnDirection), _SpawnableHost.transform);
+        Vector3 spawnOnSphere = Random.onUnitSphere;
+        Vector3 spawnPositionOffset = Vector3.Slerp(_EjectionPosition.normalized, spawnOnSphere, _EjectionPositionVariance);
+        Vector3 spawnPosition = _ControllerObject.transform.position + spawnPositionOffset * _EjectionRadius;
+
+        newObject = Instantiate(objectToSpawn, spawnPosition, Quaternion.identity, _SpawnableHost.transform);
         newObject.name = newObject.name + " (" + _ObjectCounter + ")";
 
         if (!newObject.TryGetComponent(out Rigidbody rb))
             rb = newObject.AddComponent<Rigidbody>();
-        rb.velocity = spawnDirection * _EjectionSpeed;
+
+        spawnOnSphere = Random.onUnitSphere.normalized;
+        Vector3 spawnDirection = Vector3.Slerp(_EjectionDirection.normalized, spawnOnSphere, _EjectionDirectionVariance);
+
+        if (spawnDirection == Vector3.zero)
+            return true;
+
+        Vector3 directionVector = (_ControllerObject.transform.position - spawnPosition).normalized;
+        //Quaternion directionRotation = Quaternion.LookRotation(spawnDirection, new Vector3(0,1,0));
+        Quaternion directionRotation = Quaternion.FromToRotation(spawnDirection, directionVector);
+        Vector3 rotatedDirection = directionRotation * directionVector;
+
+
+        Vector3 spawnVelocity = rotatedDirection * _EjectionSpeed;
+        rb.velocity = spawnVelocity;
+
+        //Vector3 spawnDirection = Vector3.Slerp(spawnHeading, -spawnPositionOffset, 1);
+        //Vector3 spawnDirection = Vector3.Cross(_EjectionDirection.normalized, -spawnPositionOffset);
+
 
         return true;
     }
@@ -217,6 +268,16 @@ public class ObjectSpawner : MonoBehaviour
         }
         _ActiveObjects.RemoveAt(0);
 
+    }
+
+    public void UpdateShaderModulation()
+    {
+        if (_EmissiveColour != null)
+        {
+            _ControllerRenderer.material.SetColor("_EmissiveColor", _EmissiveColour * _EmissiveIntensity);
+            float glow = (1 + Mathf.Sin(_SecondsSinceSpawn / _SpawnPeriodSeconds * 2)) * 0.5f;
+            _EmissiveIntensity = Mathf.Lerp(_EmissiveIntensity, glow, Time.deltaTime * 4);
+        }
     }
 
     public bool UniqueCollision(GameObject goA, GameObject goB)
