@@ -76,7 +76,16 @@ public class HostAuthoring : SynthEntityBase
         _SpeakerTransform = _SpeakerTarget;
 
         if (_AttachmentLine = TryGetComponent(out _AttachmentLine) ? _AttachmentLine : gameObject.AddComponent<AttachmentLine>())
+        {
+            if (_AttachmentLine.TryGetComponent(out LineRenderer lineRenderer))
+            {
+                lineRenderer.material.color = Color.cyan;
+                lineRenderer.material.SetAlpha(0.1f);
+            }
+
+
             _AttachmentLine._TransformA = _SpeakerTarget;
+        }
 
         if (TryGetComponent(out _SurfaceProperties) || transform.parent.TryGetComponent(out _SurfaceProperties))
             _SurfaceRigidity = _SurfaceProperties._Rigidity;

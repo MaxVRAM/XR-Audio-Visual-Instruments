@@ -68,6 +68,7 @@ public struct SpeakerComponent : IComponentData
     public int _ConnectedHostCount;
     public float _ConnectionRadius;
     public float _InactiveDuration;
+    public float _GrainLoad;
 }
 
 public struct ConnectedTag : IComponentData {}

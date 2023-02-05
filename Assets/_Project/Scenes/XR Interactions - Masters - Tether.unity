@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 2138677392}
-  m_IndirectSpecularColor: {r: 262.36157, g: 325.07837, b: 430.26367, a: 1}
+  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -373,17 +373,17 @@ MonoBehaviour:
   _RandomPrefab: 0
   _ActiveObjects: []
   _WaitBeforeSpawning: 2
-  _SpawnablesAllocated: 0
-  _SpawnPeriodSeconds: 0.1
+  _SpawnablesAllocated: 4
+  _SpawnPeriodSeconds: 1
   _AutoSpawn: 1
   _AutoRemove: 1
-  _ObjectLifespan: 5
+  _ObjectLifespan: 4
   _LifespanVariance: 0
   _DestroyRadius: 40
-  _EjectionRadius: 5
+  _EjectionRadius: 1
   _EjectionPositionVariance: 1
   _EjectionPosition: {x: 0, y: 0, z: 0}
-  _EjectionSpeed: 50
+  _EjectionSpeed: 10
   _EjectionDirectionVariance: 1
   _EjectionDirection: {x: 0, y: 0, z: 0}
   _AllowSiblingSurfaceContact: 1
@@ -530,10 +530,10 @@ MonoBehaviour:
     type: 3}
   _SpeakerParentTransform: {fileID: 1810087969}
   _SpeakerPoolingPosition: {x: 0, y: -100, z: 0}
-  _SpeakersAllocated: 40
+  _SpeakersAllocated: 10
   _MaxSpeakerAllocationPerFrame: 1
   _ListenerRadius: 35
-  _SpeakerAttachArcDegrees: 10
+  _SpeakerAttachArcDegrees: 20
   _SpeakerTrackingSpeed: 50
   _SpeakerLingerTime: 300
   _StatsValuesText: {fileID: 1931825995}

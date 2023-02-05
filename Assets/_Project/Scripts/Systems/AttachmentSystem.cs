@@ -109,35 +109,92 @@ public partial class AttachmentSystem : SystemBase
 
 
 
-        //----    CONNECT DISCONNECTED HOST TO IN-RANGE SPEAKER
-        // TODO: test if better to remove speaker connection state check - potentially reposition newly pooled speakers on the main thread
+        ////----    CONNECT DISCONNECTED HOST TO IN-RANGE SPEAKER
+        //// TODO: test if better to remove speaker connection state check - potentially reposition newly pooled speakers on the main thread
+        //NativeArray<Entity> inRangeSpeaker = speakersQuery.ToEntityArray(Allocator.TempJob);
+        //JobHandle connectToActiveSpeakerJob = Entities.WithName("LinkToActiveSpeaker").
+        //    WithNone<ConnectedTag>().WithAll<InListenerRadiusTag>().WithReadOnly(inRangeSpeaker).ForEach
+        //(
+        //    (int entityInQueryIndex, Entity entity, ref HostComponent host, in Translation translation) =>
+        //    {
+        //        int closestSpeakerIndex = int.MaxValue;
+        //        float closestDist = float.MaxValue;
+
+        //        for (int i = 0; i < inRangeSpeaker.Length; i++)
+        //        {
+        //            SpeakerComponent speaker = GetComponent<SpeakerComponent>(inRangeSpeaker[i]);
+        //            if (speaker._State != ConnectionState.Pooled)
+        //            {
+        //                float dist = math.distance(translation.Value, GetComponent<Translation>(inRangeSpeaker[i]).Value);
+        //                if (dist < speaker._ConnectionRadius)
+        //                {
+        //                    closestDist = dist;
+        //                    closestSpeakerIndex = GetComponent<SpeakerIndex>(inRangeSpeaker[i]).Value;
+        //                }
+        //            }
+        //        }
+
+        //        if (closestSpeakerIndex != int.MaxValue)
+        //        {
+        //            host._Connected = true;
+        //            host._SpeakerIndex = closestSpeakerIndex;
+        //            ecb.AddComponent(entityInQueryIndex, entity, new ConnectedTag());
+        //        }
+        //    }
+        //).WithDisposeOnCompletion(inRangeSpeaker)
+        //.ScheduleParallel(updateHostRangeJob);
+        //connectToActiveSpeakerJob.Complete();
+
+        //_CommandBufferSystem.AddJobHandleForProducer(connectToActiveSpeakerJob);
+
+
+
+        //----    CONNECT DISCONNECTED HOST TO BEST IN-RANGE ACTIVE SPEAKER
         NativeArray<Entity> inRangeSpeaker = speakersQuery.ToEntityArray(Allocator.TempJob);
         JobHandle connectToActiveSpeakerJob = Entities.WithName("LinkToActiveSpeaker").
             WithNone<ConnectedTag>().WithAll<InListenerRadiusTag>().WithReadOnly(inRangeSpeaker).ForEach
         (
             (int entityInQueryIndex, Entity entity, ref HostComponent host, in Translation translation) =>
             {
-                int closestSpeakerIndex = int.MaxValue;
-                float closestDist = float.MaxValue;
+                int bestSpeakerIndex = int.MaxValue;
+                int bestSpeakerHosts = 0;
+                float bestSpeakerGrainLoad = 1;
+                float bestSpeakerInactiveDuration = 0;
 
                 for (int i = 0; i < inRangeSpeaker.Length; i++)
                 {
                     SpeakerComponent speaker = GetComponent<SpeakerComponent>(inRangeSpeaker[i]);
-                    if (speaker._State != ConnectionState.Pooled)
+                    if (speaker._State == ConnectionState.Active && speaker._GrainLoad < 0.9f && speaker._ConnectedHostCount > bestSpeakerHosts)
                     {
                         float dist = math.distance(translation.Value, GetComponent<Translation>(inRangeSpeaker[i]).Value);
                         if (dist < speaker._ConnectionRadius)
                         {
-                            closestDist = dist;
-                            closestSpeakerIndex = GetComponent<SpeakerIndex>(inRangeSpeaker[i]).Value;
+                            bestSpeakerGrainLoad = speaker._GrainLoad;
+                            bestSpeakerHosts = speaker._ConnectedHostCount;
+                            bestSpeakerIndex = GetComponent<SpeakerIndex>(inRangeSpeaker[i]).Value;
                         }
                     }
                 }
-
-                if (closestSpeakerIndex != int.MaxValue)
+                if (bestSpeakerIndex == int.MaxValue)
+                {
+                    for (int i = 0; i < inRangeSpeaker.Length; i++)
+                    {
+                        SpeakerComponent speaker = GetComponent<SpeakerComponent>(inRangeSpeaker[i]);
+                        if (speaker._State == ConnectionState.Pooled)
+                        {
+                            float dist = math.distance(translation.Value, GetComponent<Translation>(inRangeSpeaker[i]).Value);
+                            if (dist < speaker._ConnectionRadius && speaker._InactiveDuration < bestSpeakerInactiveDuration)
+                            {
+                                bestSpeakerInactiveDuration = speaker._InactiveDuration;
+                                bestSpeakerIndex = GetComponent<SpeakerIndex>(inRangeSpeaker[i]).Value;
+                            }
+                        }
+                    }
+                }
+                if (bestSpeakerIndex != int.MaxValue)
                 {
                     host._Connected = true;
-                    host._SpeakerIndex = closestSpeakerIndex;
+                    host._SpeakerIndex = bestSpeakerIndex;
                     ecb.AddComponent(entityInQueryIndex, entity, new ConnectedTag());
                 }
             }
@@ -146,7 +203,6 @@ public partial class AttachmentSystem : SystemBase
         connectToActiveSpeakerJob.Complete();
 
         _CommandBufferSystem.AddJobHandleForProducer(connectToActiveSpeakerJob);
-
 
 
 

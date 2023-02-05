@@ -98,39 +98,54 @@ public class SpeakerAuthoring : SynthEntityBase
         {
             _State = ConnectionState.Pooled,
             _ConnectionRadius = _ConnectionRadius,
-            _ConnectedHostCount = 0
+            _ConnectedHostCount = 0,
+            _GrainLoad = 0
         });
     }
 
     public override void ProcessComponents()
     {
-        ProcessIndex(_EntityManager.GetComponentData<SpeakerIndex>(_Entity));
-        ProcessTranslation(_EntityManager.GetComponentData<Translation>(_Entity));
-        ProcessPooling(_EntityManager.GetComponentData<SpeakerComponent>(_Entity));
+        ProcessIndex();
+        ProcessTranslation();
+        ProcessPooling();
     }
 
-    public void ProcessIndex(SpeakerIndex index)
+    public void ProcessIndex()
     {
+        SpeakerIndex index = _EntityManager.GetComponentData<SpeakerIndex>(_Entity);
         if (EntityIndex != index.Value)
             _EntityManager.SetComponentData(_Entity, new SpeakerIndex { Value = EntityIndex });
     }
 
-    public void ProcessPooling(SpeakerComponent pooling)
+    public void ProcessTranslation()
     {
+        Translation translation = _EntityManager.GetComponentData<Translation>(_Entity);
+        transform.position = translation.Value;
+    }
+
+    public void ProcessPooling()
+    {
+        SpeakerComponent pooling = _EntityManager.GetComponentData<SpeakerComponent>(_Entity);
+
+        _State = pooling._State;
         _ConnectionRadius = pooling._ConnectionRadius;
         _ConnectedHosts = pooling._ConnectedHostCount;
         _InactiveDuration = pooling._InactiveDuration;
         transform.localScale = Vector3.one * _ConnectionRadius;
 
         UpdateGrainPool();
-        if (_GrainLoad < 0.005f)
+        float newGrainLoad = (_GrainArraySize - _NumGrainsFree) / (float)_GrainArraySize;
+        if (newGrainLoad < 0.005f)
             _GrainLoad = 0;
-        else if (_GrainLoad > 0.995f)
+        else if (newGrainLoad > 0.995f)
             _GrainLoad = 1;
         else
-            _GrainLoad = Mathf.Lerp(_GrainLoad, (_GrainArraySize - _NumGrainsFree) / (float)_GrainArraySize, Time.deltaTime * 10);
+            _GrainLoad = Mathf.Lerp(_GrainLoad, newGrainLoad, Time.deltaTime * 5);
 
-        _State = pooling._State;
+        pooling._GrainLoad = _GrainLoad;
+        _EntityManager.SetComponentData(_Entity, pooling);
+
+
         _TargetVolume = _State != ConnectionState.Pooled ? 1 : 0;
 
         if (Mathf.Abs(_AudioSource.volume - _TargetVolume) < 0.005f)
@@ -146,11 +161,6 @@ public class SpeakerAuthoring : SynthEntityBase
             _CurrentColour.a = _AudioSource.volume / 30;
             _Material.color = _CurrentColour;
         }
-    }
-
-    public void ProcessTranslation(Translation translation)
-    {
-        transform.position = translation.Value;
     }
 
     public override void Deregister()
