@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Reflection;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using Unity.Entities;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using static UnityEngine.EventSystems.EventTrigger;
-using Unity.Transforms;
-using UnityEngine.UI;
 using TMPro;
 
 // PROJECT AUDIO CONFIGURATION NOTES
@@ -49,17 +45,18 @@ public class GrainSynth : MonoBehaviour
 
     [Header("Runtime Dynamics")]
     public int _SampleRate = 44100; // TODO create property
-    public int _CurrentDSPSample; // TODO create property
+    [HideInInspector] public int _CurrentSampleIndex; // TODO create property
+    public int _FrameStartSampleIndex;
     private int _NextFrameIndexEstimate;
     private int _LastFrameSampleDuration = 0;
     private float _GrainsPerFrame = 0;
-    private int _GrainsPerSecond = 0;
-    private int _GrainsPerSecondPeak = 0;
-    private int _GrainsDiscarded = 0;
-    private int _AverageGrainAge = 0;
+    private float _GrainsPerSecond = 0;
+    private float _GrainsPerSecondPeak = 0;
+    [SerializeField] private int _GrainsDiscarded = 0;
+    private float _AverageGrainAge = 0;
     private float _AverageGrainAgeMS = 0;
     [Tooltip("Maximum number of speakers possible, defined by 'numRealVoices' in the project settings audio tab.")]
-    private int _MaxSpeakers = 0;
+    [SerializeField] private int _MaxSpeakers = 0;
 
     private int _SpeakersAllocatedThisFrame = 0;
 
@@ -79,22 +76,27 @@ public class GrainSynth : MonoBehaviour
     public int SamplesPerMS { get { return _SamplesPerMS; } }
     public int QueueDurationSamples { get { return (int)(_QueueDurationMS * SamplesPerMS); } }
     public int BurstStartOffsetRange { get { return (int)(_BurstStartOffsetRangeMS * SamplesPerMS); } }
-    public int GrainDiscardSampleIndex { get { return _CurrentDSPSample - (int)(_DiscardGrainsOlderThanMS * SamplesPerMS); } }
-    public int NextFrameIndexEstimate { get { return _CurrentDSPSample + (int)(_LastFrameSampleDuration * (1 + _DelayPercentLastFrame / 100)); } }
+    public int GrainDiscardSampleIndex { get { return _FrameStartSampleIndex - (int)(_DiscardGrainsOlderThanMS * SamplesPerMS); } }
+    public int NextFrameIndexEstimate { get { return _FrameStartSampleIndex + (int)(_LastFrameSampleDuration * (1 + _DelayPercentLastFrame / 100)); } }
 
 
     [Header(header: "Speaker Configuration")]
+    [Tooltip("Maximum distance from the listener to enable emitters and allocate speakers.")]
+    [Range(0.1f, 50)] public float _ListenerRadius = 20;
+    [Tooltip("Speaker prefab to spawn when dynamically allocating speakers.")]
     public SpeakerAuthoring _SpeakerPrefab;
     [Tooltip("Transform to contain spawned speakers.")]
     [SerializeField] private Transform _SpeakerParentTransform;
     [Tooltip("World coordinates to store pooled speakers.")]
     [SerializeField] private Vector3 _SpeakerPoolingPosition = Vector3.down * 20;
     [Tooltip("Target number of speakers to be spawned and managed by the synth system.")]
-    [Range(0, 255)] [SerializeField] private int _SpeakersAllocated = 32;
+    [Range(0, 255)][SerializeField] private int _SpeakersAllocated = 32;
     [Tooltip("(TODO): Minimum time (seconds) to instantiate/destroy speakers. Affects performance only during start time or when altering the 'Speakers Allocated' value above.")]
     [Range(0, 16)] [SerializeField] private int _MaxSpeakerAllocationPerFrame = 2;
-    [Tooltip("Maximum distance from the listener to enable emitters and allocate speakers.")]
-    [Range(0.1f, 50)] public float _ListenerRadius = 20;
+    [Tooltip("Number of grains allocated to each speaker. Every frame the synth manager distributes grains to each grain's target speaker, which holds on to the grain object until all samples have been written to the output buffer.")]
+    [Range(0, 255)][SerializeField] private int _SpeakerGrainArraySize = 100;
+    [Tooltip("The ratio of busy(?):(1)empty grains in each speaker before it is considered 'busy' and deprioritised as a target for additional emitters by the attachment system.")]
+    [Range(0.1f, 45)] public float _SpeakerBusyLoadLimit = 0.5f;
     [Tooltip("Arc length in degrees from the listener position that emitters can be attached to a speaker.")]
     [Range(0.1f, 45)] public float _SpeakerAttachArcDegrees = 10;
     [Tooltip("How quicklyt speakers follow their targets. Increasing this value helps the speaker track its target, but can start invoking inappropriate doppler if tracking high numbers of ephemeral emitters.")]
@@ -161,6 +163,7 @@ public class GrainSynth : MonoBehaviour
 
     private void Update()
     {
+        _FrameStartSampleIndex = _CurrentSampleIndex;
         _LastFrameSampleDuration = (int)(Time.deltaTime * _SampleRate);
         _NextFrameIndexEstimate = NextFrameIndexEstimate;
 
@@ -172,6 +175,7 @@ public class GrainSynth : MonoBehaviour
         DistributeGrains();
 
         UpdateHosts();
+        UpdateEmitters();
 
         UpdateEntity(_AudioTimerEntity, EntityType.AudioTimer);
 
@@ -224,22 +228,22 @@ public class GrainSynth : MonoBehaviour
         if (_EntityManager.HasComponent<AudioTimerComponent>(entity))
             _EntityManager.SetComponentData(entity, new AudioTimerComponent
             {
-                _LastActualDSPIndex = _CurrentDSPSample,
+                _LastActualDSPIndex = _CurrentSampleIndex,
                 _NextFrameIndexEstimate = NextFrameIndexEstimate,
                 _GrainQueueSampleDuration = QueueDurationSamples,
                 _PreviousFrameSampleDuration = _LastFrameSampleDuration,
                 _RandomiseBurstStartIndex = BurstStartOffsetRange,
-                _AverageGrainAge = _AverageGrainAge
+                _AverageGrainAge = (int)_AverageGrainAge
             });
         else
             _EntityManager.AddComponentData(entity, new AudioTimerComponent
             {
-                _LastActualDSPIndex = _CurrentDSPSample,
+                _LastActualDSPIndex = _CurrentSampleIndex,
                 _NextFrameIndexEstimate = NextFrameIndexEstimate,
                 _GrainQueueSampleDuration = QueueDurationSamples,
                 _PreviousFrameSampleDuration = _LastFrameSampleDuration,
                 _RandomiseBurstStartIndex = BurstStartOffsetRange,
-                _AverageGrainAge = _AverageGrainAge
+                _AverageGrainAge = (int)_AverageGrainAge
             });
     }
 
@@ -251,6 +255,7 @@ public class GrainSynth : MonoBehaviour
                 _DeltaTime = Time.deltaTime,
                 _ListenerPos = _Listener.transform.position,
                 _ListenerRadius = _ListenerRadius,
+                _BusyLoadLimit = _SpeakerBusyLoadLimit,
                 _ArcDegrees = _SpeakerAttachArcDegrees,
                 _TranslationSmoothing = AttachSmoothing,
                 _DisconnectedPosition = _SpeakerPoolingPosition,
@@ -262,6 +267,7 @@ public class GrainSynth : MonoBehaviour
                 _DeltaTime = 0,
                 _ListenerPos = _Listener.transform.position,
                 _ListenerRadius = _ListenerRadius,
+                _BusyLoadLimit = _SpeakerBusyLoadLimit,
                 _ArcDegrees = _SpeakerAttachArcDegrees,
                 _TranslationSmoothing = AttachSmoothing,
                 _DisconnectedPosition = _SpeakerPoolingPosition,
@@ -328,8 +334,8 @@ public class GrainSynth : MonoBehaviour
         NativeArray<Entity> grainEntities = _GrainQuery.ToEntityArray(Allocator.TempJob);
         int grainCount = grainEntities.Length;
         _GrainsPerFrame = Mathf.Lerp(_GrainsPerFrame, grainCount, Time.deltaTime * 5);
-        _GrainsPerSecond = (int)Mathf.Lerp(_GrainsPerSecond, grainCount / Time.deltaTime, Time.deltaTime * 2);
-        _GrainsPerSecondPeak = Math.Max(_GrainsPerSecondPeak, _GrainsPerSecond);
+        _GrainsPerSecond = Mathf.Lerp(_GrainsPerSecond, grainCount / Time.deltaTime, Time.deltaTime * 2);
+        _GrainsPerSecondPeak = Math.Max(_GrainsPerSecondPeak, grainCount / Time.deltaTime);
 
         if (_Speakers.Count == 0 && grainCount > 0)
         {
@@ -340,13 +346,14 @@ public class GrainSynth : MonoBehaviour
         }
 
         GrainComponent grain;
+        float ageSum = 0;
 
         for (int i = 0; i < grainCount; i++)
         {
             grain = _EntityManager.GetComponentData<GrainComponent>(grainEntities[i]);
+            ageSum += _FrameStartSampleIndex - grain._StartSampleIndex;
+
             SpeakerAuthoring speaker = GetSpeakerForGrain(grain);
-            _AverageGrainAge = (int)Mathf.Lerp(_AverageGrainAge, _CurrentDSPSample - grain._StartSampleIndex, Time.deltaTime * 2);
-            _AverageGrainAgeMS = (float)_AverageGrainAge / SamplesPerMS;
 
             if (speaker == null || grain._StartSampleIndex < GrainDiscardSampleIndex || speaker.GetEmptyGrain(out Grain grainOutput) == null)
             {
@@ -354,7 +361,6 @@ public class GrainSynth : MonoBehaviour
                 _GrainsDiscarded++;
                 continue;
             }
-
             try
             {
                 NativeArray<float> grainSamples = _EntityManager.GetBuffer<GrainSampleBufferElement>(grainEntities[i]).Reinterpret<float>().ToNativeArray(Allocator.Temp);
@@ -374,6 +380,12 @@ public class GrainSynth : MonoBehaviour
             _EntityManager.DestroyEntity(grainEntities[i]);
         }
         grainEntities.Dispose();
+
+        if (grainCount > 0)
+        {
+            _AverageGrainAge = Mathf.Lerp(_AverageGrainAge, ageSum / grainCount, Time.deltaTime * 5);
+            _AverageGrainAgeMS = _AverageGrainAge / SamplesPerMS;
+        }
     }
 
     public static unsafe void NativeToManagedCopyMemory(float[] targetArray, NativeArray<float> SourceNativeArray)
@@ -395,6 +407,7 @@ public class GrainSynth : MonoBehaviour
 
     public void UpdateHosts()
     {
+        TrimHostList();
         foreach (HostAuthoring host in _Hosts)
             if (host != null)
                 host.PrimaryUpdate();
@@ -402,6 +415,7 @@ public class GrainSynth : MonoBehaviour
 
     public void UpdateEmitters()
     {
+        TrimEmitterList();
         foreach (EmitterAuthoring emitter in _Emitters)
             if (emitter != null)
                 emitter.PrimaryUpdate();
@@ -496,28 +510,66 @@ public class GrainSynth : MonoBehaviour
 
     public int RegisterHost(HostAuthoring host)
     {
-        _Hosts.Remove(host);
-        _HostCounter++;
+        //_Hosts.Remove(host);
+        //_HostCounter++;
+        //_Hosts.Add(host);
+        //return _HostCounter - 1;
+
+        for (int i = 0; i < _Hosts.Count; i++)
+            if (_Hosts[i] == null)
+            {
+                _Hosts[i] = host;
+                return i;
+            }
         _Hosts.Add(host);
-        return _HostCounter - 1;
+        return _Hosts.Count - 1;
+    }
+
+    public void TrimHostList()
+    {
+        for (int i = _Hosts.Count - 1; i >= 0; i--)
+        {
+            if (_Hosts[i] == null)
+                _Hosts.RemoveAt(i);
+            else return;
+        }
     }
 
     public void DeregisterHost(HostAuthoring host)
     {
-        _Hosts.Remove(host);
+        //_Hosts.Remove(host);
     }
 
     public int RegisterEmitter(EmitterAuthoring emitter)
     {
-        _Emitters.Remove(emitter);
-        _EmitterCounter++;
+        //_Emitters.Remove(emitter);
+        //_EmitterCounter++;
+        //_Emitters.Add(emitter);
+        //return _EmitterCounter - 1;
+
+        for (int i = 0; i < _Emitters.Count; i++)
+            if (_Emitters[i] == null)
+            {
+                _Emitters[i] = emitter;
+                return i;
+            }
         _Emitters.Add(emitter);
-        return _EmitterCounter - 1;
+        return _Emitters.Count - 1;
+    }
+
+    public void TrimEmitterList()
+    {
+        for (int i = _Emitters.Count - 1; i >= 0; i--)
+        {
+            if (_Emitters[i] == null)
+                _Emitters.RemoveAt(i);
+            else return;
+        }
     }
 
     public void DeregisterEmitter(EmitterAuthoring emitter)
     {
-        _Emitters.Remove(emitter);
+        //_Emitters.Remove(emitter);
     }
 
     #endregion
@@ -527,7 +579,7 @@ public class GrainSynth : MonoBehaviour
     void OnAudioFilterRead(float[] data, int channels)
     {
         for (int dataIndex = 0; dataIndex < data.Length; dataIndex += channels)
-            _CurrentDSPSample++;
+            _CurrentSampleIndex++;
     }
 
     #endregion
@@ -538,11 +590,11 @@ public class GrainSynth : MonoBehaviour
     {
         if (_StatsValuesText != null)
         {
-            _StatsValuesText.text = $"{_GrainsPerSecond}\n{_GrainsDiscarded}\n{_AverageGrainAgeMS.ToString("F2")}";
+            _StatsValuesText.text = $"{(int)_GrainsPerSecond}\n{_GrainsDiscarded}\n{_AverageGrainAgeMS.ToString("F2")}";
         }
         if (_StatsValuesText != null )
         {
-            _StatsValuesPeakText.text = $"{_GrainsPerSecondPeak}";
+            _StatsValuesPeakText.text = $"{(int)_GrainsPerSecondPeak}";
         }
 
     }

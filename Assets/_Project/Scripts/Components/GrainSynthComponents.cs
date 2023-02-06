@@ -46,6 +46,7 @@ public struct ConnectionConfig : IComponentData
     public float _DeltaTime;
     public float _ArcDegrees;
     public float _ListenerRadius;
+    public float _BusyLoadLimit;
     public float _SpeakerLingerTime;
     public float _TranslationSmoothing;
     public float3 _DisconnectedPosition;

@@ -53,7 +53,7 @@ public class SynthEntityBase : MonoBehaviour
     {
         _EntityIndex = index;
         SetEntityType();
-        name = $"{Enum.GetName(typeof(SynthEntityType), _EntityType)}.{_EntityIndex}.{transform.parent.name}";
+        name = $"{Enum.GetName(typeof(SynthEntityType), _EntityType)}.{_EntityIndex}";
         SetEntityName();
     }
 

@@ -1,5 +1,17 @@
 {
   "dependencies": {
+    "com.akb.knn": {
+      "version": "https://github.com/joanllobera/KNN.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.burst": "1.1.2",
+        "com.unity.collections": "0.1.1-preview",
+        "com.unity.mathematics": "1.1.0",
+        "com.unity.jobs": "0.1.1-preview"
+      },
+      "hash": "24fa935b9bb18fd275a899b5ebea8a6955d5e86e"
+    },
     "com.unity.2d.tilemap": {
       "version": "1.0.0",
       "depth": 0,

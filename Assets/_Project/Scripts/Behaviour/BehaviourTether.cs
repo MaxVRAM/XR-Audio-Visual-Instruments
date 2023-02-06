@@ -24,13 +24,14 @@ public class BehaviourTether : BehaviourClass
             _Attachment._TransformA = _SpawnedObject.transform;
         if (_Attachment._TransformB == null)
             _Attachment._TransformB = _ControllerObject.transform;
-        _Attachment._Active = true;
+        _Attachment._Active = _LineVisible;
         enabled = true;
         gameObject.SetActive(true);
     }
 
     void Update()
     {
+        _Attachment._Active = _LineVisible;
     }
 
     public override void UpdateBehaviour(BehaviourClass behaviour)

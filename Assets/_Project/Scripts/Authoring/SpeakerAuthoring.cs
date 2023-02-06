@@ -51,8 +51,8 @@ public class SpeakerAuthoring : SynthEntityBase
 
     private MeshRenderer _MeshRenderer;
     private Material _Material;
-    private Color _ActiveColor = Color.white;
-    private Color _OverloadColor = Color.red;
+    private Color _ActiveColor = new Color(1,1,1,0.01f);
+    private Color _OverloadColor = new Color(1, 0, 0, 0.02f);
     private Color _CurrentColour;
     private AudioSource _AudioSource;
     private Grain[] _GrainArray;
@@ -127,7 +127,9 @@ public class SpeakerAuthoring : SynthEntityBase
     {
         SpeakerComponent pooling = _EntityManager.GetComponentData<SpeakerComponent>(_Entity);
 
+        bool stateChanged = _State != pooling._State;
         _State = pooling._State;
+
         _ConnectionRadius = pooling._ConnectionRadius;
         _ConnectedHosts = pooling._ConnectedHostCount;
         _InactiveDuration = pooling._InactiveDuration;
@@ -155,11 +157,18 @@ public class SpeakerAuthoring : SynthEntityBase
 
         if (_MeshRenderer != null)
         {
-
-            _MeshRenderer.enabled = _State != ConnectionState.Pooled;
-            _CurrentColour = Color.Lerp(_ActiveColor, _OverloadColor, _GrainLoad);
-            _CurrentColour.a = _AudioSource.volume / 30;
-            _Material.color = _CurrentColour;
+            if (_State == ConnectionState.Active && !stateChanged)
+            {
+                _MeshRenderer.enabled = true;
+                _CurrentColour = Color.Lerp(_ActiveColor, _OverloadColor, _GrainLoad);
+                _Material.color = _CurrentColour;
+            }
+            else
+            {
+                _MeshRenderer.enabled = false;
+                _CurrentColour = _ActiveColor;
+                _Material.color = _CurrentColour;
+            }
         }
     }
 
@@ -215,7 +224,7 @@ public class SpeakerAuthoring : SynthEntityBase
         if (!_EntityInitialised)
             return;
         _NumGrainsFree--;
-        OnGrainEmitted?.Invoke(grainData, GrainSynth.Instance._CurrentDSPSample);
+        OnGrainEmitted?.Invoke(grainData, GrainSynth.Instance._CurrentSampleIndex);
     }
 
     public Grain GetEmptyGrain(out Grain grain)
@@ -249,7 +258,7 @@ public class SpeakerAuthoring : SynthEntityBase
             return;
         
         Grain grainData;
-        int _CurrentDSPSample = GrainSynth.Instance._CurrentDSPSample;
+        int _CurrentDSPSample = GrainSynth.Instance._CurrentSampleIndex;
 
         // Populate audio buffer with grain samples and maintain sample index for successive buffers
         for (int dataIndex = 0; dataIndex < data.Length; dataIndex += channels)

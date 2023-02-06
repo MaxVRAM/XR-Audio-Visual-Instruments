@@ -157,7 +157,6 @@ public class HostAuthoring : SynthEntityBase
         foreach (EmitterAuthoring emitter in _HostedEmitters)
         {
             emitter.UpdateDistanceAmplitude(_ListenerDistance / GrainSynth.Instance._ListenerRadius, speakerAmplitudeFactor);
-            emitter.PrimaryUpdate();
         }
     }
 

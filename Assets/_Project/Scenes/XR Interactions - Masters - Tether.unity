@@ -372,18 +372,18 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _RandomPrefab: 0
   _ActiveObjects: []
-  _WaitBeforeSpawning: 2
-  _SpawnablesAllocated: 4
-  _SpawnPeriodSeconds: 1
+  _WaitBeforeSpawning: 3
+  _SpawnablesAllocated: 1
+  _SpawnPeriodSeconds: 0.01
   _AutoSpawn: 1
   _AutoRemove: 1
   _ObjectLifespan: 4
   _LifespanVariance: 0
   _DestroyRadius: 40
-  _EjectionRadius: 1
+  _EjectionRadius: 5
   _EjectionPositionVariance: 1
   _EjectionPosition: {x: 0, y: 0, z: 0}
-  _EjectionSpeed: 10
+  _EjectionSpeed: 30
   _EjectionDirectionVariance: 1
   _EjectionDirection: {x: 0, y: 0, z: 0}
   _AllowSiblingSurfaceContact: 1
@@ -520,22 +520,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _SampleRate: 0
-  _CurrentDSPSample: 0
+  _CurrentSampleIndex: 0
+  _FrameStartSampleIndex: 0
+  _GrainsDiscarded: 0
+  _MaxSpeakers: 0
   _QueueDurationMS: 30
   _DelayPercentLastFrame: 12
   _DiscardGrainsOlderThanMS: 50
   _BurstStartOffsetRangeMS: 8
   _BurstDebounceDurationMS: 50
+  _ListenerRadius: 35
   _SpeakerPrefab: {fileID: 2519325204652697373, guid: 6844ced249a80dd4584a457e05fa1c66,
     type: 3}
   _SpeakerParentTransform: {fileID: 1810087969}
   _SpeakerPoolingPosition: {x: 0, y: -100, z: 0}
-  _SpeakersAllocated: 10
+  _SpeakersAllocated: 100
   _MaxSpeakerAllocationPerFrame: 1
-  _ListenerRadius: 35
-  _SpeakerAttachArcDegrees: 20
-  _SpeakerTrackingSpeed: 50
-  _SpeakerLingerTime: 300
+  _SpeakerGrainArraySize: 100
+  _SpeakerBusyLoadLimit: 0.5
+  _SpeakerAttachArcDegrees: 12
+  _SpeakerTrackingSpeed: 30
+  _SpeakerLingerTime: 500
   _StatsValuesText: {fileID: 1931825995}
   _StatsValuesPeakText: {fileID: 475395361}
   _DrawAttachmentLines: 1
@@ -3269,7 +3274,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 400, y: 274}
+  m_AnchoredPosition: {x: 410, y: 274}
   m_SizeDelta: {x: 300, y: 400}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &475395361
@@ -10362,6 +10367,51 @@ PrefabInstance:
         type: 3}
       propertyPath: _DistanceAttenuationFactor
       value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 6566134665840452837, guid: 02ec51453b34a444bb3fa1cd193668aa,
+        type: 3}
+      propertyPath: _Properties._Density._Idle
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 6566134665840452837, guid: 02ec51453b34a444bb3fa1cd193668aa,
+        type: 3}
+      propertyPath: _Properties._Playhead._Idle
+      value: 0.124
+      objectReference: {fileID: 0}
+    - target: {fileID: 6566134665840452837, guid: 02ec51453b34a444bb3fa1cd193668aa,
+        type: 3}
+      propertyPath: _Properties._GrainDuration._Idle
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 6566134665840452837, guid: 02ec51453b34a444bb3fa1cd193668aa,
+        type: 3}
+      propertyPath: _Properties._Transpose._Noise._Amount
+      value: 0.056
+      objectReference: {fileID: 0}
+    - target: {fileID: 6566134665840452837, guid: 02ec51453b34a444bb3fa1cd193668aa,
+        type: 3}
+      propertyPath: _Properties._Volume._InteractionAmount
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6566134665840452837, guid: 02ec51453b34a444bb3fa1cd193668aa,
+        type: 3}
+      propertyPath: _Properties._Density._InteractionAmount
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6566134665840452837, guid: 02ec51453b34a444bb3fa1cd193668aa,
+        type: 3}
+      propertyPath: _Properties._GrainDuration._Noise._Amount
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6566134665840452837, guid: 02ec51453b34a444bb3fa1cd193668aa,
+        type: 3}
+      propertyPath: _Properties._GrainDuration._Noise._Perlin
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6566134665840452837, guid: 02ec51453b34a444bb3fa1cd193668aa,
+        type: 3}
+      propertyPath: _Properties._GrainDuration._InteractionAmount
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 02ec51453b34a444bb3fa1cd193668aa, type: 3}

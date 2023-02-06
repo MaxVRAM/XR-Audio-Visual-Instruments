@@ -42,7 +42,7 @@ public class ContinuousAuthoring : EmitterAuthoring
             _PingPong = _PingPongGrainPlayheads,
             _SamplesUntilFade = _Host._SpawnLife.SamplesUntilFade(_AgeFadeout),
             _SamplesUntilDeath = _Host._SpawnLife.SamplesUntilDeath(),
-            _LastSampleIndex = GrainSynth.Instance._CurrentDSPSample,
+            _LastSampleIndex = GrainSynth.Instance._CurrentSampleIndex,
             _OutputSampleRate = AudioSettings.outputSampleRate,
 
             _Playhead = new ModulationComponent

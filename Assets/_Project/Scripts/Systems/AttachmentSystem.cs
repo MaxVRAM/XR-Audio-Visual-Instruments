@@ -164,7 +164,7 @@ public partial class AttachmentSystem : SystemBase
                 for (int i = 0; i < inRangeSpeaker.Length; i++)
                 {
                     SpeakerComponent speaker = GetComponent<SpeakerComponent>(inRangeSpeaker[i]);
-                    if (speaker._State == ConnectionState.Active && speaker._GrainLoad < 0.9f && speaker._ConnectedHostCount > bestSpeakerHosts)
+                    if (speaker._State == ConnectionState.Active && speaker._GrainLoad < connectionConfig._BusyLoadLimit && speaker._ConnectedHostCount > bestSpeakerHosts)
                     {
                         float dist = math.distance(translation.Value, GetComponent<Translation>(inRangeSpeaker[i]).Value);
                         if (dist < speaker._ConnectionRadius)
