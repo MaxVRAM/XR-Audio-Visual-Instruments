@@ -372,12 +372,12 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _RandomPrefab: 0
   _ActiveObjects: []
-  _WaitBeforeSpawning: 3
+  _WaitBeforeSpawning: 2
   _SpawnablesAllocated: 1
-  _SpawnPeriodSeconds: 0.01
+  _SpawnPeriodSeconds: 0.1
   _AutoSpawn: 1
   _AutoRemove: 1
-  _ObjectLifespan: 4
+  _ObjectLifespan: 20
   _LifespanVariance: 0
   _DestroyRadius: 40
   _EjectionRadius: 5
@@ -544,7 +544,7 @@ MonoBehaviour:
   _StatsValuesText: {fileID: 1931825995}
   _StatsValuesPeakText: {fileID: 475395361}
   _DrawAttachmentLines: 1
-  _AttachmentLineMat: {fileID: 2100000, guid: 9b11db608c7528743b0fd535e4db2ec6, type: 2}
+  _AttachmentLineMat: {fileID: 2100000, guid: 96663e35961d281459bbcc36e6b84157, type: 2}
   _AttachmentLineWidth: 0.01
   _OnlyTriggerMostRigidSurface: 1
   _Hosts: []
@@ -4984,7 +4984,14 @@ MonoBehaviour:
 
     Grains Discarded:
 
-    Grain Age (ms):'
+    Grain Age (ms):
+
+    Speaker
+    Count:
+
+    Emitter Count:
+
+    Host Count:'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -5700,7 +5707,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1106178825
 Transform:
   m_ObjectHideFlags: 0
@@ -10301,6 +10308,11 @@ PrefabInstance:
     - target: {fileID: 3855671869938862442, guid: 02ec51453b34a444bb3fa1cd193668aa,
         type: 3}
       propertyPath: m_UseGravity
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3855671869938862445, guid: 02ec51453b34a444bb3fa1cd193668aa,
+        type: 3}
+      propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3855671869938862446, guid: 02ec51453b34a444bb3fa1cd193668aa,

@@ -27,9 +27,11 @@ namespace MaxVRAM
 
         private float _TimePeriod = 1000;
         private float _TimeCounter = 0;
+        public float TimeCounter { get { return _TimeCounter; } }
 
         private int _SamplePeriod = AudioSettings.outputSampleRate;
         private int _SampleCounter = 0;
+        public float SampleCounter { get { return _SampleCounter; } }
 
         public ActionTimer(TimeUnit unit, float timePeriod)
         {
@@ -52,6 +54,17 @@ namespace MaxVRAM
             _Unit = unit;
             _SampleCounter = 0;
             ChangePeriod(samplePeriod);
+        }
+
+        public bool DrainTrigger()
+        {
+            if (_LatestTriggerCount > 0)
+            {
+                _LatestTriggerCount--;
+                return true;
+            }
+            else
+                return false;
         }
 
         public int UpdateTrigger(float delta, float? period)
@@ -95,17 +108,6 @@ namespace MaxVRAM
                 _LatestTriggerCount = count;
                 return count;
             }
-        }
-
-        public bool DrainTrigger()
-        {
-            if (_LatestTriggerCount > 0)
-            {
-                _LatestTriggerCount--;
-                return true;
-            }
-            else
-                return false;
         }
 
         public void Reset(TimeUnit? unit = null)

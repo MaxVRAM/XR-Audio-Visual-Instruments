@@ -136,13 +136,13 @@ public class SpeakerAuthoring : SynthEntityBase
         transform.localScale = Vector3.one * _ConnectionRadius;
 
         UpdateGrainPool();
-        float newGrainLoad = (_GrainArraySize - _NumGrainsFree) / (float)_GrainArraySize;
+        float newGrainLoad = 1 - (float)_NumGrainsFree / _GrainArraySize;
         if (newGrainLoad < 0.005f)
             _GrainLoad = 0;
         else if (newGrainLoad > 0.995f)
             _GrainLoad = 1;
         else
-            _GrainLoad = Mathf.Lerp(_GrainLoad, newGrainLoad, Time.deltaTime * 5);
+            _GrainLoad = Mathf.Lerp(_GrainLoad, newGrainLoad, Time.deltaTime * 3);
 
         pooling._GrainLoad = _GrainLoad;
         _EntityManager.SetComponentData(_Entity, pooling);

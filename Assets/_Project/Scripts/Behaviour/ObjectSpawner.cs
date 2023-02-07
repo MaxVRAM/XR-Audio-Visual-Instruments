@@ -32,7 +32,9 @@ public class ObjectSpawner : MonoBehaviour
     private float _StartTime = int.MaxValue;
     private bool _StartTimeReached = false;
     [SerializeField] [Range(0, 100)] private int _SpawnablesAllocated = 10;
-    [SerializeField] [Range(0.01f, 2f)] private float _SpawnPeriodSeconds = 0.1f;
+    [Tooltip("Period (seconds) to instantiate/destroy spawnables.")]
+    [Range(0.01f, 1)][SerializeField] private float _SpawnPeriodSeconds = 0.2f;
+    private ActionTimer _SpawnTimer;
     [SerializeField] private bool _AutoSpawn = true;
     [SerializeField] private bool _AutoRemove = true;
 
@@ -83,6 +85,7 @@ public class ObjectSpawner : MonoBehaviour
     void Awake()
     {
         StartCoroutine(ClearCollisions());
+        _SpawnTimer = new ActionTimer(TimeUnit.sec, _SpawnPeriodSeconds);
     }
 
     IEnumerator ClearCollisions()
@@ -97,20 +100,20 @@ public class ObjectSpawner : MonoBehaviour
 
     void Update()
     {
-        _SecondsSinceSpawn = float.IsFinite(_SecondsSinceSpawn) ? _SecondsSinceSpawn : 0;
-        _SecondsSinceSpawn += Time.deltaTime;
+        _SpawnTimer.UpdateTrigger(Time.deltaTime, _SpawnPeriodSeconds);
 
         if (ReadyToSpawn())
         {
-            if (_ActiveObjects.Count < _SpawnablesAllocated && _AutoSpawn)
-                if (CreateNewSpawnable())
-                {
-                    _EmissiveIntensity = 10;
-                }
-            else if (_ActiveObjects.Count > _SpawnablesAllocated && _AutoRemove)
-                RemoveOverSpawnTarget();
+            if (_ActiveObjects.Count < _SpawnablesAllocated && _AutoSpawn && _SpawnTimer.DrainTrigger())
+            {
+                _ActiveObjects.Add(CreateSpawnable());
+                _EmissiveIntensity = 10;
+            }
+            else if (_ActiveObjects.Count > _SpawnablesAllocated && _AutoRemove && _SpawnTimer.DrainTrigger())
+                RemoveSpawnable(0);
         }
         _ActiveObjects.RemoveAll(item => item == null);
+
         UpdateShaderModulation();
     }
 
@@ -120,14 +123,12 @@ public class ObjectSpawner : MonoBehaviour
             return false;
         if (!_StartTimeReached)
         {
-            if (_SecondsSinceSpawn > _StartTime)
+            if (Time.time > _StartTime)
                 _StartTimeReached = true;
             else
                 return false;
         }
         if ((_ControllerObject == null | _PrefabToSpawn == null) && !InitialiseSpawner())
-            return false;
-        if (_ActiveObjects.Count == _SpawnablesAllocated || _SecondsSinceSpawn < _SpawnPeriodSeconds)
             return false;
         return true;
     }
@@ -141,9 +142,7 @@ public class ObjectSpawner : MonoBehaviour
 
         _ControllerRenderer = GetComponentInChildren<Renderer>();
         if (_ControllerRenderer != null)
-        {
             _EmissiveColour = _ControllerRenderer.material.GetColor("_EmissiveColor");
-        }
 
         if (_SpawnableHost == null)
             _SpawnableHost = gameObject;
@@ -166,24 +165,14 @@ public class ObjectSpawner : MonoBehaviour
         return true;
     }
 
-    public bool CreateNewSpawnable()
+    public GameObject CreateSpawnable()
     {
-        if (!InstantiatePrefab(out GameObject newObject))
-        {
-            _Initialised = false;
-            return false;
-        }
-
+        InstantiatePrefab(out GameObject newObject);
         SpawnableManager spawnableManager = AttachSpawnableManager(newObject);
         ConfigureSpawnableBehaviour(newObject);
         ConfigureEmitterHost(newObject, spawnableManager);
-
-
         newObject.SetActive(true);
-        _ActiveObjects.Add(newObject);
-        _SecondsSinceSpawn = 0;
-        _ObjectCounter++;
-        return true;
+        return newObject;
     }
 
     public bool InstantiatePrefab(out GameObject newObject)
@@ -208,18 +197,10 @@ public class ObjectSpawner : MonoBehaviour
             return true;
 
         Vector3 directionVector = (_ControllerObject.transform.position - spawnPosition).normalized;
-        //Quaternion directionRotation = Quaternion.LookRotation(spawnDirection, new Vector3(0,1,0));
         Quaternion directionRotation = Quaternion.FromToRotation(spawnDirection, directionVector);
         Vector3 rotatedDirection = directionRotation * directionVector;
-
-
         Vector3 spawnVelocity = rotatedDirection * _EjectionSpeed;
         rb.velocity = spawnVelocity;
-
-        //Vector3 spawnDirection = Vector3.Slerp(spawnHeading, -spawnPositionOffset, 1);
-        //Vector3 spawnDirection = Vector3.Cross(_EjectionDirection.normalized, -spawnPositionOffset);
-
-
         return true;
     }
 
@@ -259,14 +240,11 @@ public class ObjectSpawner : MonoBehaviour
         newHost.AddBehaviourInputSource(spawnable);
     }
 
-    public void RemoveOverSpawnTarget()
+    public void RemoveSpawnable(int index)
     {
-        if (_ActiveObjects[0] != null)
-        {
-            Destroy(_ActiveObjects[0]);
-            _SecondsSinceSpawn = 0;
-        }
-        _ActiveObjects.RemoveAt(0);
+        if (_ActiveObjects[index] != null)
+            Destroy(_ActiveObjects[index]);
+        _ActiveObjects.RemoveAt(index);
 
     }
 

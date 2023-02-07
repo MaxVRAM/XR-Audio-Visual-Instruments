@@ -61,6 +61,10 @@ public class GrainSynth : MonoBehaviour
     [SerializeField] private int _GrainsDiscarded = 0;
     private float _AverageGrainAge = 0;
     private float _AverageGrainAgeMS = 0;
+    private int _SpeakerCount;
+    private int _HostCount;
+    private int _EmitterCount;
+
     [Tooltip("Maximum number of speakers possible, defined by 'numRealVoices' in the project settings audio tab.")]
     [SerializeField] private int _MaxSpeakers = 0;
 
@@ -97,7 +101,7 @@ public class GrainSynth : MonoBehaviour
     [Range(0, 255)][SerializeField] private int _SpeakersAllocated = 32;
     [Tooltip("Period (seconds) to instantiate/destroy speakers. Affects performance only during start time or when altering the 'Speakers Allocated' value during runtime.")]
     [Range(0.01f, 1)] [SerializeField] private float _SpeakerAllocationPeriod = 0.2f;
-    private ActionTimer _SpeakerAllocationTrigger;
+    private ActionTimer _SpeakerAllocationTimer;
     [Tooltip("Number of grains allocated to each speaker. Every frame the synth manager distributes grains to each grain's target speaker, which holds on to the grain object until all samples have been written to the output buffer.")]
     [Range(0, 255)][SerializeField] private int _SpeakerGrainArraySize = 100;
     [Tooltip("The ratio of busy(?):(1)empty grains in each speaker before it is considered 'busy' and deprioritised as a target for additional emitters by the attachment system.")]
@@ -142,7 +146,7 @@ public class GrainSynth : MonoBehaviour
         Instance = this;
         _SampleRate = AudioSettings.outputSampleRate;
         _SamplesPerMS = (int)(_SampleRate * .001f);
-        _SpeakerAllocationTrigger = new ActionTimer(TimeUnit.sec, _SpeakerAllocationPeriod);
+        _SpeakerAllocationTimer = new ActionTimer(TimeUnit.sec, _SpeakerAllocationPeriod);
         _MaxSpeakers = AudioSettings.GetConfiguration().numRealVoices;
         CheckSpeakerAllocation();
     }
@@ -439,7 +443,7 @@ public class GrainSynth : MonoBehaviour
             Debug.Log($"Warning: Number of synth speakers ({_SpeakersAllocated}) cannot exceed number of audio voices {_MaxSpeakers} configured in the project settings.");
             _SpeakersAllocated = _MaxSpeakers;
         }
-        _SpeakerAllocationTrigger.UpdateTrigger(Time.deltaTime, _SpeakerAllocationPeriod);
+        _SpeakerAllocationTimer.UpdateTrigger(Time.deltaTime, _SpeakerAllocationPeriod);
     }
 
     public SpeakerAuthoring CreateSpeaker(int index)
@@ -456,15 +460,13 @@ public class GrainSynth : MonoBehaviour
             if (_Speakers[i] == null)
                 _Speakers[i] = CreateSpeaker(i);
             if (_Speakers[i] != null && _Speakers[i].EntityIndex != i)
-            {
                 _Speakers[i].SetIndex(i);
-            }
         }
-        while (_Speakers.Count < SpeakersAllocated && _SpeakerAllocationTrigger.DrainTrigger())
+        while (_Speakers.Count < SpeakersAllocated && _SpeakerAllocationTimer.DrainTrigger())
         {
             _Speakers.Add(CreateSpeaker(_Speakers.Count - 1));
         }
-        while (_Speakers.Count > SpeakersAllocated && _SpeakerAllocationTrigger.DrainTrigger())
+        while (_Speakers.Count > SpeakersAllocated && _SpeakerAllocationTimer.DrainTrigger())
         {
             Destroy(_Speakers[_Speakers.Count - 1].gameObject);
             _Speakers.RemoveAt(_Speakers.Count - 1);
@@ -497,7 +499,6 @@ public class GrainSynth : MonoBehaviour
             return -1;
         return _Speakers.IndexOf(speaker);
     }
-
 
     #endregion
 
@@ -591,9 +592,14 @@ public class GrainSynth : MonoBehaviour
 
     public void UpdateStatsUI()
     {
+        _SpeakerCount = Mathf.CeilToInt(Mathf.Lerp(_SpeakerCount, _Speakers.Count, Time.deltaTime * 10));
+        _HostCount = Mathf.CeilToInt(Mathf.Lerp(_HostCount, _Hosts.Count, Time.deltaTime * 10));
+        _EmitterCount = Mathf.CeilToInt(Mathf.Lerp(_EmitterCount, _Emitters.Count, Time.deltaTime * 10));
+
         if (_StatsValuesText != null)
         {
             _StatsValuesText.text = $"{(int)_GrainsPerSecond}\n{_GrainsDiscarded}\n{_AverageGrainAgeMS.ToString("F2")}";
+            _StatsValuesText.text += $"\n{_SpeakerCount}\n{_HostCount}\n{_EmitterCount}";
         }
         if (_StatsValuesText != null )
         {
@@ -603,7 +609,6 @@ public class GrainSynth : MonoBehaviour
     }
 
     #endregion
-
 
     #region GIZMOS
 
