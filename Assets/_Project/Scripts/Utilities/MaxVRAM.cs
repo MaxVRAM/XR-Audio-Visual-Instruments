@@ -20,83 +20,119 @@ namespace MaxVRAM
 
     public class ActionTimer
     {
-        public TimeUnit _Unit = TimeUnit.ms;
-        public bool _CarryRemainder = true;
+        private TimeUnit _Unit = TimeUnit.ms;
+        private bool _CarryRemainder = true;
+        private int _LatestTriggerCount = 0;
+        public int LatestTriggerCount { get { return _LatestTriggerCount; } }
 
-        public float _PeriodMS = 1000;
-        public float _CounterMS = 0;
+        private float _TimePeriod = 1000;
+        private float _TimeCounter = 0;
 
-        public int _PeriodSamples = AudioSettings.outputSampleRate;
-        public int _CounterSamples = 0;
+        private int _SamplePeriod = AudioSettings.outputSampleRate;
+        private int _SampleCounter = 0;
 
-
-        public ActionTimer(TimeUnit unit, float time = -1)
+        public ActionTimer(TimeUnit unit, float timePeriod)
         {
-            _Unit = unit;
-            _CounterMS = 0;
-            _CounterSamples = 0;
-
-            if (_Unit == TimeUnit.samples)
+            if (unit == TimeUnit.samples)
             {
                 Debug.Log("ActionTimer: Sample-rate timer period can only be defined using integers. This timer will be disabled.");
                 return;
             }
 
-            _PeriodMS = _Unit == TimeUnit.ms ? time : time * 1000;
+            _Unit = unit;
+            _TimeCounter = 0;
+            ChangePeriod(timePeriod);
         }
 
-        public ActionTimer(TimeUnit unit, int samples = -1)
+        public ActionTimer(TimeUnit unit, int samplePeriod)
         {
-            _Unit = unit;
-            _CounterMS = 0;
-            _CounterSamples = 0;
+            if (unit != TimeUnit.samples)
+                return;
 
+            _Unit = unit;
+            _SampleCounter = 0;
+            ChangePeriod(samplePeriod);
+        }
+
+        public int UpdateTrigger(float delta, float? period)
+        {
             if (_Unit == TimeUnit.samples)
-                _PeriodSamples = samples;
+                return 0;
+
+            if (period.HasValue)
+                ChangePeriod(period.Value);
+
+            _TimeCounter += _Unit == TimeUnit.ms ? delta : delta * 1000;
+
+            if (_TimeCounter < _TimePeriod)
+                return 0;
+            else
+            {
+                float factor = (_TimeCounter / _TimePeriod);
+                int count = (int)factor;
+                _TimeCounter = _CarryRemainder ? _TimeCounter - _TimePeriod * factor : 0;
+                _LatestTriggerCount = count;
+                return count;
+            }
+        }
+
+        public int UpdateTrigger(int delta, int? period)
+        {
+            if (_Unit != TimeUnit.samples)
+                return 0;
+
+            if (period.HasValue)
+                ChangePeriod(period.Value);
+
+            _SampleCounter += delta;
+
+            if (_SampleCounter < _SamplePeriod)
+                return 0;
+            else
+            {
+                int count = _SampleCounter / _SamplePeriod;
+                _SampleCounter = _CarryRemainder ? _SampleCounter - _SamplePeriod * count : 0;
+                _LatestTriggerCount = count;
+                return count;
+            }
+        }
+
+        public bool DrainTrigger()
+        {
+            if (_LatestTriggerCount > 0)
+            {
+                _LatestTriggerCount--;
+                return true;
+            }
+            else
+                return false;
         }
 
         public void Reset(TimeUnit? unit = null)
         {
-            if (unit != null)
+            if (unit.HasValue)
                 _Unit = unit.Value;
 
-            _CounterMS = 0;
-            _CounterSamples = 0;
+            _TimeCounter = 0;
+            _SampleCounter = 0;
         }
 
-        public bool TimeDelta(float delta)
+        public void ChangePeriod(float timePeriod)
         {
-            if (_Unit == TimeUnit.samples)
-                return false;
-
-            if (_Unit == TimeUnit.ms)
-                _CounterMS += delta;
-            else
-                _CounterMS += delta * 1000;
-
-            if (_CounterMS >= _PeriodMS)
-            {
-                _CounterMS = 0;
-                return true;
-            }
-            else
-                return false;
+            timePeriod = _Unit == TimeUnit.ms ? timePeriod : timePeriod * 1000;
+            timePeriod = Mathf.Max(timePeriod, 0.01f);
+            if (timePeriod == _TimePeriod)
+                return;
+            _TimePeriod = timePeriod;
         }
 
-        public bool SampleDelta(int delta)
+        public void ChangePeriod(int samplePeriod)
         {
-            if (_Unit != TimeUnit.samples)
-                return false;
-
-            _CounterSamples += delta;
-
-            if (_CounterSamples >= _PeriodSamples)
-            {
-                _CounterSamples = 0;
-                return true;
-            }
-            else
-                return false;
+            samplePeriod = Mathf.Max(samplePeriod, 10);
+            if (samplePeriod == _SamplePeriod)
+                return;
+            _SamplePeriod = samplePeriod;
         }
+
     }
 }

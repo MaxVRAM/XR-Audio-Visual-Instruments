@@ -4,12 +4,6 @@ using Unity.Transforms;
 using Unity.Collections;
 using Unity.Jobs;
 using System;
-using static UnityEngine.EventSystems.EventTrigger;
-using System.Net;
-using UnityEditorInternal;
-using System.Numerics;
-using Unity.Core;
-using UnityEngine;
 
 // https://docs.unity3d.com/Packages/com.unity.entities@0.51/api/
 

@@ -7,6 +7,7 @@ using Unity.Entities;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using TMPro;
+using MaxVRAM;
 
 // PROJECT AUDIO CONFIGURATION NOTES
 // ---------------------------------
@@ -41,6 +42,11 @@ public class GrainSynth : MonoBehaviour
         public readonly static string AudioClip = "_AudioClip";
     }
 
+    public enum WindowingAlgorithm
+    {
+
+    }
+
     private AudioListener _Listener;
 
     [Header("Runtime Dynamics")]
@@ -57,8 +63,6 @@ public class GrainSynth : MonoBehaviour
     private float _AverageGrainAgeMS = 0;
     [Tooltip("Maximum number of speakers possible, defined by 'numRealVoices' in the project settings audio tab.")]
     [SerializeField] private int _MaxSpeakers = 0;
-
-    private int _SpeakersAllocatedThisFrame = 0;
 
     [Header("DSP Config")]
     [Tooltip("Additional ms to calculate and queue grains each frame. Set to 0, the grainComponent queue equals the previous frame's duration. Adds latency, but help to avoid underrun. Recommended values > 20ms.")]
@@ -91,8 +95,9 @@ public class GrainSynth : MonoBehaviour
     [SerializeField] private Vector3 _SpeakerPoolingPosition = Vector3.down * 20;
     [Tooltip("Target number of speakers to be spawned and managed by the synth system.")]
     [Range(0, 255)][SerializeField] private int _SpeakersAllocated = 32;
-    [Tooltip("(TODO): Minimum time (seconds) to instantiate/destroy speakers. Affects performance only during start time or when altering the 'Speakers Allocated' value above.")]
-    [Range(0, 16)] [SerializeField] private int _MaxSpeakerAllocationPerFrame = 2;
+    [Tooltip("Period (seconds) to instantiate/destroy speakers. Affects performance only during start time or when altering the 'Speakers Allocated' value during runtime.")]
+    [Range(0.01f, 1)] [SerializeField] private float _SpeakerAllocationPeriod = 0.2f;
+    private ActionTimer _SpeakerAllocationTrigger;
     [Tooltip("Number of grains allocated to each speaker. Every frame the synth manager distributes grains to each grain's target speaker, which holds on to the grain object until all samples have been written to the output buffer.")]
     [Range(0, 255)][SerializeField] private int _SpeakerGrainArraySize = 100;
     [Tooltip("The ratio of busy(?):(1)empty grains in each speaker before it is considered 'busy' and deprioritised as a target for additional emitters by the attachment system.")]
@@ -137,6 +142,7 @@ public class GrainSynth : MonoBehaviour
         Instance = this;
         _SampleRate = AudioSettings.outputSampleRate;
         _SamplesPerMS = (int)(_SampleRate * .001f);
+        _SpeakerAllocationTrigger = new ActionTimer(TimeUnit.sec, _SpeakerAllocationPeriod);
         _MaxSpeakers = AudioSettings.GetConfiguration().numRealVoices;
         CheckSpeakerAllocation();
     }
@@ -428,13 +434,12 @@ public class GrainSynth : MonoBehaviour
 
     public void CheckSpeakerAllocation()
     {
-        _MaxSpeakers = AudioSettings.GetConfiguration().numRealVoices;
         if (_SpeakersAllocated > _MaxSpeakers)
         {
             Debug.Log($"Warning: Number of synth speakers ({_SpeakersAllocated}) cannot exceed number of audio voices {_MaxSpeakers} configured in the project settings.");
             _SpeakersAllocated = _MaxSpeakers;
         }
-        _SpeakersAllocatedThisFrame = 0;
+        _SpeakerAllocationTrigger.UpdateTrigger(Time.deltaTime, _SpeakerAllocationPeriod);
     }
 
     public SpeakerAuthoring CreateSpeaker(int index)
@@ -455,16 +460,14 @@ public class GrainSynth : MonoBehaviour
                 _Speakers[i].SetIndex(i);
             }
         }
-        while (_Speakers.Count < SpeakersAllocated && _SpeakersAllocatedThisFrame < _MaxSpeakerAllocationPerFrame)
+        while (_Speakers.Count < SpeakersAllocated && _SpeakerAllocationTrigger.DrainTrigger())
         {
             _Speakers.Add(CreateSpeaker(_Speakers.Count - 1));
-            _SpeakersAllocatedThisFrame++;
         }
-        while (_Speakers.Count > SpeakersAllocated && _SpeakersAllocatedThisFrame < _MaxSpeakerAllocationPerFrame)
+        while (_Speakers.Count > SpeakersAllocated && _SpeakerAllocationTrigger.DrainTrigger())
         {
             Destroy(_Speakers[_Speakers.Count - 1].gameObject);
             _Speakers.RemoveAt(_Speakers.Count - 1);
-            _SpeakersAllocatedThisFrame++;
         }
     }
 
