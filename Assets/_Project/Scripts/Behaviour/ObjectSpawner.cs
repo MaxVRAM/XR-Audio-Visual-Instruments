@@ -34,7 +34,7 @@ public class ObjectSpawner : MonoBehaviour
     [SerializeField] [Range(0, 100)] private int _SpawnablesAllocated = 10;
     [Tooltip("Period (seconds) to instantiate/destroy spawnables.")]
     [Range(0.01f, 1)][SerializeField] private float _SpawnPeriodSeconds = 0.2f;
-    private ActionTimer _SpawnTimer;
+    private TimerTrigger _SpawnTimer;
     [SerializeField] private bool _AutoSpawn = true;
     [SerializeField] private bool _AutoRemove = true;
 
@@ -85,7 +85,7 @@ public class ObjectSpawner : MonoBehaviour
     void Awake()
     {
         StartCoroutine(ClearCollisions());
-        _SpawnTimer = new ActionTimer(TimeUnit.sec, _SpawnPeriodSeconds);
+        _SpawnTimer = new TimerTrigger(TimeUnit.seconds, _SpawnPeriodSeconds);
     }
 
     IEnumerator ClearCollisions()

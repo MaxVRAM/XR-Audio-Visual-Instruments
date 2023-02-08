@@ -37,7 +37,6 @@ public class SpeakerAuthoring : SynthEntityBase
     #region FIELDS & PROPERTIES
 
     [SerializeField] private ConnectionState _State = ConnectionState.Pooled;
-    [SerializeField] private bool _GrainArrayReady = false;
     [SerializeField] private int _GrainArraySize = 100;
     [SerializeField] private int _NumGrainsFree = 0;
     [SerializeField] private float _GrainLoad = 0;
@@ -187,6 +186,15 @@ public class SpeakerAuthoring : SynthEntityBase
         return new Grain(samples);
     }
 
+    public void SetGrainArraySize(int size)
+    {
+        if (size == _GrainArraySize)
+            return;
+
+        _GrainArraySize = size;
+        InitialiseGrainArray();
+    }
+
     public void InitialiseGrainArray()
     {
         _GrainArray = new Grain[_GrainArraySize];
@@ -194,7 +202,6 @@ public class SpeakerAuthoring : SynthEntityBase
             _GrainArray[i] = CreateNewGrain();
 
         _NumGrainsFree = _GrainArray.Length;
-        _GrainArrayReady = true;
     }
 
     public void ResetGrainPool()
@@ -205,7 +212,6 @@ public class SpeakerAuthoring : SynthEntityBase
             _GrainArray[i]._IsPlaying = false;
         }
         _NumGrainsFree = _GrainArray.Length;
-        _GrainArrayReady = true;
     }
  
     public void UpdateGrainPool()

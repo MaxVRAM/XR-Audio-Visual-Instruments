@@ -81,7 +81,7 @@ public partial class GrainSynthSystem : SystemBase
                 int duration = (int)ComputeEmitterParameter(emitter._Duration, randomDuration);
                 int offset = 0;
                 int sampleIndexNextGrainStart = dspTimer._NextFrameIndexEstimate;
-                if (emitter._LastSampleIndex < 0 && emitter._LastSampleIndex > dspTimer._LastActualDSPIndex)
+                if (emitter._LastSampleIndex > 0 && emitter._PreviousGrainDuration > 0)
                 {
                     offset = (int)(emitter._PreviousGrainDuration / density);
                     sampleIndexNextGrainStart = emitter._LastSampleIndex + offset;

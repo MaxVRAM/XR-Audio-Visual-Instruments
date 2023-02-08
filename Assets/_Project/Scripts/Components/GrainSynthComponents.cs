@@ -8,7 +8,6 @@ using Unity.Transforms;
 
 public struct AudioTimerComponent : IComponentData
 {
-    public int _LastActualDSPIndex;
     public int _NextFrameIndexEstimate;
     public int _GrainQueueSampleDuration;
     public int _PreviousFrameSampleDuration;
@@ -29,7 +28,6 @@ public struct WindowingDataComponent : IComponentData
 
 public struct GrainComponent : IComponentData
 {
-    // TODO - add record of emitter index. Could be useful for fading out grains of destroyed emitters, etc.
     public AudioClipDataComponent _AudioClipDataComponent;
     public int _StartSampleIndex;
     public int _SampleCount;

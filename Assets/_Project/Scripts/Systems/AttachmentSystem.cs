@@ -151,9 +151,9 @@ public partial class AttachmentSystem : SystemBase
             (int entityInQueryIndex, Entity entity, ref HostComponent host, in Translation translation) =>
             {
                 int bestSpeakerIndex = int.MaxValue;
-                int bestSpeakerHosts = 0;
+                int bestSpeakerHosts = -1;
                 float bestSpeakerGrainLoad = 1;
-                float bestSpeakerInactiveDuration = 0;
+                //float bestSpeakerInactiveDuration = 0;
 
                 for (int i = 0; i < inRangeSpeaker.Length; i++)
                 {
@@ -169,22 +169,22 @@ public partial class AttachmentSystem : SystemBase
                         }
                     }
                 }
-                if (bestSpeakerIndex == int.MaxValue)
-                {
-                    for (int i = 0; i < inRangeSpeaker.Length; i++)
-                    {
-                        SpeakerComponent speaker = GetComponent<SpeakerComponent>(inRangeSpeaker[i]);
-                        if (speaker._State == ConnectionState.Pooled)
-                        {
-                            float dist = math.distance(translation.Value, GetComponent<Translation>(inRangeSpeaker[i]).Value);
-                            if (dist < speaker._ConnectionRadius && speaker._InactiveDuration < bestSpeakerInactiveDuration)
-                            {
-                                bestSpeakerInactiveDuration = speaker._InactiveDuration;
-                                bestSpeakerIndex = GetComponent<SpeakerIndex>(inRangeSpeaker[i]).Value;
-                            }
-                        }
-                    }
-                }
+                //if (bestSpeakerIndex == int.MaxValue)
+                //{
+                //    for (int i = 0; i < inRangeSpeaker.Length; i++)
+                //    {
+                //        SpeakerComponent speaker = GetComponent<SpeakerComponent>(inRangeSpeaker[i]);
+                //        if (speaker._State == ConnectionState.Pooled)
+                //        {
+                //            float dist = math.distance(translation.Value, GetComponent<Translation>(inRangeSpeaker[i]).Value);
+                //            if (dist < speaker._ConnectionRadius && speaker._InactiveDuration < bestSpeakerInactiveDuration)
+                //            {
+                //                bestSpeakerInactiveDuration = speaker._InactiveDuration;
+                //                bestSpeakerIndex = GetComponent<SpeakerIndex>(inRangeSpeaker[i]).Value;
+                //            }
+                //        }
+                //    }
+                //}
                 if (bestSpeakerIndex != int.MaxValue)
                 {
                     host._Connected = true;

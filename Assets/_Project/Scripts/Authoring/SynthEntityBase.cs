@@ -5,10 +5,10 @@ using UnityEngine;
 
 
 /// <summary>
-//      Base interaface for managing synth entities
+//      Abstract class for managing synth entities
 /// <summary>
 
-public class SynthEntityBase : MonoBehaviour
+public abstract class SynthEntityBase : MonoBehaviour
 {
     #region FIELDS & PROPERTIES
 

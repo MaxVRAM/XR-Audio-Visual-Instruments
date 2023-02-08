@@ -120,8 +120,12 @@ public class ContinuousAuthoring : EmitterAuthoring
             
             // Reset grain offset if attached to a new speaker
             if (_Host._AttachedSpeakerIndex != continuousData._SpeakerIndex)
-                continuousData._LastSampleIndex = -1;
-            else _LastSampleIndex = continuousData._LastSampleIndex;
+            {
+                _LastSampleIndex = -1;
+                continuousData._PreviousGrainDuration = -1;
+            }
+            
+            _LastSampleIndex = continuousData._LastSampleIndex;
 
             continuousData._IsPlaying = _IsPlaying;
             continuousData._AudioClipIndex = _ClipIndex;
