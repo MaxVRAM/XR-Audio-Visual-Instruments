@@ -124,6 +124,7 @@ public class GrainSynth : MonoBehaviour
     public List<SpeakerAuthoring> _Speakers = new List<SpeakerAuthoring>();
 
     [Header("Audio Clip Library")]
+    public AudioLibrary _AudioClipLibrary;
     public AudioClip[] _AudioClips;
     protected List<AudioClip> _AudioClipList = new List<AudioClip>();
 
@@ -293,13 +294,17 @@ public class GrainSynth : MonoBehaviour
 
     private void PopulateAudioClipEntities(string entityName)
     {
-        for (int i = 0; i < _AudioClips.Length; i++)
+        if (!_AudioClipLibrary.InitialiseLibrary())
+            return;
+
+        for (int i = 0; i < _AudioClipLibrary.LibrarySize; i++)
         {
             Entity audioClipDataEntity = _EntityManager.CreateEntity();
 
-            int clipChannels = _AudioClips[i].channels;
-            float[] clipData = new float[_AudioClips[i].samples];
-            _AudioClips[i].GetData(clipData, 0);
+            AudioClip clip = _AudioClipLibrary.GetClipAndSetEntityIndex(i);
+            int clipChannels = clip.channels;
+            float[] clipData = new float[clip.samples];
+            clip.GetData(clipData, 0);
             
             using BlobBuilder blobBuilder = new BlobBuilder(Allocator.Temp);
             ref FloatBlobAsset audioClipBlobAsset = ref blobBuilder.ConstructRoot<FloatBlobAsset>();
@@ -309,20 +314,19 @@ public class GrainSynth : MonoBehaviour
             _EntityManager.AddComponentData(audioClipDataEntity, new AudioClipDataComponent { _ClipDataBlobAsset = audioClipBlobAssetRef, _ClipIndex = i });
 
 #if UNITY_EDITOR
-            _EntityManager.SetName(audioClipDataEntity, entityName + "." + i + "." + _AudioClips[i].name);
+            _EntityManager.SetName(audioClipDataEntity, entityName + "." + i + "." + clip.name);
 #endif
         }
     }
 
+    // TODO: Move this functionality over to the AudioAsset class
     private void BuildAudioClipBlob(ref BlobBuilderArray<float> audioBlob, float[] samples, int channels)
     {
         for (int s = 0; s < samples.Length - 1; s += channels)
         {
             audioBlob[s / channels] = 0;
-            // TODO: Possibly worth investigating multi-channel audio assets. Currently mono-summing everything.
-            // TODO: Check if have to divide amplitude by channels to avoid clipping.
             for (int c = 0; c < channels; c++)
-                audioBlob[s / channels] += samples[s + c];
+                audioBlob[s / channels] += samples[s + c] / channels;
         }
     }
 
@@ -602,40 +606,3 @@ public class GrainSynth : MonoBehaviour
     #endregion
 }
 
-#region AUDIO CLIP LIBRARY
-
-// TODO: Create AudioClipSource and AudioClipLibrary objects to add properties to source
-// content, making it much easier to create emitter configurations. Adding properties like
-// tagging/grouping, custom names/descriptions, and per-clip processing; like volume,
-// compression, and eq; are feasible and would drastically benefit workflow.
-
-[Serializable]
-public class AudioClipLibrary
-{
-    public AudioClip[] _Clips;
-    public List<float[]> _ClipsDataArray = new List<float[]>();
-
-    public void Initialize()
-    {
-        if (_Clips.Length == 0)
-            Debug.LogError("No clips in clip library");
-        else
-            Debug.Log("Initializing clip library.");
-
-        for (int i = 0; i < _Clips.Length; i++)
-        {
-            AudioClip audioClip = _Clips[i];
-            if (audioClip.channels > 1)
-            {
-                Debug.LogError("Audio clip not mono");
-            }
-            float[] samples = new float[audioClip.samples];
-            _Clips[i].GetData(samples, 0);
-            _ClipsDataArray.Add(samples);
-
-            Debug.Log(String.Format("Clip {0}      Samples: {1}        Time length: {2} ", _Clips[i].name, _ClipsDataArray[i].Length, _ClipsDataArray[i].Length / (float)_Clips[i].frequency));
-        }
-    }
-}
-
-#endregion

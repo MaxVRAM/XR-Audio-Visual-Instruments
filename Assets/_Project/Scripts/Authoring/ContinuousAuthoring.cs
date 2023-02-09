@@ -35,7 +35,7 @@ public class ContinuousAuthoring : EmitterAuthoring
         {
             _IsPlaying = _PlaybackCondition != Condition.NotColliding,
             _EmitterIndex = _EntityIndex,
-            _AudioClipIndex = _ClipIndex,
+            _AudioClipIndex = _AudioAsset.ClipEntityIndex,
             _SpeakerIndex = _Host._AttachedSpeakerIndex,
             _HostIndex = _Host.EntityIndex,
             _DistanceAmplitude = 1,
@@ -128,7 +128,7 @@ public class ContinuousAuthoring : EmitterAuthoring
             _LastSampleIndex = continuousData._LastSampleIndex;
 
             continuousData._IsPlaying = _IsPlaying;
-            continuousData._AudioClipIndex = _ClipIndex;
+            continuousData._AudioClipIndex = _AudioAsset.ClipEntityIndex;
             continuousData._SpeakerIndex = _Host._AttachedSpeakerIndex;
             continuousData._HostIndex = _Host.EntityIndex;
             continuousData._LastSampleIndex = _LastSampleIndex;

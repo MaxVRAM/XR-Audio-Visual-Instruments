@@ -549,23 +549,23 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: 4
   cascadeShadowSplit0:
-    m_OverrideState: 0
-    m_Value: 0.05
+    m_OverrideState: 1
+    m_Value: 0.0013333333
   cascadeShadowSplit1:
-    m_OverrideState: 0
-    m_Value: 0.15
+    m_OverrideState: 1
+    m_Value: 0.06666667
   cascadeShadowSplit2:
-    m_OverrideState: 0
-    m_Value: 0.3
+    m_OverrideState: 1
+    m_Value: 0.26666668
   cascadeShadowBorder0:
     m_OverrideState: 1
-    m_Value: 0.13333334
+    m_Value: 0.52599996
   cascadeShadowBorder1:
     m_OverrideState: 1
-    m_Value: 0.06666666
+    m_Value: 0.8163265
   cascadeShadowBorder2:
-    m_OverrideState: 0
-    m_Value: 0
+    m_OverrideState: 1
+    m_Value: 0.13333333
   cascadeShadowBorder3:
     m_OverrideState: 0
     m_Value: 0
@@ -1087,25 +1087,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 953beb541740ddc499d005ee80c9ff29, type: 3}
   m_Name: Fog
   m_EditorClassIdentifier: 
-  active: 0
+  active: 1
   quality:
     m_OverrideState: 0
-    m_Value: 1
+    m_Value: 3
   enabled:
     m_OverrideState: 1
     m_Value: 1
   colorMode:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
   color:
     m_OverrideState: 1
     m_Value: {r: 256, g: 256, b: 256, a: 1}
   tint:
-    m_OverrideState: 0
-    m_Value: {r: 1, g: 1, b: 1, a: 1}
+    m_OverrideState: 1
+    m_Value: {r: 8.094118, g: 10.854902, b: 13.929412, a: 1}
   maxFogDistance:
     m_OverrideState: 1
-    m_Value: 80
+    m_Value: 200
   mipFogMaxMip:
     m_OverrideState: 0
     m_Value: 0.5
@@ -1114,10 +1114,10 @@ MonoBehaviour:
     m_Value: 0
   mipFogFar:
     m_OverrideState: 0
-    m_Value: 1000
+    m_Value: 400
   baseHeight:
     m_OverrideState: 1
-    m_Value: -10
+    m_Value: 0
   maximumHeight:
     m_OverrideState: 1
     m_Value: 30
@@ -1132,7 +1132,7 @@ MonoBehaviour:
     m_Value: {r: 1, g: 1, b: 1, a: 1}
   globalLightProbeDimmer:
     m_OverrideState: 1
-    m_Value: 0.5
+    m_Value: 0
   depthExtent:
     m_OverrideState: 1
     m_Value: 50

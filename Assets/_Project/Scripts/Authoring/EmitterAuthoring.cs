@@ -31,14 +31,14 @@ public class EmitterAuthoring : SynthEntityBase
     public Condition _PlaybackCondition = Condition.Always;
     [Tooltip("Audio clip used as the emitter's content source.")]
     public int _ClipIndex = 0;
+    [Tooltip("Audio clip used as the emitter's content source.")]
+    public AudioAsset _AudioAsset;
 
     [Header("Playback Config")]
-    [Range(0.001f, 1f)]
     [Tooltip("Scaling factor applied to the global listener radius value. The result defines the emitter's distance-volume attenuation.")]
-    public float _DistanceAttenuationFactor = 1f;
+    [Range(0.001f, 1f)] public float _DistanceAttenuationFactor = 1f;
     [Tooltip("Normalised age to begin fadeout of spawned emitter if a DestroyTimer component is attached.")]
-    [Range(0,1)]
-    public float _AgeFadeout = .9f;  // TODO - not implemented yet
+    [Range(0,1)] public float _AgeFadeout = .9f;  // TODO - not implemented yet
     [Tooltip("Reverses the playhead of an individual grain if it reaches the end of the clip during playback instead of outputting 0s.")]
     public bool _PingPongGrainPlayheads = true;
     [Tooltip("Multiplies the emitter's output by the rigidity value of the colliding surface.")]

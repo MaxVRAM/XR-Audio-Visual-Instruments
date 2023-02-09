@@ -12,6 +12,7 @@ Material:
   m_ValidKeywords:
   - _DISABLE_DECALS
   - _DISABLE_SSR_TRANSPARENT
+  - _DOUBLESIDED_ON
   - _EMISSIVE_COLOR_MAP
   - _MASKMAP
   - _NORMALMAP
@@ -19,7 +20,7 @@ Material:
   - _TESSELLATION_PHONG
   m_LightmapFlags: 1
   m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
+  m_DoubleSidedGI: 1
   m_CustomRenderQueue: 2000
   stringTagMap: {}
   disabledShaderPasses:
@@ -166,7 +167,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AORemapMax: 1
-    - _AORemapMin: 0.5394757
+    - _AORemapMin: 0.27321243
     - _ATDistance: 1
     - _AddPrecomputedVelocity: 0
     - _AlbedoAffectEmissive: 0
@@ -188,8 +189,8 @@ Material:
     - _ClearCoatSmoothness: 0
     - _CoatMask: 0
     - _Cull: 2
-    - _CullMode: 2
-    - _CullModeForward: 2
+    - _CullMode: 0
+    - _CullModeForward: 0
     - _Cutoff: 0.5
     - _DepthOffsetEnable: 0
     - _DetailAlbedoMapScale: 1
@@ -202,7 +203,7 @@ Material:
     - _DisplacementLockObjectScale: 1
     - _DisplacementLockTilingScale: 1
     - _DisplacementMode: 0
-    - _DoubleSidedEnable: 0
+    - _DoubleSidedEnable: 1
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 1
     - _DstBlend: 0
@@ -234,8 +235,8 @@ Material:
     - _LinkDetailsWithBase: 1
     - _MaterialID: 1
     - _Metallic: 0
-    - _MetallicRemapMax: 1
-    - _MetallicRemapMin: 0
+    - _MetallicRemapMax: 0.85779124
+    - _MetallicRemapMin: 0.045385763
     - _NormalMapSpace: 1
     - _NormalScale: 0
     - _OcclusionStrength: 1
@@ -253,8 +254,8 @@ Material:
     - _ReceivesSSRTransparent: 0
     - _RefractionModel: 0
     - _Smoothness: 1
-    - _SmoothnessRemapMax: 1
-    - _SmoothnessRemapMin: 0
+    - _SmoothnessRemapMax: 0.7397883
+    - _SmoothnessRemapMin: 0.30862334
     - _SmoothnessTextureChannel: 0
     - _SpecularAAScreenSpaceVariance: 0.1
     - _SpecularAAThreshold: 0.2

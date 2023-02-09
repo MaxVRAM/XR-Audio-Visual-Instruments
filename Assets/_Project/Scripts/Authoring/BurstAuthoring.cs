@@ -37,7 +37,7 @@ public class BurstAuthoring : EmitterAuthoring
         {
             _IsPlaying = false,
             _EmitterIndex = _EntityIndex,
-            _AudioClipIndex = _ClipIndex,
+            _AudioClipIndex = _AudioAsset.ClipEntityIndex,
             _SpeakerIndex = _Host._AttachedSpeakerIndex,
             _HostIndex = _Host.EntityIndex,
             _DistanceAmplitude = 1,
@@ -145,7 +145,7 @@ public class BurstAuthoring : EmitterAuthoring
             BurstComponent burstData = _EntityManager.GetComponentData<BurstComponent>(_Entity);
 
             burstData._IsPlaying = true;
-            burstData._AudioClipIndex = _ClipIndex;
+            burstData._AudioClipIndex = _AudioAsset.ClipEntityIndex;
             burstData._SpeakerIndex = _Host._AttachedSpeakerIndex;
             burstData._HostIndex = _Host.EntityIndex;
             burstData._PingPong = _PingPongGrainPlayheads;
