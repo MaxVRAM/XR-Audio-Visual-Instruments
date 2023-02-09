@@ -1,7 +1,5 @@
 
-using JetBrains.Annotations;
 using System;
-using Unity.Entities.UniversalDelegates;
 using UnityEngine;
 
 namespace MaxVRAM
@@ -66,12 +64,8 @@ namespace MaxVRAM
         public float[] BuildWindowArray()
         {
             _WindowArray = new float[_EnvelopeSize];
-
-            Debug.Log($"Window: {Enum.GetName(typeof(WindowFunctionSelection), _WindowFunction)}   Size: {_EnvelopeSize}   TukeyHeight: {_TukeyHeight}   GaussianSigma: {_GaussianSigma}   Fade: {_LinearInOutFade}");
-
             for (int i = 1; i < _WindowArray.Length; i++)
                 _WindowArray[i] = AmplitudeAtIndex(i);
-
             return _WindowArray;            
         }
 

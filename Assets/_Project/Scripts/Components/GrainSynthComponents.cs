@@ -2,9 +2,26 @@
 using Unity.Mathematics;
 using Unity.Transforms;
 
-// TODO - break up into separate scripts
 
 #region ---------- COMPONENTS
+
+//    _________.__                             .___ ________          __          
+//   /   _____/|  |__ _____ _______   ____   __| _/ \______ \ _____ _/  |______   
+//   \_____  \ |  |  \\__  \\_  __ \_/ __ \ / __ |   |    |  \\__  \\   __\__  \  
+//   /        \|   Y  \/ __ \|  | \/\  ___// /_/ |   |    `   \/ __ \|  |  / __ \_
+//  /_______  /|___|  (____  /__|    \___  >____ |  /_______  (____  /__| (____  /
+//          \/      \/     \/            \/     \/          \/     \/          \/ 
+
+public struct WindowingDataComponent : IComponentData
+{
+    public BlobAssetReference<FloatBlobAsset> _WindowingArray;
+}
+
+public struct AudioClipDataComponent :IComponentData
+{
+    public int _ClipIndex;
+    public BlobAssetReference<FloatBlobAsset> _ClipDataBlobAsset;
+}
 
 public struct AudioTimerComponent : IComponentData
 {
@@ -14,30 +31,6 @@ public struct AudioTimerComponent : IComponentData
     public int _RandomiseBurstStartIndex;
     public int _AverageGrainAge;
 }
-
-public struct AudioClipDataComponent :IComponentData
-{
-    public int _ClipIndex;
-    public BlobAssetReference<FloatBlobAsset> _ClipDataBlobAsset;
-}
-
-public struct WindowingDataComponent : IComponentData
-{
-    public BlobAssetReference<FloatBlobAsset> _WindowingArray;   
-}
-
-public struct GrainComponent : IComponentData
-{
-    public AudioClipDataComponent _AudioClipDataComponent;
-    public int _StartSampleIndex;
-    public int _SampleCount;
-    public float _PlayheadNorm;
-    public float _Pitch;
-    public float _Volume;
-    public int _SpeakerIndex;
-    public int _EffectTailSampleLength;
-}
-public struct SamplesProcessedTag : IComponentData {}
 
 public struct ConnectionConfig : IComponentData
 {
@@ -50,6 +43,38 @@ public struct ConnectionConfig : IComponentData
     public float3 _DisconnectedPosition;
     public float3 _ListenerPos;
 }
+
+
+//    ________             .__               
+//   /  _____/___________  |__| ____   ______
+//  /   \  __\_  __ \__  \ |  |/    \ /  ___/
+//  \    \_\  \  | \// __ \|  |   |  \\___ \ 
+//   \______  /__|  (____  /__|___|  /____  >
+//          \/           \/        \/     \/ 
+
+public struct SamplesProcessedTag : IComponentData { }
+
+public struct GrainComponent : IComponentData
+{
+    public AudioClipDataComponent _AudioClipDataComponent;
+    public int _StartSampleIndex;
+    public int _SampleCount;
+    public float _PlayheadNorm;
+    public float _Pitch;
+    public float _Volume;
+    public int _SpeakerIndex;
+    public int _EffectTailSampleLength;
+}
+
+//    _________                     __                        
+//   /   _____/_____   ____ _____  |  | __ ___________  ______
+//   \_____  \\____ \_/ __ \\__  \ |  |/ // __ \_  __ \/  ___/
+//   /        \  |_> >  ___/ / __ \|    <\  ___/|  | \/\___ \ 
+//  /_______  /   __/ \___  >____  /__|_ \\___  >__|  /____  >
+//          \/|__|        \/     \/     \/    \/           \/ 
+
+public struct SpeakerAvailableTag : IComponentData { }
+
 public struct SpeakerIndex : IComponentData
 {
     public int Value;
@@ -61,6 +86,7 @@ public enum ConnectionState
     Active,
     Lingering
 }
+
 public struct SpeakerComponent : IComponentData
 {
     public ConnectionState _State;
@@ -70,8 +96,21 @@ public struct SpeakerComponent : IComponentData
     public float _GrainLoad;
 }
 
-public struct ConnectedTag : IComponentData {}
-public struct InListenerRadiusTag : IComponentData {}
+
+
+
+//  ___________       .__  __    __                       
+//  \_   _____/ _____ |__|/  |__/  |_  ___________  ______
+//   |    __)_ /     \|  \   __\   __\/ __ \_  __ \/  ___/
+//   |        \  Y Y  \  ||  |  |  | \  ___/|  | \/\___ \ 
+//  /_______  /__|_|  /__||__|  |__|  \___  >__|  /____  >
+//          \/      \/                    \/           \/ 
+
+
+
+
+public struct ConnectedTag : IComponentData { }
+public struct InListenerRadiusTag : IComponentData { }
 
 public struct HostComponent : IComponentData
 {
@@ -80,7 +119,7 @@ public struct HostComponent : IComponentData
     public bool _Connected;
     public bool _InListenerRadius;
 }
-public struct PlayingTag : IComponentData {}
+public struct PlayingTag : IComponentData { }
 public struct PingPongTag : IComponentData { }
 public struct ModulationComponent : IComponentData
 {

@@ -277,13 +277,6 @@ public class GrainSynth : MonoBehaviour
     {
         float[] window = _GrainEnvelope.BuildWindowArray();
 
-        //GameObject windowObject = new GameObject("WindowLine");
-        //windowObject.transform.position = Vector3.zero;
-        //LineRenderer windowLine = windowObject.AddComponent<LineRenderer>();
-        //windowLine.positionCount = window.Length;
-        //for (int i = 0; i < window.Length; i++)
-        //    windowLine.SetPosition(i, new Vector3((float)i / window.Length, window[i], 0));
-
         using (BlobBuilder blobTheBuilder = new BlobBuilder(Allocator.Temp))
         {
             ref FloatBlobAsset windowingBlobAsset = ref blobTheBuilder.ConstructRoot<FloatBlobAsset>();
@@ -292,8 +285,6 @@ public class GrainSynth : MonoBehaviour
 
             for (int i = 0; i < windowArray.Length; i++)
                 windowArray[i] = window[i];
-
-            // windowArray[i] = 0.5f * (1 - Mathf.Cos(2 * Mathf.PI * i / windowArray.Length));
 
             BlobAssetReference<FloatBlobAsset> windowingBlobAssetRef = blobTheBuilder.CreateBlobAssetReference<FloatBlobAsset>(Allocator.Persistent);
             _EntityManager.AddComponentData(entity, new WindowingDataComponent { _WindowingArray = windowingBlobAssetRef });

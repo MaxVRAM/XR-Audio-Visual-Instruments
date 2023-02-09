@@ -15,10 +15,15 @@ public partial class AttachmentSystem : SystemBase
 {
     private EndSimulationEntityCommandBufferSystem _CommandBufferSystem;
 
+
     protected override void OnCreate()
     {
         base.OnCreate();
         _CommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+
+
+
+
     }
 
     protected override void OnUpdate()
@@ -31,6 +36,8 @@ public partial class AttachmentSystem : SystemBase
             All = new ComponentType[] { typeof(SpeakerIndex), typeof(SpeakerComponent), typeof(Translation) }
         };
         EntityQuery speakersQuery = GetEntityQuery(speakerQueryDesc);
+
+
 
         EntityQueryDesc hostQueryDesc = new()
         {
@@ -77,7 +84,7 @@ public partial class AttachmentSystem : SystemBase
                     ecb.AddComponent(entityInQueryIndex, entity, new InListenerRadiusTag());
                 }
 
-                if (host._SpeakerIndex < speakerPool.Length)
+                if (host._SpeakerIndex < speakerPool.Length && speakerPool[host._SpeakerIndex]._State != ConnectionState.Pooled)
                 {
                     if (math.distance(translation.Value, speakerTranslations[host._SpeakerIndex].Value) <
                         speakerPool[host._SpeakerIndex]._ConnectionRadius)
@@ -153,7 +160,6 @@ public partial class AttachmentSystem : SystemBase
                 int bestSpeakerIndex = int.MaxValue;
                 int bestSpeakerHosts = -1;
                 float bestSpeakerGrainLoad = 1;
-                //float bestSpeakerInactiveDuration = 0;
 
                 for (int i = 0; i < inRangeSpeaker.Length; i++)
                 {
@@ -169,22 +175,6 @@ public partial class AttachmentSystem : SystemBase
                         }
                     }
                 }
-                //if (bestSpeakerIndex == int.MaxValue)
-                //{
-                //    for (int i = 0; i < inRangeSpeaker.Length; i++)
-                //    {
-                //        SpeakerComponent speaker = GetComponent<SpeakerComponent>(inRangeSpeaker[i]);
-                //        if (speaker._State == ConnectionState.Pooled)
-                //        {
-                //            float dist = math.distance(translation.Value, GetComponent<Translation>(inRangeSpeaker[i]).Value);
-                //            if (dist < speaker._ConnectionRadius && speaker._InactiveDuration < bestSpeakerInactiveDuration)
-                //            {
-                //                bestSpeakerInactiveDuration = speaker._InactiveDuration;
-                //                bestSpeakerIndex = GetComponent<SpeakerIndex>(inRangeSpeaker[i]).Value;
-                //            }
-                //        }
-                //    }
-                //}
                 if (bestSpeakerIndex != int.MaxValue)
                 {
                     host._Connected = true;
@@ -220,21 +210,18 @@ public partial class AttachmentSystem : SystemBase
                         attachedHosts++;
                     }
                 }
-                // Debug.Log($"Speaker {index.Value} has {attachedHosts} attached hosts and state {speaker._State} with inactive duration: {speaker._InactiveDuration}");
+
                 if (attachedHosts == 0)
                 {
                     speaker._InactiveDuration += connectionConfig._DeltaTime;
-                    // Debug.Log($"Adding timedelta {connectionConfig._DeltaTime}");
                     if (speaker._State == ConnectionState.Lingering && speaker._InactiveDuration >= connectionConfig._SpeakerLingerTime)
                     {
-                        // Debug.Log($"Max lingering time hit, pooling speaker.");
                         speaker._State = ConnectionState.Pooled;
                         speaker._ConnectionRadius = 0.001f;
                         currentPos = connectionConfig._DisconnectedPosition;
                     }
                     else if (speaker._State == ConnectionState.Active)
                     {
-                        // Debug.Log($"Setting active speaker to lingering and resetting inactive duration.");
                         speaker._State = ConnectionState.Lingering;
                         speaker._InactiveDuration = 0;
                         speaker._ConnectionRadius = CalculateSpeakerRadius(connectionConfig._ListenerPos, currentPos, connectionConfig._ArcDegrees);
@@ -242,7 +229,6 @@ public partial class AttachmentSystem : SystemBase
                 }
                 else
                 {
-                    // Debug.Log($"Speaker {index.Value} has {attachedHosts} attached hosts and state {speaker._State}");
                     speaker._State = ConnectionState.Active;
                     speaker._InactiveDuration = 0;
                     if (speaker._ConnectedHostCount == 1)
