@@ -1,23 +1,30 @@
-using System.Collections;
-using System.Collections.Generic;
+using MaxVRAM.Audio.Library;
 using UnityEditor;
 using UnityEngine;
-using MaxVRAM.Audio;
 
-[CustomEditor(typeof(AudioAsset))]
+[CustomEditor(typeof(AudioLibrary))]
 public class AudioAssetInspector : Editor
 {
     public override void OnInspectorGUI()
     {
         base.OnInspectorGUI();
 
-        AudioAsset audioAsset = (AudioAsset)target;
+        AudioLibrary audioLibrary = (AudioLibrary)target;
 
         GUILayout.BeginHorizontal();
 
         if (GUILayout.Button("Preview Sound"))
         {
-            Debug.Log($"This will play a sound from {audioAsset.name}.");
+            if (audioLibrary._AudioSource != null && audioLibrary._AudioAssetObjects != null)
+            {
+                AudioAssetObject audioAsset = audioLibrary._AudioAssetObjects[0];
+                if (audioAsset != null)
+                {
+                    Debug.Log($"Playing - {audioAsset.Clip.name}.");
+                    audioLibrary._AudioSource.clip = audioAsset.Clip;
+                    audioLibrary._AudioSource.Play();
+                }
+            }
         }
 
         GUILayout.EndHorizontal();

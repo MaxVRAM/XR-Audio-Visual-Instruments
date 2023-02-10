@@ -2,6 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// < summary >
+/// Scriptable Object for creating audio clip assets with assignable types and other properties.
+/// Will be used for expanding audio library paradigm to make it easier to manage and
+/// assign audio assets to interactive synthesis elements.
+/// < summary >
+
 [CreateAssetMenu(fileName = "AudioAssetObject", menuName = "ScriptableObjects/AudioAssetObject")]
 public class AudioAssetObject : ScriptableObject
 {

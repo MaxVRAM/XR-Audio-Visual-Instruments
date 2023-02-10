@@ -11,7 +11,9 @@ namespace MaxVRAM.Audio.Library
     public class AudioLibrary : MonoBehaviour
     {
         [SerializeField] private bool _Initialised = false;
+        public AudioSource _AudioSource;
         [SerializeField] private List<AudioAsset> _AudioAssets;
+        [SerializeField] public List<AudioAssetObject> _AudioAssetObjects = new List<AudioAssetObject>();
         public int LibrarySize { get { return _AudioAssets.Count; } }
 
         public bool InitialiseLibrary()
