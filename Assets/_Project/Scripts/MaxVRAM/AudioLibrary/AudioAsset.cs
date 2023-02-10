@@ -1,11 +1,11 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-// Class for defining audio clip assets with assignable types and other properties.
-// Will be used for expanding audio library paradigm to make it easier to manage and
-// assign audio assets to interactive synthesis elements.
+/// < summary >
+/// Class for defining audio clip assets with assignable types and other properties.
+/// Will be used for expanding audio library paradigm to make it easier to manage and
+/// assign audio assets to interactive synthesis elements.
+/// < summary >
 
 [Serializable]
 public class AudioAsset : MonoBehaviour

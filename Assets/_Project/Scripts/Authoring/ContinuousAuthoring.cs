@@ -1,6 +1,10 @@
 ﻿using Unity.Entities;
 using UnityEngine;
 
+/// <summary>
+//  Emitter class for building and spawning a continuous stream of audio grain playback.
+/// <summary>
+
 #region CONTINUOUS PARAMETERS
 
 [System.Serializable]

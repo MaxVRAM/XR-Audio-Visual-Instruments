@@ -72,8 +72,8 @@ public class GrainSynthVisualizer : MonoBehaviour
         if (_DrawWaveform)
         {
             // Waveform
-            float[] clipData = new float[GrainSynth.Instance._AudioClips[0].samples];
-            GrainSynth.Instance._AudioClips[0].GetData(clipData, 0);
+            float[] clipData = new float[20]; // [GrainSynth.Instance._AudioClips[0].samples];
+            // GrainSynth.Instance._AudioClips[0].GetData(clipData, 0);
             _ClipSampleCount = clipData.Length;
             int samplesPerBlock = clipData.Length / _WaveformBlockCount;
 

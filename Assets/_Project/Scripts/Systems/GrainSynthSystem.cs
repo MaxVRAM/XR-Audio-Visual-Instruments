@@ -4,7 +4,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using Unity.Jobs.LowLevel.Unsafe;
-using MaxVRAM;
+using MaxVRAM.Math;
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 class RandomSystem : ComponentSystem
@@ -178,7 +178,7 @@ public partial class GrainSynthSystem : SystemBase
                 int currentDSPTime = dspTimer._NextFrameIndexEstimate + (int)(randomGen.NextFloat(0, 1) * dspTimer._RandomiseBurstStartIndex);
 
                 int burstDurationRange = (int)(burst._BurstDuration._Max - burst._BurstDuration._Min);
-                int burstDurationInteraction = (int)(Mathx.Map(burst._BurstDuration._InteractionInput,
+                int burstDurationInteraction = (int)(MaxMath.Map(burst._BurstDuration._InteractionInput,
                     0, 1, 0, 1, burst._BurstDuration._Shape) * burst._BurstDuration._InteractionAmount);
                 int burstDurationRandom = (int)(randomGen.NextFloat(-1, 1) * burst._BurstDuration._Noise * burstDurationRange);
                 int totalBurstSampleCount = (int)Mathf.Clamp(burst._BurstDuration._StartValue + burstDurationInteraction + burstDurationRandom,
@@ -305,7 +305,7 @@ public partial class GrainSynthSystem : SystemBase
                         // Adjusted for volume and windowing
                         sourceValue *= grain._Volume;
                         sourceValue *= windowingData._WindowingArray.Value.array[
-                            (int)Mathx.Map(i, 0, grain._SampleCount, 0, windowingData._WindowingArray.Value.array.Length)];
+                            (int)MaxMath.Map(i, 0, grain._SampleCount, 0, windowingData._WindowingArray.Value.array.Length)];
                         sampleOutputBuffer.Add(new GrainSampleBufferElement { Value = sourceValue });
                     }
                     dspBuffer.Add(new DSPSampleBufferElement { Value = 0 });
@@ -351,7 +351,7 @@ public partial class GrainSynthSystem : SystemBase
                     // Adjusted for volume and windowing
                     sourceValue *= grain._Volume;
                     sourceValue *= windowingData._WindowingArray.Value.array[
-                        (int)Mathx.Map(i, 0, grain._SampleCount, 0, windowingData._WindowingArray.Value.array.Length)];
+                        (int)MaxMath.Map(i, 0, grain._SampleCount, 0, windowingData._WindowingArray.Value.array.Length)];
                     sampleOutputBuffer.Add(new GrainSampleBufferElement { Value = sourceValue });
                     dspBuffer.Add(new DSPSampleBufferElement { Value = 0 });
                 }

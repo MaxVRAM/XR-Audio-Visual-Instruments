@@ -1,5 +1,6 @@
 ﻿using Unity.Entities;
 using UnityEngine;
+using MaxVRAM.Audio.Utils;
 
 // A classic bi-quad filter design
 public class DSP_Filter : DSP_Class
@@ -45,7 +46,7 @@ public class DSP_Filter : DSP_Class
     {
         DSPParametersElement dspParams = new DSPParametersElement();
 
-        float cutoffFreq = AudioUtils.NormToFreq(Mathf.Clamp(_FilterCutoffNorm, 0f, 1f));
+        float cutoffFreq = ScaleFrequency.NormToFreq(Mathf.Clamp(_FilterCutoffNorm, 0f, 1f));
         float gain = Mathf.Clamp(_FilterGain, 0.5f, 1f);
         float q = Mathf.Clamp(_FilterQ, 0.1f, 5f);
 

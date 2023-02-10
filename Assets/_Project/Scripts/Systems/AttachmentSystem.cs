@@ -20,10 +20,6 @@ public partial class AttachmentSystem : SystemBase
     {
         base.OnCreate();
         _CommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
-
-
-
-
     }
 
     protected override void OnUpdate()

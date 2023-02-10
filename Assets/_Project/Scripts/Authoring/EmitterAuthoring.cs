@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
-using Unity.Entities;
+﻿using Unity.Entities;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using MaxVRAM.Audio.Utils;
 
+/// <summary>
+//  Abstract class for managing emitter entities
+/// <summary>
 
-public class EmitterAuthoring : SynthEntityBase
+public abstract class EmitterAuthoring : SynthEntityBase
 {
     #region FIELDS & PROPERTIES
 
@@ -118,7 +121,7 @@ public class EmitterAuthoring : SynthEntityBase
     public void UpdateDistanceAmplitude(float distance, float speakerFactor)
     {
         _AdjustedDistance = distance / _DistanceAttenuationFactor;
-        _DistanceAmplitude = AudioUtils.ListenerDistanceVolume(_AdjustedDistance) * speakerFactor;
+        _DistanceAmplitude = ScaleAmplitude.ListenerDistanceVolume(_AdjustedDistance) * speakerFactor;
     }
 
     public void NewCollision(Collision collision)

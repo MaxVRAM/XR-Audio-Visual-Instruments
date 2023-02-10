@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
 using Unity.Transforms;
-using System;
+using MaxVRAM.Audio.Utils;
 
 /// <summary>
 //      Multiple emitters are often spawned and attached to the same object and modulated by
@@ -147,7 +147,7 @@ public class HostAuthoring : SynthEntityBase
         UpdateSpeakerAttachmentLine();
         ProcessRigidity();
 
-        float speakerAmplitudeFactor = AudioUtils.SpeakerOffsetFactor(
+        float speakerAmplitudeFactor = ScaleAmplitude.SpeakerOffsetFactor(
             transform.position,
             _HeadTransform.position,
             _SpeakerTransform.position);

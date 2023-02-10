@@ -7,7 +7,9 @@ using Unity.Entities;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using TMPro;
-using MaxVRAM;
+using MaxVRAM.Audio.Library;
+using MaxVRAM.Audio.Utils;
+using MaxVRAM.Ticker;
 
 // PROJECT AUDIO CONFIGURATION NOTES
 // ---------------------------------
@@ -37,7 +39,7 @@ public class GrainSynth : MonoBehaviour
         public readonly static string AudioTimer = "_AudioTimer";
         public readonly static string AudioClip = "_AudioClip";
     }
-
+    
     private AudioListener _Listener;
 
     [Header("Runtime Dynamics")]
@@ -72,7 +74,7 @@ public class GrainSynth : MonoBehaviour
     [Range(0, 40)] public float _BurstStartOffsetRangeMS = 8;
     [Tooltip("Burst emitters ignore subsequent collisions for this duration to avoid fluttering from weird physics.")]
     [Range(0, 50)] public float _BurstDebounceDurationMS = 25;
-    [SerializeField] public Envelope _GrainEnvelope;
+    [SerializeField] private WindowFunction _GrainEnvelope;
 
     private int _SamplesPerMS = 0;
     public int SamplesPerMS { get { return _SamplesPerMS; } }
@@ -86,7 +88,7 @@ public class GrainSynth : MonoBehaviour
     [Range(0, 255)][SerializeField] private int _SpeakersAllocated = 32;
     [Tooltip("Period (seconds) to instantiate/destroy speakers. Affects performance only during start time or when altering the 'Speakers Allocated' value during runtime.")]
     [Range(0.01f, 1)][SerializeField] private float _SpeakerAllocationPeriod = 0.2f;
-    private TimerTrigger _SpeakerAllocationTimer;
+    private Trigger _SpeakerAllocationTimer;
     [Tooltip("Speaker prefab to spawn when dynamically allocating speakers.")]
     public SpeakerAuthoring _SpeakerPrefab;
     [Tooltip("Transform to contain spawned speakers.")]
@@ -124,8 +126,6 @@ public class GrainSynth : MonoBehaviour
 
     [Header("Audio Clip Library")]
     public AudioLibrary _AudioClipLibrary;
-    public AudioClip[] _AudioClips;
-    protected List<AudioClip> _AudioClipList = new List<AudioClip>();
 
     #endregion
 
@@ -136,7 +136,7 @@ public class GrainSynth : MonoBehaviour
         Instance = this;
         _SampleRate = AudioSettings.outputSampleRate;
         _SamplesPerMS = (int)(_SampleRate * .001f);
-        _SpeakerAllocationTimer = new TimerTrigger(TimeUnit.seconds, _SpeakerAllocationPeriod);
+        _SpeakerAllocationTimer = new Trigger(TimeUnit.seconds, _SpeakerAllocationPeriod);
         _MaxSpeakers = AudioSettings.GetConfiguration().numRealVoices;
         CheckSpeakerAllocation();
     }

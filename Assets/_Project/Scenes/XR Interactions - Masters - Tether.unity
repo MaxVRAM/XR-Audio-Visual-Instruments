@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 2138677392}
-  m_IndirectSpecularColor: {r: 4281.2363, g: 3930.3564, b: 3712.8906, a: 1}
+  m_IndirectSpecularColor: {r: 4280.241, g: 3929.963, b: 3714.9922, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -826,64 +826,6 @@ MonoBehaviour:
   _Emitters: []
   _Speakers: []
   _AudioClipLibrary: {fileID: 1074502018}
-  _AudioClips:
-  - {fileID: 8300000, guid: 43c5dceb64c004840b1e1a81d7f42e94, type: 3}
-  - {fileID: 8300000, guid: aa8ef79807eee3d49ae55eeee0759191, type: 3}
-  - {fileID: 8300000, guid: 949e565ae34c95e43aca00eb6b565f16, type: 3}
-  - {fileID: 8300000, guid: e81435e7122447349a0aa339eb6c5ed5, type: 3}
-  - {fileID: 8300000, guid: fe4ce639bf1513e49b6ad58d36a5c980, type: 3}
-  - {fileID: 8300000, guid: 881c764e414698a4ead8db39bdf5d6df, type: 3}
-  - {fileID: 8300000, guid: 6ff036c9a3348f34fa342cbc82b56874, type: 3}
-  - {fileID: 8300000, guid: 6c98d6dffe7c00c42a62ab32e8171d0e, type: 3}
-  - {fileID: 8300000, guid: 9015323e22c56cb498576af670a42d12, type: 3}
-  - {fileID: 8300000, guid: 39a51cdd6575bd84a90e8bc1d169d845, type: 3}
-  - {fileID: 8300000, guid: d0b7848afc045e046929e7c87a74af04, type: 3}
-  - {fileID: 8300000, guid: de29b4316a06681408b40dad66f73e70, type: 3}
-  - {fileID: 8300000, guid: c077f065c0823b94c87827450298760f, type: 3}
-  - {fileID: 8300000, guid: c077f065c0823b94c87827450298760f, type: 3}
-  - {fileID: 8300000, guid: c077f065c0823b94c87827450298760f, type: 3}
-  - {fileID: 8300000, guid: c7990f29d382dbd41a8366b25f22d282, type: 3}
-  - {fileID: 8300000, guid: c077f065c0823b94c87827450298760f, type: 3}
-  - {fileID: 8300000, guid: 3b8a389310451fd40a999eff067b02ec, type: 3}
-  - {fileID: 8300000, guid: 1c724fe2ad648f84eb4eded0f424497d, type: 3}
-  - {fileID: 8300000, guid: 732cb8df837074f42adb67ef82a7262f, type: 3}
-  - {fileID: 8300000, guid: 22cdf13e9eb014549891901887f17d59, type: 3}
-  - {fileID: 8300000, guid: 49a10a576d26b2f4180afb8244ac70d8, type: 3}
-  - {fileID: 8300000, guid: 2c7c48a11fd5043469f0d6ad1422b893, type: 3}
-  - {fileID: 8300000, guid: b2ff6a7a9ceb96940bd1f3fda6347470, type: 3}
-  - {fileID: 8300000, guid: 4199da2cc9d053540a4b265fe25cc581, type: 3}
-  - {fileID: 8300000, guid: 1dd8b35f2cba4b64782a3fa68b8583ab, type: 3}
-  - {fileID: 8300000, guid: c08c92115adf18044abdbb07ca7dbf94, type: 3}
-  - {fileID: 8300000, guid: f2f09a3f5ef060d4586abed040b3daf5, type: 3}
-  - {fileID: 8300000, guid: 91c81d29272fba5409aa3fbfbe60df75, type: 3}
-  - {fileID: 8300000, guid: c077f065c0823b94c87827450298760f, type: 3}
-  - {fileID: 8300000, guid: 5cb2a53e113681e468a090a6e39d9cb0, type: 3}
-  - {fileID: 8300000, guid: 51afe995c75d0da45b81e55266018a1d, type: 3}
-  - {fileID: 8300000, guid: 22cdf13e9eb014549891901887f17d59, type: 3}
-  - {fileID: 8300000, guid: c8c4395fb4631404bac622218f29bffe, type: 3}
-  - {fileID: 8300000, guid: 553847c2aa2d4424783b7a15b7eef1eb, type: 3}
-  - {fileID: 8300000, guid: 3c7edf45b6000104dbabddca2403d76d, type: 3}
-  - {fileID: 8300000, guid: 009e7651320bb3e4890c2776b9955f32, type: 3}
-  - {fileID: 8300000, guid: b9a2596b0b9bf9840a96cbd7e5b62bce, type: 3}
-  - {fileID: 8300000, guid: 51afe995c75d0da45b81e55266018a1d, type: 3}
-  - {fileID: 8300000, guid: 83c85a62d953bdc43bae12de5916f775, type: 3}
-  - {fileID: 8300000, guid: 946a6e9ce67826f42b06a6a4af429c63, type: 3}
-  - {fileID: 8300000, guid: 8606325c39a7d4e47a20c576ab9cd6d6, type: 3}
-  - {fileID: 8300000, guid: 087d348155751aa4fbe4c77c0fae0ca3, type: 3}
-  - {fileID: 8300000, guid: 7b60537d9631318449f765ebd0f0a5d8, type: 3}
-  - {fileID: 8300000, guid: 087d348155751aa4fbe4c77c0fae0ca3, type: 3}
-  - {fileID: 8300000, guid: ab8c6fa197d064a41ab2bbd894bad259, type: 3}
-  - {fileID: 8300000, guid: 9449e05d8273fc441848bca484e01040, type: 3}
-  - {fileID: 8300000, guid: 6f2bcd47f7b9d3847bb505873350164e, type: 3}
-  - {fileID: 8300000, guid: eb95aaad77b493c439c1e4b45ce32ca6, type: 3}
-  - {fileID: 8300000, guid: da13ae45361359345a893842e0ec742a, type: 3}
-  - {fileID: 8300000, guid: 135e76a4c37ff604291fa9caa0bfde3d, type: 3}
-  - {fileID: 8300000, guid: a45b7a18716cf8942a2d659aad1bb28d, type: 3}
-  - {fileID: 8300000, guid: 5d31d7d3f3b07f64eb090bfdd69c1846, type: 3}
-  - {fileID: 8300000, guid: 73c2d133b8ac5be47abe67f3f5b41bb2, type: 3}
-  - {fileID: 8300000, guid: 308fa9beb3aa73943a5f407b8a5081c5, type: 3}
-  - {fileID: 8300000, guid: 498da90aba050804a9acbc57ef2a5a4f, type: 3}
-  - {fileID: 8300000, guid: b9c3d3d2da763fd488bacd296677499f, type: 3}
 --- !u!4 &24721014
 Transform:
   m_ObjectHideFlags: 0
@@ -15170,8 +15112,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 13018
   m_UseColorTemperature: 1
-  m_BoundingSphereOverride: {x: 3.2952817e+24, y: 1.3210635e-11, z: 1.7408234e+25,
-    w: 1.8467236e+25}
+  m_BoundingSphereOverride: {x: 4.5905e-41, y: 2.2794794e+19, z: 4.5905e-41, w: 9.403955e-38}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0

@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
-
 /// <summary>
-//      Abstract class for managing synth entities
+//  Abstract class for managing synth entities
 /// <summary>
 
 public abstract class SynthEntityBase : MonoBehaviour

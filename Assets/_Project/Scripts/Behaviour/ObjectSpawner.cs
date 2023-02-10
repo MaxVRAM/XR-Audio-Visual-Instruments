@@ -4,10 +4,9 @@ using System.Collections.Generic;
 using Random = UnityEngine.Random;
 using System;
 using GD.MinMaxSlider;
-using MaxVRAM;
-using Unity.Physics;
+using MaxVRAM.Math;
+using MaxVRAM.Ticker;
 
-public enum SiblingCollision { All, Single, None };
 
 /// <summary>
 //     Dynamically spawn/destroy child objects.
@@ -15,6 +14,8 @@ public enum SiblingCollision { All, Single, None };
 public class ObjectSpawner : MonoBehaviour
 {
     #region FIELDS & PROPERTIES
+
+    public enum SiblingCollision { All, Single, None };
 
     [Header("Runtime Dynamics")]
     [SerializeField] private bool _Initialised = false;
@@ -42,7 +43,7 @@ public class ObjectSpawner : MonoBehaviour
     [SerializeField] [Range(0, 100)] private int _SpawnablesAllocated = 10;
     [Tooltip("Period (seconds) to instantiate/destroy spawnables.")]
     [Range(0.01f, 1)][SerializeField] private float _SpawnPeriodSeconds = 0.2f;
-    private TimerTrigger _SpawnTimer;
+    private Trigger _SpawnTimer;
     [SerializeField] private bool _AutoSpawn = true;
     [SerializeField] private bool _AutoRemove = true;
 
@@ -97,7 +98,7 @@ public class ObjectSpawner : MonoBehaviour
     void Awake()
     {
         StartCoroutine(ClearCollisions());
-        _SpawnTimer = new TimerTrigger(TimeUnit.seconds, _SpawnPeriodSeconds);
+        _SpawnTimer = new Trigger(TimeUnit.seconds, _SpawnPeriodSeconds);
     }
 
     IEnumerator ClearCollisions()
@@ -239,7 +240,7 @@ public class ObjectSpawner : MonoBehaviour
         if (!go.TryGetComponent(out SpawnableManager spawnableManager))
             spawnableManager = go.AddComponent<SpawnableManager>();
         if (_UseSpawnDuration)
-            spawnableManager._Lifespan = Totes.Rando(_SpawnObjectDuration);
+            spawnableManager._Lifespan = Rando.Range(_SpawnObjectDuration);
         spawnableManager._DestroyRadius = _DestroyRadius;
         spawnableManager._SpawnedObject = go;
         spawnableManager._ObjectSpawner = this;

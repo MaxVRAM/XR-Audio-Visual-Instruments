@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System;
-using System.Collections.Generic;
-using Unity.Entities;
+﻿using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
 

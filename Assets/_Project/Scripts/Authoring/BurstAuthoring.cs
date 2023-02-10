@@ -1,6 +1,8 @@
 ﻿using Unity.Entities;
-using UnityEngine;
 
+/// <summary>
+//  Emitter class for building and spawning bursts of audio grains.
+/// <summary>
 
 #region BURST PARAMETERS
 
