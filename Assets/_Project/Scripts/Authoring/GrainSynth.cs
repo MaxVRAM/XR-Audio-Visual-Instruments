@@ -81,7 +81,6 @@ public class GrainSynth : MonoBehaviour
     public int GrainDiscardSampleIndex { get { return _FrameStartSampleIndex - (int)(_DiscardGrainsOlderThanMS * SamplesPerMS); } }
     public int NextFrameIndexEstimate { get { return _FrameStartSampleIndex + (int)(_LastFrameSampleDuration * (1 + _DelayPercentLastFrame / 100)); } }
 
-
     [Header(header: "Speaker Configuration")]
     [Tooltip("Target number of speakers to be spawned and managed by the synth system.")]
     [Range(0, 255)][SerializeField] private int _SpeakersAllocated = 32;
@@ -147,7 +146,7 @@ public class GrainSynth : MonoBehaviour
         _Listener = FindObjectOfType<AudioListener>();
         if (_SpeakerParentTransform == null)
         {
-            GameObject go = new GameObject($"_Pooling");
+            GameObject go = new GameObject($"Speakers");
             go.transform.parent = transform;
             go.transform.position = transform.position;
             _SpeakerParentTransform = go.transform;

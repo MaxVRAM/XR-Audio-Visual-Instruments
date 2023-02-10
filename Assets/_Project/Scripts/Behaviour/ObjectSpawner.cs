@@ -3,8 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using Random = UnityEngine.Random;
 using System;
-using UnityEditor;
+using GD.MinMaxSlider;
 using MaxVRAM;
+using Unity.Physics;
 
 public enum SiblingCollision { All, Single, None };
 
@@ -13,20 +14,27 @@ public enum SiblingCollision { All, Single, None };
 /// <summary>
 public class ObjectSpawner : MonoBehaviour
 {
+    #region FIELDS & PROPERTIES
+
     [Header("Runtime Dynamics")]
     [SerializeField] private bool _Initialised = false;
     [SerializeField] private int _ObjectCounter = 0;
     [SerializeField] private float _SecondsSinceSpawn = 0;
     [SerializeField] public HashSet<GameObject> _CollidedThisUpdate;
 
-    [Header("Spawnable Prefab Selection")]
-    [Tooltip("Currently selected prefab to spawn.")]
+    [Header("Object Configuration")]
+    [Tooltip("Object providing the spawn location and controller behaviour.")]
+    public GameObject _ControllerObject;
+    [Tooltip("Parent GameObject to attach spawned prefabs.")]
+    public GameObject _SpawnableHost;
+    [Tooltip("Prefab to spawn.")]
     [SerializeField] private GameObject _PrefabToSpawn;
+    [SerializeField] private bool _RandomiseSpawnPrefab = false;
+    [Tooltip("A list of prebs to spawn can also be supplied, allowing runtime selection of object spawn selection.")]
     [SerializeField] private List<GameObject> _SpawnablePrefabs;
-    [SerializeField] private bool _RandomPrefab = false;
     public List<GameObject> _ActiveObjects = new List<GameObject>();
 
-    [Header("Spawning Limits")]
+    [Header("Spawning Rules")]
     [Tooltip("Number of seconds after this ObjectSpawner is created before it starts spawning loop.")]
     [SerializeField] private float _WaitBeforeSpawning = 2;
     private float _StartTime = int.MaxValue;
@@ -39,42 +47,46 @@ public class ObjectSpawner : MonoBehaviour
     [SerializeField] private bool _AutoRemove = true;
 
     [Header("Spawnable Lifetime")]
-    [Tooltip("Duration in seconds before destroying spawned object (0 = do not destroy based on duration).")]
-    [Range(0, 60)] public float _ObjectLifespan = 0;
-    [Tooltip("Subtract a random amount from a spawned object's lifespan by this fraction of its max duration.")]
-    [Range(0, 1)] public float _LifespanVariance = 0;
+    [Tooltip("When enabled, spawned objects will be destroyed after its duration has been reached.")]
+    [SerializeField] private bool _UseSpawnDuration = true;
+    [Tooltip("Duration in seconds before destroying spawned object.")]
+    [MinMaxSlider(0f, 60f)] public Vector2 _SpawnObjectDuration = new Vector2(5, 10);
     [Tooltip("Destroy object outside this radius from its spawning position.")]
-    public float _DestroyRadius = 20f;
-    
+    public float _DestroyRadius = 30f;
+
+    public enum ControllerEvent { All, OnSpawn, OnCollision }
+    [Header("Visual Feedback")]
+    [SerializeField] private ControllerEvent _EmissiveFlashEvent = ControllerEvent.OnSpawn;
+    [Tooltip("Emissive brightness range to modulate associated renderers. X = base emissive brightness, Y = brightness on event trigger.")]
+    [MinMaxSlider(-10f, 10f)] public Vector2 _EmissiveBrightness = new Vector2(0, 10);
+    [Tooltip("Supply list of renderers to modulate/flash emissive brightness on selected triggers.")]
+    [SerializeField] private List<Renderer> _ControllerRenderers = new List<Renderer>();
+    private List<Color> _EmissiveColours = new List<Color>();
+    private float _EmissiveIntensity = 0;
+
     [Header("Ejection Position")]
     [Tooltip("Distance from the anchor that objects will be spawned.")]
-    [Range(0f, 10f)] public float _EjectionRadius = 0.5f;
-    [Tooltip("Randomise spawn position. 0 = objects will always spawn at the Ejection Position. 0.5 = objects spawn randomly within one hemisphere of the Ejection Position")]
-    [Range(0, 1)] public float _EjectionPositionVariance = 0;
+    [MinMaxSlider(0f, 10f)] public Vector2 _EjectionRadiusRange = new Vector2(1, 2);
     [Tooltip("Normalised default position that spawnables leave the anchor.")]
     public Vector3 _EjectionPosition = new Vector3(0, -1, 0);
+    [Tooltip("Randomise spawnable ejection position. 0 = Always spawn at defined position. 0.5 = Spawn within one hemisphere of ejection position. 1.0 = Spawn at any angle around the position.")]
+    [Range(0, 1)] public float _EjectionPositionVariance = 0;
 
     [Header("Ejection Velocity")]
-    [Tooltip("Default speed that spawnables leave the anchor.")]
-    [Range(0, 100)] public float _EjectionSpeed = 0;
-    [Tooltip("Apply random amount of spread to the direction for each spawn.")]
-    [Range(0, 1)] public float _EjectionDirectionVariance = 0;
+    [Tooltip("Speed that spawned objects leave the anchor.")]
+    [MinMaxSlider(0f, 100f)] public Vector2 _EjectionSpeedRange = new Vector2(5, 10);
     [Tooltip("Normalised velocity that spawnables have at the spawn time.")]
     public Vector3 _EjectionDirection = new Vector3(0, 0, 0);
+    [Tooltip("Apply random amount of spread to the direction for each spawn.")]
+    [Range(0f, 1f)] public float _EjectionDirectionVariance = 0;
 
     [Header("Emitter Behaviour")]
     public bool _AllowSiblingSurfaceContact = true;
     public SiblingCollision _AllowSiblingCollisionBurst = SiblingCollision.Single;
 
-    [Header("Object Configuration")]
-    [Tooltip("Parent GameObject to attach spawned prefabs.")]
-    public GameObject _SpawnableHost;
-    [Tooltip("Object providing the spawn location and controller behaviour.")]
-    public GameObject _ControllerObject;
-    [SerializeField] private Renderer _ControllerRenderer;
-    [SerializeField] private float _EmissiveIntensity = 0;
-    [SerializeField] private Color _EmissiveColour;
+    #endregion
 
+    #region INITIALISATION
 
     void Start()
     {
@@ -97,42 +109,6 @@ public class ObjectSpawner : MonoBehaviour
         }
     }
 
-
-    void Update()
-    {
-        _SpawnTimer.UpdateTrigger(Time.deltaTime, _SpawnPeriodSeconds);
-
-        if (ReadyToSpawn())
-        {
-            if (_ActiveObjects.Count < _SpawnablesAllocated && _AutoSpawn && _SpawnTimer.DrainTrigger())
-            {
-                _ActiveObjects.Add(CreateSpawnable());
-                _EmissiveIntensity = 10;
-            }
-            else if (_ActiveObjects.Count > _SpawnablesAllocated && _AutoRemove && _SpawnTimer.DrainTrigger())
-                RemoveSpawnable(0);
-        }
-        _ActiveObjects.RemoveAll(item => item == null);
-
-        UpdateShaderModulation();
-    }
-
-    public bool ReadyToSpawn()
-    {
-        if (!_Initialised)
-            return false;
-        if (!_StartTimeReached)
-        {
-            if (Time.time > _StartTime)
-                _StartTimeReached = true;
-            else
-                return false;
-        }
-        if ((_ControllerObject == null | _PrefabToSpawn == null) && !InitialiseSpawner())
-            return false;
-        return true;
-    }
-
     private bool InitialiseSpawner()
     {
         _CollidedThisUpdate = new HashSet<GameObject>();
@@ -140,9 +116,11 @@ public class ObjectSpawner : MonoBehaviour
         if (_ControllerObject == null)
             _ControllerObject = gameObject;
 
-        _ControllerRenderer = GetComponentInChildren<Renderer>();
-        if (_ControllerRenderer != null)
-            _EmissiveColour = _ControllerRenderer.material.GetColor("_EmissiveColor");
+        foreach (Renderer renderer in _ControllerRenderers)
+        {
+            Color colour = renderer.material.GetColor("_EmissiveColor");
+            _EmissiveColours.Add(colour);
+        }
 
         if (_SpawnableHost == null)
             _SpawnableHost = gameObject;
@@ -165,24 +143,76 @@ public class ObjectSpawner : MonoBehaviour
         return true;
     }
 
-    public GameObject CreateSpawnable()
+    #endregion
+
+    #region UPDATE SCHEDULE
+
+    void Update()
     {
+        _SpawnTimer.UpdateTrigger(Time.deltaTime, _SpawnPeriodSeconds);
+
+        if (ReadyToSpawn())
+            if (_AutoSpawn) CreateSpawnable();
+            else if (_AutoRemove) RemoveSpawnable(0);
+
+        _ActiveObjects.RemoveAll(item => item == null);
+        UpdateShaderModulation();
+    }
+
+    #endregion
+
+    #region SPAWN MANAGEMENT
+
+    public bool ReadyToSpawn()
+    {
+        if (!_Initialised)
+            return false;
+        if (!_StartTimeReached)
+        {
+            if (Time.time > _StartTime)
+                _StartTimeReached = true;
+            else
+                return false;
+        }
+        if ((_ControllerObject == null | _PrefabToSpawn == null) && !InitialiseSpawner())
+            return false;
+        return true;
+    }
+
+    public void CreateSpawnable()
+    {
+        if (_ActiveObjects.Count >= _SpawnablesAllocated || !_SpawnTimer.DrainTrigger())
+            return;
+
         InstantiatePrefab(out GameObject newObject);
         SpawnableManager spawnableManager = AttachSpawnableManager(newObject);
         ConfigureSpawnableBehaviour(newObject);
         ConfigureEmitterHost(newObject, spawnableManager);
         newObject.SetActive(true);
-        return newObject;
+        _ActiveObjects.Add(newObject);
+
+        if (_EmissiveFlashEvent == ControllerEvent.OnSpawn)
+            _EmissiveIntensity = _EmissiveBrightness.y;
+    }
+
+    public void RemoveSpawnable(int index)
+    {
+        if (_ActiveObjects.Count <= _SpawnablesAllocated || !_SpawnTimer.DrainTrigger())
+            return;
+        if (_ActiveObjects[index] != null)
+            Destroy(_ActiveObjects[index]);
+        _ActiveObjects.RemoveAt(index);
+
     }
 
     public bool InstantiatePrefab(out GameObject newObject)
     {
-        int index = (!_RandomPrefab || _SpawnablePrefabs.Count < 2) ? Random.Range(0, _SpawnablePrefabs.Count) : 0;
+        int index = (!_RandomiseSpawnPrefab || _SpawnablePrefabs.Count < 2) ? Random.Range(0, _SpawnablePrefabs.Count) : 0;
         GameObject objectToSpawn = _SpawnablePrefabs[index];
 
         Vector3 spawnOnSphere = Random.onUnitSphere;
         Vector3 spawnPositionOffset = Vector3.Slerp(_EjectionPosition.normalized, spawnOnSphere, _EjectionPositionVariance);
-        Vector3 spawnPosition = _ControllerObject.transform.position + spawnPositionOffset * _EjectionRadius;
+        Vector3 spawnPosition = _ControllerObject.transform.position + spawnPositionOffset * Random.Range(_EjectionRadiusRange.x, _EjectionRadiusRange.y);
 
         newObject = Instantiate(objectToSpawn, spawnPosition, Quaternion.identity, _SpawnableHost.transform);
         newObject.name = newObject.name + " (" + _ObjectCounter + ")";
@@ -199,7 +229,7 @@ public class ObjectSpawner : MonoBehaviour
         Vector3 directionVector = (_ControllerObject.transform.position - spawnPosition).normalized;
         Quaternion directionRotation = Quaternion.FromToRotation(spawnDirection, directionVector);
         Vector3 rotatedDirection = directionRotation * directionVector;
-        Vector3 spawnVelocity = rotatedDirection * _EjectionSpeed;
+        Vector3 spawnVelocity = rotatedDirection * Random.Range(_EjectionSpeedRange.x, _EjectionSpeedRange.y);
         rb.velocity = spawnVelocity;
         return true;
     }
@@ -208,8 +238,8 @@ public class ObjectSpawner : MonoBehaviour
     {
         if (!go.TryGetComponent(out SpawnableManager spawnableManager))
             spawnableManager = go.AddComponent<SpawnableManager>();
-        if (_ObjectLifespan > 0)
-            spawnableManager._Lifespan = _ObjectLifespan - _ObjectLifespan * Random.Range(0, _LifespanVariance);
+        if (_UseSpawnDuration)
+            spawnableManager._Lifespan = Totes.Rando(_SpawnObjectDuration);
         spawnableManager._DestroyRadius = _DestroyRadius;
         spawnableManager._SpawnedObject = go;
         spawnableManager._ObjectSpawner = this;
@@ -240,22 +270,19 @@ public class ObjectSpawner : MonoBehaviour
         newHost.AddBehaviourInputSource(spawnable);
     }
 
-    public void RemoveSpawnable(int index)
-    {
-        if (_ActiveObjects[index] != null)
-            Destroy(_ActiveObjects[index]);
-        _ActiveObjects.RemoveAt(index);
+    #endregion
 
-    }
+    #region RUNTIME MODULATIONS
 
     public void UpdateShaderModulation()
     {
-        if (_EmissiveColour != null)
+        for (int i = 0; i < _ControllerRenderers.Count; i++)
         {
-            _ControllerRenderer.material.SetColor("_EmissiveColor", _EmissiveColour * _EmissiveIntensity);
-            float glow = (1 + Mathf.Sin(_SecondsSinceSpawn / _SpawnPeriodSeconds * 2)) * 0.5f;
-            _EmissiveIntensity = Mathf.Lerp(_EmissiveIntensity, glow, Time.deltaTime * 4);
+            _ControllerRenderers[i].material.SetColor("_EmissiveColor", _EmissiveColours[i] * _EmissiveIntensity * 2);
         }
+
+        float glow = _EmissiveBrightness.x + (1 + Mathf.Sin(_SecondsSinceSpawn / _SpawnPeriodSeconds * 2)) * 0.5f;
+        _EmissiveIntensity = Mathf.Lerp(_EmissiveIntensity, glow, Time.deltaTime * 4);
     }
 
     public bool UniqueCollision(GameObject goA, GameObject goB)
@@ -270,4 +297,6 @@ public class ObjectSpawner : MonoBehaviour
         else
             return false;
     }
+
+    #endregion
 }

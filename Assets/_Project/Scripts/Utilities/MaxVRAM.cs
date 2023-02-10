@@ -1,6 +1,7 @@
 
 using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace MaxVRAM
 {
@@ -33,6 +34,14 @@ namespace MaxVRAM
         public static float FadeInOut(float normPosition, float inOutPoint)
         {
             return FadeInOut(normPosition, inOutPoint, 1 - inOutPoint);
+        }
+    }
+
+    public struct Totes
+    {
+        public static float Rando(Vector2 range)
+        {
+            return Random.Range(range.x, range.y);
         }
     }
 
