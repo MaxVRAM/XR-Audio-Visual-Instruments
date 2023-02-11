@@ -24,7 +24,6 @@ public class GrainSynth : MonoBehaviour
     #region FIELDS & PROPERTIES
 
     public static GrainSynth Instance;
-    public AudioSource _AudioSource;
 
     private EntityManager _EntityManager;
     private EntityQuery _GrainQuery;
@@ -145,7 +144,6 @@ public class GrainSynth : MonoBehaviour
     public void Start()
     {
         _Listener = FindObjectOfType<AudioListener>();
-        _AudioSource = GetComponent<AudioSource>();
 
         if (_SpeakerParentTransform == null)
         {

@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-
 namespace MaxVRAM.Audio.Library
 {
     [Serializable]
+    [RequireComponent(typeof(AudioSource))]
     public class AudioLibrary : MonoBehaviour
     {
         [SerializeField] private bool _Initialised = false;
@@ -19,6 +19,8 @@ namespace MaxVRAM.Audio.Library
         public bool InitialiseLibrary()
         {
             Debug.Log("Initializing Audio Library...");
+
+            //Resources.LoadAll("", typeof(AudioAssetObject));
 
             _AudioAssets = new List<AudioAsset>();
             _AudioAssets = GetComponentsInChildren<AudioAsset>().ToList();
@@ -59,4 +61,15 @@ namespace MaxVRAM.Audio.Library
         }
     }
 
+    public enum AudioClipType
+    {
+        Generic = 0,
+        Hit = 1,
+        Short = 2,
+        Long = 3,
+        Loop = 4,
+        Note = 5,
+        Phrase = 6,
+        Voice = 7
+    }
 }

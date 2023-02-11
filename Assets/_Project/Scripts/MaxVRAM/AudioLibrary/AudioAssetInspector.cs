@@ -1,6 +1,7 @@
 using MaxVRAM.Audio.Library;
 using UnityEditor;
 using UnityEngine;
+using MaxVRAM.Audio.Library;
 
 [CustomEditor(typeof(AudioLibrary))]
 public class AudioAssetInspector : Editor
@@ -20,7 +21,7 @@ public class AudioAssetInspector : Editor
                 AudioAssetObject audioAsset = audioLibrary._AudioAssetObjects[0];
                 if (audioAsset != null)
                 {
-                    Debug.Log($"Playing - {audioAsset.Clip.name}.");
+                    Debug.Log($"Playing audio asset preview: {audioAsset.Clip.name}.");
                     audioLibrary._AudioSource.clip = audioAsset.Clip;
                     audioLibrary._AudioSource.Play();
                 }
