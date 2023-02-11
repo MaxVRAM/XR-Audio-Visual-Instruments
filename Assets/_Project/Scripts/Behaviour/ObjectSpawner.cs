@@ -7,15 +7,16 @@ using GD.MinMaxSlider;
 using MaxVRAM.Math;
 using MaxVRAM.Ticker;
 
+/// <summary>
+//  Manager for spawning child game objects with a variety of existance and controller behaviours.
+/// <summary>
 
-/// <summary>
-//     Dynamically spawn/destroy child objects.
-/// <summary>
 public class ObjectSpawner : MonoBehaviour
 {
     #region FIELDS & PROPERTIES
 
     public enum SiblingCollision { All, Single, None };
+    public enum BoundingArea { Unrestricted, Spawn, Controller, ControllerBounds}
 
     [Header("Runtime Dynamics")]
     [SerializeField] private bool _Initialised = false;
@@ -47,13 +48,16 @@ public class ObjectSpawner : MonoBehaviour
     [SerializeField] private bool _AutoSpawn = true;
     [SerializeField] private bool _AutoRemove = true;
 
-    [Header("Spawnable Lifetime")]
-    [Tooltip("When enabled, spawned objects will be destroyed after its duration has been reached.")]
+    [Header("Spawned Object Removal")]
+    public bool _DestroyOnCollision = false;
+    [Tooltip("Coodinates that define the bounding for spawned objects, which are destroyed if they leave. The bounding radius is ignored when using Controller Bounds, defined instead by the controller's collider bounds.")]
+    public BoundingArea _BoundingAreaType = BoundingArea.Controller;
+    [Tooltip("Radius of the bounding volume.")]
+    public float _BoundingRadius = 30f;
+    [Tooltip("Use a timer to destroy spawned objects after a duration.")]
     [SerializeField] private bool _UseSpawnDuration = true;
     [Tooltip("Duration in seconds before destroying spawned object.")]
     [MinMaxSlider(0f, 60f)] public Vector2 _SpawnObjectDuration = new Vector2(5, 10);
-    [Tooltip("Destroy object outside this radius from its spawning position.")]
-    public float _DestroyRadius = 30f;
 
     public enum ControllerEvent { All, OnSpawn, OnCollision }
     [Header("Visual Feedback")]
@@ -239,17 +243,16 @@ public class ObjectSpawner : MonoBehaviour
     {
         if (!go.TryGetComponent(out SpawnableManager spawnableManager))
             spawnableManager = go.AddComponent<SpawnableManager>();
-        if (_UseSpawnDuration)
-            spawnableManager._Lifespan = Rando.Range(_SpawnObjectDuration);
-        spawnableManager._DestroyRadius = _DestroyRadius;
-        spawnableManager._SpawnedObject = go;
-        spawnableManager._ObjectSpawner = this;
+
+        spawnableManager._Lifespan = _UseSpawnDuration ? Rando.Range(_SpawnObjectDuration) : int.MaxValue;
+        spawnableManager._BoundingArea = _BoundingAreaType;
+        spawnableManager._BoundingRadius = _BoundingRadius;
         return spawnableManager;
     }
 
     public void ConfigureSpawnableBehaviour(GameObject go)
     {
-        if (go.TryGetComponent(out BehaviourClass behaviour))
+        foreach (var behaviour in go.GetComponents<BehaviourClass>())
         {
             behaviour._SpawnedObject = go;
             behaviour._ControllerObject = _ControllerObject;

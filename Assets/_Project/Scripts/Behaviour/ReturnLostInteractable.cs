@@ -7,33 +7,41 @@ public class ReturnLostInteractable : MonoBehaviour
     public Vector3 _InitialPosition;
     public Quaternion _InitialRotation;
     public GameObject _BoundingObject;
+    private Collider _BoundingCollider;
     private Rigidbody _RigidBody;
     public float _Radius = 30f;
     public float _HeightLimit = 50f;
 
     void Start()
     {
-        _InitialPosition = this.transform.position;
-        _InitialRotation = this.transform.rotation;
+        _InitialPosition = transform.position;
+        _InitialRotation = transform.rotation;
 
-        if (_BoundingObject != null)
-            _Radius = (_BoundingObject.transform.localScale.x + _BoundingObject.transform.localScale.z) / 2;
+        if (_BoundingObject != null && !_BoundingObject.TryGetComponent(out _BoundingCollider))
+                _Radius = (_BoundingObject.transform.localScale.x + _BoundingObject.transform.localScale.z) / 2;
 
-        _RigidBody = this.GetComponent<Rigidbody>();
+        _RigidBody = GetComponent<Rigidbody>();
     }
 
-    void Update()
+    void FixedUpdate()
     {
-        Vector3 objectPlanePosition = new Vector3(this.transform.position.x, 0, this.transform.position.z);
-
-        if (objectPlanePosition.magnitude > _Radius || this.transform.position.y > _HeightLimit || this.transform.position.y < -_HeightLimit)
+        if (_BoundingCollider != null && !_BoundingCollider.bounds.Contains(transform.position))
+            ReturnObject();
+        else
         {
-            if (_RigidBody != null)
-            {
-                _RigidBody.MovePosition(_InitialPosition);
-                _RigidBody.velocity = Vector3.zero;
-                _RigidBody.rotation = _InitialRotation;
-            }
+            if (new Vector2(transform.position.x, transform.position.z).magnitude > _Radius ||
+                transform.position.y > _HeightLimit || transform.position.y < -_HeightLimit)
+            ReturnObject();
+        }
+    }
+
+    public void ReturnObject()
+    {
+        if (_RigidBody != null)
+        {
+            _RigidBody.MovePosition(_InitialPosition);
+            _RigidBody.velocity = Vector3.zero;
+            _RigidBody.rotation = _InitialRotation;
         }
     }
 }

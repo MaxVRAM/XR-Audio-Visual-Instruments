@@ -17,12 +17,12 @@ TagManager:
   - UI
   - SceneFX
   - 
-  - EmitterInteractables
-  - EmitterSurfaces
-  - EmitterParticles
-  - EmitterControllers
-  - EmitterVFX
-  - EmitterContainers
+  - SonicObject
+  - SonicSurface
+  - SonicParticle
+  - SonicController
+  - SonicVFX
+  - SonicContainer
   - 
   - 
   - 

@@ -44,8 +44,8 @@ public class ContinuousAuthoring : EmitterAuthoring
             _HostIndex = _Host.EntityIndex,
             _DistanceAmplitude = 1,
             _PingPong = _PingPongGrainPlayheads,
-            _SamplesUntilFade = _Host._SpawnLife.SamplesUntilFade(_AgeFadeout),
-            _SamplesUntilDeath = _Host._SpawnLife.SamplesUntilDeath(),
+            _SamplesUntilFade = _Host._SpawnLife.GetSamplesUntilFade(_AgeFadeout),
+            _SamplesUntilDeath = _Host._SpawnLife.GetSamplesUntilDeath(),
             _LastSampleIndex = GrainSynth.Instance._CurrentSampleIndex,
             _OutputSampleRate = AudioSettings.outputSampleRate,
 
@@ -137,8 +137,8 @@ public class ContinuousAuthoring : EmitterAuthoring
             continuousData._HostIndex = _Host.EntityIndex;
             continuousData._LastSampleIndex = _LastSampleIndex;
             continuousData._PingPong = _PingPongGrainPlayheads;
-            continuousData._SamplesUntilFade = _Host._SpawnLife.SamplesUntilFade(_AgeFadeout);
-            continuousData._SamplesUntilDeath = _Host._SpawnLife.SamplesUntilDeath();
+            continuousData._SamplesUntilFade = _Host._SpawnLife.GetSamplesUntilFade(_AgeFadeout);
+            continuousData._SamplesUntilDeath = _Host._SpawnLife.GetSamplesUntilDeath();
             continuousData._DistanceAmplitude = _DistanceAmplitude;
             continuousData._OutputSampleRate = _SampleRate;
 
