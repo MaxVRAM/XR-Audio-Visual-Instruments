@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 2138677392}
-  m_IndirectSpecularColor: {r: 4597.873, g: 4335.873, b: 4438.6016, a: 1}
+  m_IndirectSpecularColor: {r: 4599.1846, g: 4338.551, b: 4444.797, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -359,12 +359,12 @@ GameObject:
   - component: {fileID: 19499202}
   - component: {fileID: 19499201}
   - component: {fileID: 19499200}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (14)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &19499199
 Transform:
@@ -456,12 +456,12 @@ GameObject:
   - component: {fileID: 22238398}
   - component: {fileID: 22238397}
   - component: {fileID: 22238396}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (8)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &22238395
 Transform:
@@ -557,7 +557,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &22275141
 Transform:
   m_ObjectHideFlags: 0
@@ -592,28 +592,29 @@ MonoBehaviour:
   _SecondsSinceSpawn: 0
   _ControllerObject: {fileID: 1811036108}
   _SpawnableHost: {fileID: 129053208}
-  _PrefabToSpawn: {fileID: 1977057586}
+  _PrefabToSpawn: {fileID: 1664604814}
   _RandomiseSpawnPrefab: 0
   _SpawnablePrefabs: []
   _ActiveObjects: []
   _WaitBeforeSpawning: 1
-  _SpawnablesAllocated: 1
-  _SpawnPeriodSeconds: 0.1
+  _SpawnablesAllocated: 10
+  _SpawnPeriodSeconds: 0.5
   _AutoSpawn: 1
   _AutoRemove: 1
   _DestroyOnCollision: 0
-  _BoundingAreaType: 2
+  _BoundingAreaType: 1
   _BoundingRadius: 30
   _UseSpawnDuration: 1
-  _SpawnObjectDuration: {x: 5, y: 10}
+  _SpawnObjectDuration: {x: 2, y: 2}
   _EmissiveFlashEvent: 1
-  _EmissiveBrightness: {x: -10, y: 10}
-  _ControllerRenderers: []
-  _EjectionRadiusRange: {x: 5, y: 10}
+  _EmissiveBrightness: {x: 0, y: 10}
+  _ControllerRenderers:
+  - {fileID: 1716587906}
+  _EjectionRadiusRange: {x: 1, y: 1}
   _EjectionPosition: {x: 0, y: 1, z: 0}
   _EjectionPositionVariance: 0.3
   _EjectionSpeedRange: {x: 5, y: 10}
-  _EjectionDirection: {x: 0, y: 0, z: 0}
+  _EjectionDirection: {x: 0, y: 1, z: 0}
   _EjectionDirectionVariance: 0.3
   _AllowSiblingSurfaceContact: 1
   _AllowSiblingCollisionBurst: 1
@@ -790,7 +791,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 575024e13d07ce244a554537f81bdf43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _AudioSource: {fileID: 24721012}
   _SampleRate: 0
   _CurrentSampleIndex: 0
   _FrameStartSampleIndex: 0
@@ -837,7 +837,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 24721011}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -100, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -880,14 +880,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 65149944}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1138242390}
-  m_Father: {fileID: 412989998}
-  m_RootOrder: 3
+  m_Father: {fileID: 1639877265}
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &65149946
 MonoBehaviour:
@@ -1040,7 +1040,9 @@ GameObject:
   - component: {fileID: 69801482}
   - component: {fileID: 69801481}
   - component: {fileID: 69801486}
-  m_Layer: 9
+  - component: {fileID: 69801487}
+  - component: {fileID: 69801488}
+  m_Layer: 14
   m_Name: OctoFloor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1852,6 +1854,79 @@ MonoBehaviour:
   _ApplyToChildren: 0
   _IsSurfaceChild: 0
   _ChildSurfaces: []
+--- !u!114 &69801487
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 69801480}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abdaae8d2b81ba54498967f33610da0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  filePathRelative: XR Interactions - Masters - Tether/Environment-OctoFloor
+  fileEnabled: 1
+  includeChildMeshes: 1
+--- !u!114 &69801488
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 69801480}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45fef2cb49a5b4b46a3d1cbeaec4c932, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  absorption:
+    selection: 2147483647
+    points:
+    - frequency: 125
+      data: 0.05
+    - frequency: 250
+      data: 0.1
+    - frequency: 500
+      data: 0.1
+    - frequency: 1000
+      data: 0.1
+    - frequency: 2000
+      data: 0.07
+    - frequency: 4000
+      data: 0.02
+  transmission:
+    selection: 2147483647
+    points:
+    - frequency: 125
+      data: 0.25
+    - frequency: 250
+      data: 0.2
+    - frequency: 500
+      data: 0.17
+    - frequency: 1000
+      data: 0.089
+    - frequency: 2000
+      data: 0.089
+    - frequency: 4000
+      data: 0.0056
+  scattering:
+    selection: 2147483647
+    points:
+    - frequency: 125
+      data: 0.1
+    - frequency: 250
+      data: 0.1
+    - frequency: 500
+      data: 0.1
+    - frequency: 1000
+      data: 0.1
+    - frequency: 2000
+      data: 0.1
+    - frequency: 4000
+      data: 0.1
+  preset_: 24
 --- !u!1 &90622318
 GameObject:
   m_ObjectHideFlags: 0
@@ -1958,12 +2033,12 @@ GameObject:
   - component: {fileID: 106805993}
   - component: {fileID: 106805992}
   - component: {fileID: 106805991}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (11)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &106805990
 Transform:
@@ -2258,12 +2333,12 @@ GameObject:
   - component: {fileID: 147860450}
   - component: {fileID: 147860449}
   - component: {fileID: 147860448}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &147860447
 Transform:
@@ -2355,12 +2430,12 @@ GameObject:
   - component: {fileID: 156231435}
   - component: {fileID: 156231434}
   - component: {fileID: 156231433}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (10)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &156231432
 Transform:
@@ -2669,12 +2744,12 @@ GameObject:
   - component: {fileID: 254480195}
   - component: {fileID: 254480194}
   - component: {fileID: 254480193}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &254480192
 Transform:
@@ -2860,12 +2935,12 @@ GameObject:
   - component: {fileID: 311365150}
   - component: {fileID: 311365149}
   - component: {fileID: 311365148}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &311365147
 Transform:
@@ -3327,12 +3402,12 @@ GameObject:
   - component: {fileID: 319187181}
   - component: {fileID: 319187180}
   - component: {fileID: 319187179}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &319187178
 Transform:
@@ -3519,12 +3594,12 @@ GameObject:
   - component: {fileID: 402994019}
   - component: {fileID: 402994018}
   - component: {fileID: 402994017}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &402994016
 Transform:
@@ -3652,12 +3727,12 @@ GameObject:
   - component: {fileID: 408657795}
   - component: {fileID: 408657794}
   - component: {fileID: 408657793}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &408657792
 Transform:
@@ -3747,12 +3822,14 @@ GameObject:
   m_Component:
   - component: {fileID: 408747729}
   - component: {fileID: 408747730}
-  m_Layer: 9
+  - component: {fileID: 408747732}
+  - component: {fileID: 408747731}
+  m_Layer: 14
   m_Name: Teal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &408747729
 Transform:
@@ -3800,6 +3877,79 @@ MonoBehaviour:
   _ApplyToChildren: 1
   _IsSurfaceChild: 0
   _ChildSurfaces: []
+--- !u!114 &408747731
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 408747728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45fef2cb49a5b4b46a3d1cbeaec4c932, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  absorption:
+    selection: 2147483647
+    points:
+    - frequency: 125
+      data: 0.18
+    - frequency: 250
+      data: 0.06
+    - frequency: 500
+      data: 0.04
+    - frequency: 1000
+      data: 0.03
+    - frequency: 2000
+      data: 0.02
+    - frequency: 4000
+      data: 0.02
+  transmission:
+    selection: 2147483647
+    points:
+    - frequency: 125
+      data: 0.056
+    - frequency: 250
+      data: 0.039
+    - frequency: 500
+      data: 0.028
+    - frequency: 1000
+      data: 0.02
+    - frequency: 2000
+      data: 0.032
+    - frequency: 4000
+      data: 0.014
+  scattering:
+    selection: 2147483647
+    points:
+    - frequency: 125
+      data: 0.05
+    - frequency: 250
+      data: 0.05
+    - frequency: 500
+      data: 0.05
+    - frequency: 1000
+      data: 0.05
+    - frequency: 2000
+      data: 0.05
+    - frequency: 4000
+      data: 0.05
+  preset_: 15
+--- !u!114 &408747732
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 408747728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abdaae8d2b81ba54498967f33610da0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  filePathRelative: XR Interactions - Masters - Tether/Environment-Shards-Teal
+  fileEnabled: 1
+  includeChildMeshes: 1
 --- !u!1 &412989997
 GameObject:
   m_ObjectHideFlags: 0
@@ -3809,12 +3959,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 412989998}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Shards
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &412989998
 Transform:
@@ -3831,7 +3981,6 @@ Transform:
   - {fileID: 761048850}
   - {fileID: 408747729}
   - {fileID: 913594152}
-  - {fileID: 65149945}
   m_Father: {fileID: 1459523247}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -3847,12 +3996,12 @@ GameObject:
   - component: {fileID: 424598529}
   - component: {fileID: 424598528}
   - component: {fileID: 424598527}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (13)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &424598526
 Transform:
@@ -4600,12 +4749,12 @@ GameObject:
   - component: {fileID: 614162130}
   - component: {fileID: 614162129}
   - component: {fileID: 614162128}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (12)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &614162127
 Transform:
@@ -4744,12 +4893,12 @@ GameObject:
   - component: {fileID: 629107668}
   - component: {fileID: 629107667}
   - component: {fileID: 629107666}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &629107665
 Transform:
@@ -5316,12 +5465,12 @@ GameObject:
   - component: {fileID: 735958572}
   - component: {fileID: 735958571}
   - component: {fileID: 735958570}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &735958569
 Transform:
@@ -5492,7 +5641,9 @@ GameObject:
   - component: {fileID: 761048852}
   - component: {fileID: 761048853}
   - component: {fileID: 761048854}
-  m_Layer: 9
+  - component: {fileID: 761048856}
+  - component: {fileID: 761048855}
+  m_Layer: 14
   m_Name: RampShard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5593,6 +5744,79 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &761048855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 761048849}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45fef2cb49a5b4b46a3d1cbeaec4c932, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  absorption:
+    selection: 2147483647
+    points:
+    - frequency: 125
+      data: 0.36
+    - frequency: 250
+      data: 0.44
+    - frequency: 500
+      data: 0.31
+    - frequency: 1000
+      data: 0.29
+    - frequency: 2000
+      data: 0.39
+    - frequency: 4000
+      data: 0.21
+  transmission:
+    selection: 2147483647
+    points:
+    - frequency: 125
+      data: 0.02
+    - frequency: 250
+      data: 0.01
+    - frequency: 500
+      data: 0.0063
+    - frequency: 1000
+      data: 0.0035
+    - frequency: 2000
+      data: 0.00011
+    - frequency: 4000
+      data: 0.00063
+  scattering:
+    selection: 2147483647
+    points:
+    - frequency: 125
+      data: 0.1
+    - frequency: 250
+      data: 0.12
+    - frequency: 500
+      data: 0.15
+    - frequency: 1000
+      data: 0.2
+    - frequency: 2000
+      data: 0.3
+    - frequency: 4000
+      data: 0.4
+  preset_: 0
+--- !u!114 &761048856
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 761048849}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abdaae8d2b81ba54498967f33610da0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  filePathRelative: XR Interactions - Masters - Tether/Environment-Shards-RampShard
+  fileEnabled: 1
+  includeChildMeshes: 1
 --- !u!1 &782195765
 GameObject:
   m_ObjectHideFlags: 0
@@ -5681,12 +5905,12 @@ GameObject:
   - component: {fileID: 788102772}
   - component: {fileID: 788102771}
   - component: {fileID: 788102770}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (10)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &788102769
 Transform:
@@ -5810,12 +6034,12 @@ GameObject:
   - component: {fileID: 798180719}
   - component: {fileID: 798180718}
   - component: {fileID: 798180717}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &798180716
 Transform:
@@ -6441,7 +6665,7 @@ MonoBehaviour:
   m_ShapeWidth: 1
   m_ShapeHeight: 1
   m_AspectRatio: 1
-  m_ShapeRadius: 1
+  m_ShapeRadius: 3
   m_SoftnessScale: 1
   m_UseCustomSpotLightShadowCone: 0
   m_CustomSpotLightShadowCone: 30
@@ -6595,7 +6819,7 @@ Light:
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 10}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
-  m_ShadowRadius: 1
+  m_ShadowRadius: 3
   m_ShadowAngle: 0
 --- !u!1 &913594151
 GameObject:
@@ -6607,12 +6831,14 @@ GameObject:
   m_Component:
   - component: {fileID: 913594152}
   - component: {fileID: 913594153}
-  m_Layer: 9
+  - component: {fileID: 913594155}
+  - component: {fileID: 913594154}
+  m_Layer: 14
   m_Name: Coral
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &913594152
 Transform:
@@ -6657,6 +6883,79 @@ MonoBehaviour:
   _ApplyToChildren: 1
   _IsSurfaceChild: 0
   _ChildSurfaces: []
+--- !u!114 &913594154
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 913594151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45fef2cb49a5b4b46a3d1cbeaec4c932, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  absorption:
+    selection: 2147483647
+    points:
+    - frequency: 125
+      data: 0.18
+    - frequency: 250
+      data: 0.06
+    - frequency: 500
+      data: 0.04
+    - frequency: 1000
+      data: 0.03
+    - frequency: 2000
+      data: 0.02
+    - frequency: 4000
+      data: 0.02
+  transmission:
+    selection: 2147483647
+    points:
+    - frequency: 125
+      data: 0.056
+    - frequency: 250
+      data: 0.039
+    - frequency: 500
+      data: 0.028
+    - frequency: 1000
+      data: 0.02
+    - frequency: 2000
+      data: 0.032
+    - frequency: 4000
+      data: 0.014
+  scattering:
+    selection: 2147483647
+    points:
+    - frequency: 125
+      data: 0.05
+    - frequency: 250
+      data: 0.05
+    - frequency: 500
+      data: 0.05
+    - frequency: 1000
+      data: 0.05
+    - frequency: 2000
+      data: 0.05
+    - frequency: 4000
+      data: 0.05
+  preset_: 15
+--- !u!114 &913594155
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 913594151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abdaae8d2b81ba54498967f33610da0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  filePathRelative: XR Interactions - Masters - Tether/Environment-Shards-Coral
+  fileEnabled: 1
+  includeChildMeshes: 1
 --- !u!1 &922394145
 GameObject:
   m_ObjectHideFlags: 0
@@ -6799,12 +7098,12 @@ GameObject:
   - component: {fileID: 937908232}
   - component: {fileID: 937908231}
   - component: {fileID: 937908230}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (11)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &937908229
 Transform:
@@ -8369,7 +8668,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1109771457}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 100, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -8869,12 +9168,12 @@ GameObject:
   - component: {fileID: 1181900078}
   - component: {fileID: 1181900077}
   - component: {fileID: 1181900076}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &1181900075
 Transform:
@@ -8970,7 +9269,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1196933170
 Transform:
   m_ObjectHideFlags: 0
@@ -9109,6 +9408,7 @@ Transform:
   m_Children:
   - {fileID: 961816295}
   - {fileID: 975255380}
+  - {fileID: 1616322507}
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -9974,7 +10274,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1459523247}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: Environment
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10337,12 +10637,12 @@ GameObject:
   - component: {fileID: 1539474457}
   - component: {fileID: 1539474456}
   - component: {fileID: 1539474455}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &1539474454
 Transform:
@@ -10826,12 +11126,12 @@ GameObject:
   - component: {fileID: 1588916676}
   - component: {fileID: 1588916675}
   - component: {fileID: 1588916674}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &1588916673
 Transform:
@@ -11069,6 +11369,59 @@ MonoBehaviour:
   _ClipEntityIndex: 0
   _Clip: {fileID: 8300000, guid: 192d73430ad47b04a9c827ca11c77d53, type: 3}
   _ClipType: 1
+--- !u!1 &1616322506
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1616322507}
+  - component: {fileID: 1616322508}
+  m_Layer: 0
+  m_Name: OculusRoomModeling
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1616322507
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1616322506}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1221644288}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1616322508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1616322506}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e8aaaa0cd7804c469aa5f8dc3f42ee4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 16384
+  visualizeRoom: 1
+  raysPerSecond: 256
+  roomInterpSpeed: 0.9
+  maxWallDistance: 50
+  rayCacheSize: 512
+  dynamicReflectionsEnabled: 1
 --- !u!1001 &1625065538
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11184,6 +11537,7 @@ Transform:
   m_Children:
   - {fileID: 1102653707}
   - {fileID: 1551187616}
+  - {fileID: 65149945}
   m_Father: {fileID: 0}
   m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -11309,8 +11663,7 @@ MonoBehaviour:
     m_Bits: 1024
   m_DistanceCalculationMode: 0
   m_SelectMode: 0
-  m_CustomReticle: {fileID: -3888481672020999207, guid: 39f2cb9489cec774bab0b1a1b5df5d4e,
-    type: 3}
+  m_CustomReticle: {fileID: 0}
   m_FirstHoverEntered:
     m_PersistentCalls:
       m_Calls: []
@@ -11609,12 +11962,12 @@ GameObject:
   - component: {fileID: 1687210307}
   - component: {fileID: 1687210306}
   - component: {fileID: 1687210305}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (9)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &1687210304
 Transform:
@@ -12109,12 +12462,12 @@ GameObject:
   - component: {fileID: 1748464003}
   - component: {fileID: 1748464002}
   - component: {fileID: 1748464001}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &1748464000
 Transform:
@@ -12253,12 +12606,12 @@ GameObject:
   - component: {fileID: 1770850202}
   - component: {fileID: 1770850201}
   - component: {fileID: 1770850200}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (9)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &1770850199
 Transform:
@@ -12935,12 +13288,12 @@ GameObject:
   - component: {fileID: 1804849142}
   - component: {fileID: 1804849141}
   - component: {fileID: 1804849140}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (8)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &1804849139
 Transform:
@@ -13063,6 +13416,7 @@ GameObject:
   - component: {fileID: 1811036114}
   - component: {fileID: 1811036115}
   - component: {fileID: 1811036116}
+  - component: {fileID: 1811036117}
   m_Layer: 11
   m_Name: GrabbableAnchor
   m_TagString: Untagged
@@ -13106,8 +13460,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   m_InteractionLayers:
-    m_Bits: 4294967295
-  m_DistanceCalculationMode: 1
+    m_Bits: 1024
+  m_DistanceCalculationMode: 2
   m_SelectMode: 0
   m_CustomReticle: {fileID: 0}
   m_FirstHoverEntered:
@@ -13171,10 +13525,10 @@ MonoBehaviour:
       m_Calls: []
   m_AttachTransform: {fileID: 0}
   m_UseDynamicAttach: 1
-  m_MatchAttachPosition: 0
+  m_MatchAttachPosition: 1
   m_MatchAttachRotation: 1
   m_SnapToColliderVolume: 1
-  m_AttachEaseInTime: 0.15
+  m_AttachEaseInTime: 0.4
   m_MovementType: 0
   m_VelocityDamping: 0.9
   m_VelocityScale: 0.25
@@ -13228,7 +13582,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 1
+  m_CollisionDetection: 3
 --- !u!64 &1811036116
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -13243,6 +13597,23 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: -2194042186925421486, guid: 81b97fb9d4db8bf49bed3076e6fb603a, type: 3}
+--- !u!114 &1811036117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1811036108}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c24b0ae9e076db64aa6e40fceb550793, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _InitialPosition: {x: 0, y: 0, z: 0}
+  _InitialRotation: {x: 0, y: 0, z: 0, w: 0}
+  _BoundingObject: {fileID: 1521040265}
+  _Radius: 30
+  _HeightLimit: 30
 --- !u!1 &1818525762
 GameObject:
   m_ObjectHideFlags: 0
@@ -13255,12 +13626,12 @@ GameObject:
   - component: {fileID: 1818525766}
   - component: {fileID: 1818525765}
   - component: {fileID: 1818525764}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &1818525763
 Transform:
@@ -13571,12 +13942,12 @@ GameObject:
   - component: {fileID: 1891555378}
   - component: {fileID: 1891555377}
   - component: {fileID: 1891555376}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &1891555375
 Transform:
@@ -14442,12 +14813,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 10
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1977057586 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3855671869938862447, guid: 02ec51453b34a444bb3fa1cd193668aa,
-    type: 3}
-  m_PrefabInstance: {fileID: 880635110509678896}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2022557833
 GameObject:
   m_ObjectHideFlags: 0
@@ -14601,12 +14966,12 @@ GameObject:
   - component: {fileID: 2060866328}
   - component: {fileID: 2060866327}
   - component: {fileID: 2060866326}
-  m_Layer: 9
+  m_Layer: 14
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &2060866325
 Transform:
@@ -15049,7 +15414,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh34634
+  m_Name: pb_Mesh34646
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2

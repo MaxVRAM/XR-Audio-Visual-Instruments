@@ -53,7 +53,6 @@ MonoBehaviour:
   _EntityInitialised: 0
   _ManagerInitialised: 0
   _State: 0
-  _GrainArrayReady: 0
   _GrainArraySize: 100
   _NumGrainsFree: 0
   _GrainLoad: 0
