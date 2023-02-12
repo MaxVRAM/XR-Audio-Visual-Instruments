@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 2138677392}
-  m_IndirectSpecularColor: {r: 4272.7437, g: 3925.0068, b: 3726.3906, a: 1}
+  m_IndirectSpecularColor: {r: 4599.7627, g: 4337.037, b: 4433.4297, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -6193,7 +6193,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 2a31b5a862230d047be33af0642946f6, type: 3}
+  m_audioClip: {fileID: 8300000, guid: 8282cd2118513044ba10116b12b4d83e, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -9317,7 +9317,8 @@ PrefabInstance:
         type: 3}
       propertyPath: _AudioAsset
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: c75335a3df9d39a42978f74c80c83417,
+        type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 26c8df6390d44ff46af7ca002dacda5f, type: 3}
 --- !u!4 &1664604813 stripped
