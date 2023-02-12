@@ -17,6 +17,31 @@ namespace MaxVRAM.Math
             return Mathf.Pow((val - inMin) / (inMax - inMin), exp) * (outMax - outMin) + outMin;
         }
 
+        public static bool ClampCheck(ref float value, float min, float max)
+        {
+            if (value < min)
+            {
+                value = min;
+                return true;
+            }
+            if (value > max)
+            {
+                value = max;
+                return true;
+            }
+            return false;
+        }
+
+        public static bool InRange(float value, float min, float max)
+        {
+            return value >= min && value <= max;
+        }
+
+        public static bool InRange(float value, Vector2 range)
+        {
+            return value >= range.x && value <= range.y;
+        }
+
         public static float FadeInOut(float norm, float inEnd, float outStart)
         {
             norm = Mathf.Clamp01(norm);
