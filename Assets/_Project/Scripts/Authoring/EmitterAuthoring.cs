@@ -2,6 +2,7 @@
 using UnityEngine;
 using Random = UnityEngine.Random;
 using MaxVRAM.Audio.Utils;
+using MaxVRAM.Audio.Library;
 
 /// <summary>
 //  Abstract class for managing emitter entities

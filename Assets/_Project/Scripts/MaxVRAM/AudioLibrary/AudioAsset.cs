@@ -1,33 +1,73 @@
 using System;
+using UnityEditor;
 using UnityEngine;
 
 /// < summary >
-/// Class for defining audio clip assets with assignable types and other properties.
+/// Scriptable Object for creating audio clip assets with assignable types and other properties.
 /// Will be used for expanding audio library paradigm to make it easier to manage and
 /// assign audio assets to interactive synthesis elements.
 /// < summary >
 
-[Serializable]
-public class AudioAsset : MonoBehaviour
+namespace MaxVRAM.Audio.Library
 {
-    public enum AudioClipType
+    [CreateAssetMenu(fileName = "AudioAsset", menuName = "ScriptableObjects/AudioAsset")]
+    public class AudioAsset : ScriptableObject
     {
-        Generic = 0,
-        Hit = 1,
-        Short = 2,
-        Long = 3,
-        Loop = 4,
-        Note = 5,
-        Phrase = 6,
-        Voice = 7
+        [SerializeField] private AudioClip _Clip;
+        [SerializeField] private AudioClipType _ClipType;
+        [SerializeField] private int _ClipEntityIndex;
+        [SerializeField] DateTime _DateCreated;
+        private GUID _GUID;
+        public int _SampleRate;
+        public int _SampleCount;
+        public float _Duration;
+
+        public int ClipEntityIndex { get { return _ClipEntityIndex; } }
+        public AudioClipType ClipType { get { return _ClipType; } }
+        public AudioClip Clip { get { return _Clip; } }
+        public string ClipName { get { return _Clip.name; } }
+        public bool ValidClip { get { return _Clip != null; } }
+        public int SampleRate { get { return _SampleRate; } }
+        public int Samples { get { return _SampleCount; } }
+        public float Duration { get { return _Duration; } }
+
+        void OnValidate()
+        {
+            UpdateClipProperties();
+        }
+
+        private void Awake()
+        {
+            UpdateClipProperties();
+        }
+
+        public void UpdateEntityIndex(int entityIndex)
+        {
+            _ClipEntityIndex = entityIndex;
+        }
+
+        public AudioAsset AssociateAudioClip(AudioClip clip, AudioClipType clipType, int index)
+        {
+            _Clip = clip;
+            _ClipType = clipType;
+            _ClipEntityIndex = index;
+
+            if (!UpdateClipProperties())
+                return null;
+
+            _DateCreated = DateTime.Now;
+            return this;
+        }
+
+        private bool UpdateClipProperties()
+        {
+            if (_Clip == null)
+                return false;
+
+            _SampleRate = _Clip.frequency;
+            _SampleCount = _Clip.samples;
+            _Duration = _Clip.length;
+            return true;
+        }
     }
-
-    [SerializeField] private int _ClipEntityIndex;
-    [SerializeField] private AudioClip _Clip;
-    [SerializeField] private AudioClipType _ClipType;
-
-    public int ClipEntityIndex { get { return _ClipEntityIndex; } set { _ClipEntityIndex = value; } }
-    public AudioClipType ClipType { get { return _ClipType; } }
-    public AudioClip Clip { get { return _Clip; } }
-    public bool ValidClip { get { return _Clip != null; } }
 }

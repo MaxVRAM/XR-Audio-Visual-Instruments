@@ -8,7 +8,6 @@ namespace MaxVRAM.Audio.Utils
     public class WindowFunction
     {
         // Source: https://michaelkrzyzaniak.com/AudioSynthesis/2_Audio_Synthesis/11_Granular_Synthesis/1_Window_Functions/
-
         public enum FunctionSelect { sine = 0, hann = 1, hamming = 2, tukey = 3, gaussian = 4 }
         public FunctionSelect _WindowFunction = FunctionSelect.hann;
 

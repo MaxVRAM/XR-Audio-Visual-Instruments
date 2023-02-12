@@ -301,7 +301,7 @@ public class GrainSynth : MonoBehaviour
         {
             Entity audioClipDataEntity = _EntityManager.CreateEntity();
 
-            AudioClip clip = _AudioClipLibrary.GetClipAndSetEntityIndex(i);
+            AudioClip clip = _AudioClipLibrary.GetClip(i);
             int clipChannels = clip.channels;
             float[] clipData = new float[clip.samples];
             clip.GetData(clipData, 0);

@@ -15,16 +15,28 @@ public class AudioAssetInspector : Editor
 
         if (GUILayout.Button("Preview Sound"))
         {
-            if (audioLibrary._AudioSource != null && audioLibrary._AudioAssetObjects != null)
+            if (audioLibrary._PreviewAudioSource != null && audioLibrary.AudioAssets != null)
             {
-                AudioAssetObject audioAsset = audioLibrary._AudioAssetObjects[0];
+                AudioAsset audioAsset = audioLibrary.AudioAssets[0];
                 if (audioAsset != null)
                 {
                     Debug.Log($"Playing audio asset preview: {audioAsset.Clip.name}.");
-                    audioLibrary._AudioSource.clip = audioAsset.Clip;
-                    audioLibrary._AudioSource.Play();
+                    audioLibrary._PreviewAudioSource.clip = audioAsset.Clip;
+                    audioLibrary._PreviewAudioSource.Play();
                 }
             }
+        }
+
+        if (GUILayout.Button("Reload Audio Assets"))
+        {
+            Debug.Log("Todo: create reload function.");
+            //audioLibrary.BuildAudioAssets();
+        }
+
+
+        if (GUILayout.Button("Rebuild Audio Assets"))
+        {
+            audioLibrary.BuildAudioAssets();
         }
 
         GUILayout.EndHorizontal();

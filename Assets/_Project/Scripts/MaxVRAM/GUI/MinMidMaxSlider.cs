@@ -41,7 +41,6 @@ public class MinMidMaxSliderDrawer : PropertyDrawer
             }
 
             // TODO: Occasionally buggy when quickly moving one value to mid limit. Works well enough, but could be improved.
-
             if (MaxMath.ClampCheck(ref lower, minMidMaxAttribute.min, minMidMaxAttribute.mid))
                 upper = Mathf.Clamp(lower + _PreviousRange, minMidMaxAttribute.mid, minMidMaxAttribute.max);
 
@@ -58,23 +57,36 @@ public class MinMidMaxSliderDrawer : PropertyDrawer
         {
             EditorGUI.BeginChangeCheck();
 
-            Vector2Int propertyValue = property.vector2IntValue;
-            float lower = propertyValue.x;
-            float upper = propertyValue.y;
+            Vector2Int newValue = property.vector2IntValue;
+            float lower = newValue.x;
+            float upper = newValue.y;
 
-            lower = EditorGUI.FloatField(splittedRect[0], lower);
-            upper = EditorGUI.FloatField(splittedRect[2], upper);
+            if (_PreviousRange == float.MaxValue)
+                _PreviousRange = minMidMaxAttribute.max - minMidMaxAttribute.min;
+
+            lower = EditorGUI.FloatField(splittedRect[0], float.Parse(lower.ToString("F2")));
+            upper = EditorGUI.FloatField(splittedRect[2], float.Parse(upper.ToString("F2")));
 
             EditorGUI.MinMaxSlider(splittedRect[1], ref lower, ref upper, minMidMaxAttribute.min, minMidMaxAttribute.max);
 
-            lower = Mathf.Clamp(lower, minMidMaxAttribute.min, minMidMaxAttribute.mid);
-            upper = Mathf.Clamp(upper, minMidMaxAttribute.mid, minMidMaxAttribute.max);
+            if (lower.InRange(minMidMaxAttribute.min, minMidMaxAttribute.mid) &&
+                upper.InRange(minMidMaxAttribute.mid, minMidMaxAttribute.max))
+            {
+                _PreviousRange = upper - lower;
+            }
+
+            // TODO: Occasionally buggy when quickly moving one value to mid limit. Works well enough, but could be improved.
+            if (MaxMath.ClampCheck(ref lower, minMidMaxAttribute.min, minMidMaxAttribute.mid))
+                upper = Mathf.Clamp(lower + _PreviousRange, minMidMaxAttribute.mid, minMidMaxAttribute.max);
+
+            if (MaxMath.ClampCheck(ref upper, minMidMaxAttribute.mid, minMidMaxAttribute.max))
+                lower = Mathf.Clamp(upper - _PreviousRange, minMidMaxAttribute.min, minMidMaxAttribute.mid);
 
             //propertyValue = new Vector2Int(Mathf.FloorToInt(lower > upper ? upper : lower), Mathf.FloorToInt(upper));
-            propertyValue = new Vector2Int(Mathf.FloorToInt(lower), Mathf.FloorToInt(upper));
+            newValue = new Vector2Int(Mathf.FloorToInt(lower), Mathf.FloorToInt(upper));
 
             if (EditorGUI.EndChangeCheck())
-                property.vector2IntValue = propertyValue;
+                property.vector2IntValue = newValue;
         }
     }
 
