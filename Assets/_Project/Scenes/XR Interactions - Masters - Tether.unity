@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 2138677392}
-  m_IndirectSpecularColor: {r: 4599.7627, g: 4337.037, b: 4433.4297, a: 1}
+  m_IndirectSpecularColor: {r: 4608.411, g: 4340.117, b: 4401.703, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -503,8 +503,8 @@ MonoBehaviour:
   _SpawnablePrefabs: []
   _ActiveObjects: []
   _WaitBeforeSpawning: 1
-  _SpawnablesAllocated: 10
-  _SpawnPeriodSeconds: 0.5
+  _SpawnablesAllocated: 30
+  _SpawnPeriodSeconds: 0.2
   _AutoSpawn: 1
   _AutoRemove: 1
   _DestroyOnCollision: 0
@@ -517,11 +517,11 @@ MonoBehaviour:
   _ControllerRenderers:
   - {fileID: 1716587906}
   _EjectionRadiusRange: {x: 1, y: 1}
-  _EjectionPosition: {x: 0, y: 1, z: 0}
-  _EjectionPositionVariance: 0.3
-  _EjectionSpeedRange: {x: 5, y: 10}
-  _EjectionDirection: {x: 0, y: 1, z: 0}
-  _EjectionDirectionVariance: 0.3
+  _EjectionPosition: {x: 0, y: 0, z: -1}
+  _EjectionPositionVariance: 0.1
+  _EjectionSpeedRange: {x: 20, y: 30}
+  _EjectionDirection: {x: 0, y: 0, z: -1}
+  _EjectionDirectionVariance: 0.1
   _AllowSiblingSurfaceContact: 1
   _AllowSiblingCollisionBurst: 1
 --- !u!1 &24721011
@@ -667,8 +667,8 @@ MonoBehaviour:
     _TukeyHeight: 0.65
     _GaussianSigma: 0.5
     _LinearInOutFade: 0.1
-  _SpeakersAllocated: 10
-  _SpeakerAllocationPeriod: 0.2
+  _SpeakersAllocated: 30
+  _SpeakerAllocationPeriod: 1
   _SpeakerPrefab: {fileID: 2519325204652697373, guid: 6844ced249a80dd4584a457e05fa1c66,
     type: 3}
   _SpeakerParentTransform: {fileID: 1810087969}
@@ -687,7 +687,6 @@ MonoBehaviour:
   _Hosts: []
   _Emitters: []
   _Speakers: []
-  _AudioClipLibrary: {fileID: 1074502018}
 --- !u!4 &24721014
 Transform:
   m_ObjectHideFlags: 0
@@ -6106,7 +6105,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d7caeb692ac5324b83ad11017aec456, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _Initialised: 0
   _PreviewAudioSource: {fileID: 1074502019}
   _AudioFilePath: Assets/_Project/Audio/Wav/
   _AudioAssetPath: Assets/_Project/Audio/Assets/
