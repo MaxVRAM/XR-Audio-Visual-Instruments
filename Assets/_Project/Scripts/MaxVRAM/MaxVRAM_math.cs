@@ -86,57 +86,54 @@ namespace MaxVRAM.Math
 
         public class SphericalCoords
         {
-            public float radius;
-            public float polar;
-            public float elevation;
+            private float _Radius;
+            private float _Polar;
+            private float _Elevation;
+            public float Radius { get { return _Radius; } }
+            public float Polar { get { return _Polar; } }
+            public float Elevation{ get { return _Elevation; } }
 
             public SphericalCoords(Vector3 cartesianCoords)
             {
-                CartesianToSpherical(cartesianCoords, out radius, out polar, out elevation);
+                CartesianToSpherical(cartesianCoords, out _Radius, out _Polar, out _Elevation);
+            }
+            public SphericalCoords(SphericalCoords sphericalCoords)
+            {
+                _Radius = sphericalCoords._Radius;
+                _Polar = sphericalCoords._Polar;
+                _Elevation = sphericalCoords._Elevation;
             }
 
-            public Vector3 GetAsVector()
-            {
-                return new Vector3(radius, polar, elevation);
-            }
-            
-            public void GetAsVector(out Vector3 sphericalCoods)
-            {
-                sphericalCoods = GetAsVector();
-            }
+            public Vector3 GetAsVector() { return new Vector3(_Radius, _Polar, _Elevation); }
+            public void GetAsVector(out Vector3 sphericalCoods) { sphericalCoods = GetAsVector(); }
 
             public SphericalCoords FromCartesian(Vector3 cartesianCoords)
             {
-                CartesianToSpherical(cartesianCoords, out radius, out polar, out elevation);
+                CartesianToSpherical(cartesianCoords, out _Radius, out _Polar, out _Elevation);
                 return this;
             }
 
             public Vector3 ToCartesian()
             {
-                SphericalToCartesian(radius, polar, elevation, out Vector3 cartesianCoords);
+                SphericalToCartesian(_Radius, _Polar, _Elevation, out Vector3 cartesianCoords);
                 return cartesianCoords;
             }
         }
 
         public static float AngularSpeedFromQuaternion(Quaternion quat)
         {
-            // TOOD - I'm so tired. do later....
             float angleInDegrees;
             Vector3 rotationAxis;
             quat.ToAngleAxis(out angleInDegrees, out rotationAxis);
             Vector3 angularDisplacement = rotationAxis * angleInDegrees * Mathf.Deg2Rad;
             Vector3 angularSpeed = angularDisplacement / Time.deltaTime;
-            return 0;
+            return angularSpeed.magnitude;
         }
-
     }
 
     public struct Rando
     {
-        public static float Range(Vector2 range)
-        {
-            return Random.Range(range.x, range.y);
-        }
-
+        public static float Range(Vector2 range) { return Random.Range(range.x, range.y); }
+        public static int PickOne(int[] selection) { return selection[Random.Range(0, selection.Length)]; }
     }
 }

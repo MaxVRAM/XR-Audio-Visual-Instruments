@@ -74,21 +74,15 @@ namespace PlaneWaver.Interaction
         private List<Color> _EmissiveColours = new List<Color>();
         private float _EmissiveIntensity = 0;
 
-        [Header("Ejection Position")]
+        [Header("Ejection Physics")]
+        [Tooltip("Direction unit vector that determines a spawnables position and velocity on instantiation.")]
+        public Vector3 _EjectionDirection = new Vector3(0, 0, 0);
+        [Tooltip("Amount of random spread applied to each spawn direction.")]
+        [Range(0f, 1f)] public float _EjectionDirectionVariance = 0;
         [Tooltip("Distance from the anchor that objects will be spawned.")]
         [MinMaxSlider(0f, 10f)] public Vector2 _EjectionRadiusRange = new Vector2(1, 2);
-        [Tooltip("Normalised default position that spawnables leave the anchor.")]
-        public Vector3 _EjectionPosition = new Vector3(0, -1, 0);
-        [Tooltip("Randomise spawnable ejection position. 0 = Always spawn at defined position. 0.5 = Spawn within one hemisphere of ejection position. 1.0 = Spawn at any angle around the position.")]
-        [Range(0, 1)] public float _EjectionPositionVariance = 0;
-
-        [Header("Ejection Velocity")]
         [Tooltip("Speed that spawned objects leave the anchor.")]
         [MinMaxSlider(0f, 100f)] public Vector2 _EjectionSpeedRange = new Vector2(5, 10);
-        [Tooltip("Normalised velocity that spawnables have at the spawn time.")]
-        public Vector3 _EjectionDirection = new Vector3(0, 0, 0);
-        [Tooltip("Apply random amount of spread to the direction for each spawn.")]
-        [Range(0f, 1f)] public float _EjectionDirectionVariance = 0;
 
         [Header("Emitter Behaviour")]
         public bool _AllowSiblingSurfaceContact = true;
@@ -197,7 +191,7 @@ namespace PlaneWaver.Interaction
             InstantiatePrefab(out GameObject newObject);
             SpawnableManager spawnableManager = AttachSpawnableManager(newObject);
             ConfigureSpawnableBehaviour(newObject);
-            ConfigureEmitterHost(newObject, spawnableManager);
+            ConfigureEmitterHost(newObject, _ControllerObject, spawnableManager);
             newObject.SetActive(true);
             _ActiveObjects.Add(newObject);
 
@@ -220,27 +214,26 @@ namespace PlaneWaver.Interaction
             int index = (!_RandomiseSpawnPrefab || _SpawnablePrefabs.Count < 2) ? Random.Range(0, _SpawnablePrefabs.Count) : 0;
             GameObject objectToSpawn = _SpawnablePrefabs[index];
 
-            Vector3 spawnOnSphere = Random.onUnitSphere;
-            Vector3 spawnPositionOffset = Vector3.Slerp(_EjectionPosition.normalized, spawnOnSphere, _EjectionPositionVariance);
-            Vector3 spawnPosition = _ControllerObject.transform.position + spawnPositionOffset * Random.Range(_EjectionRadiusRange.x, _EjectionRadiusRange.y);
+            //Vector3 spawnPositionOffset = Vector3.Slerp(_EjectionPosition.normalized, spawnOnSphere, _EjectionPositionVariance);
+            //Vector3 spawnPosition = _ControllerObject.transform.position + spawnPositionOffset * Random.Range(_EjectionRadiusRange.x, _EjectionRadiusRange.y);
 
-            newObject = Instantiate(objectToSpawn, spawnPosition, Quaternion.identity, _SpawnableHost.transform);
+            Vector3 randomDirection = Random.onUnitSphere;
+            Vector3 spawnDirection = Vector3.Slerp(_EjectionDirection.normalized, randomDirection, _EjectionDirectionVariance);
+            Vector3 spawnPosition = _ControllerObject.transform.position + spawnDirection * Rando.Range(_EjectionRadiusRange);
+            Quaternion directionRotation = Quaternion.FromToRotation(Vector3.up, spawnDirection);
+
+            newObject = Instantiate(objectToSpawn, spawnPosition, directionRotation, _SpawnableHost.transform);
             newObject.name = newObject.name + " (" + _ObjectCounter + ")";
 
-            if (!newObject.TryGetComponent(out Rigidbody rb))
-                rb = newObject.AddComponent<Rigidbody>();
+            if (!newObject.TryGetComponent(out Rigidbody rb)) rb = newObject.AddComponent<Rigidbody>();
 
-            spawnOnSphere = Random.onUnitSphere.normalized;
-            Vector3 spawnDirection = Vector3.Slerp(_EjectionDirection.normalized, spawnOnSphere, _EjectionDirectionVariance);
-
-            if (spawnDirection == Vector3.zero)
-                return true;
-
-            Vector3 directionVector = (_ControllerObject.transform.position - spawnPosition).normalized;
-            Quaternion directionRotation = Quaternion.FromToRotation(spawnDirection, directionVector);
-            Vector3 rotatedDirection = directionRotation * directionVector;
-            Vector3 spawnVelocity = rotatedDirection * Random.Range(_EjectionSpeedRange.x, _EjectionSpeedRange.y);
-            rb.velocity = spawnVelocity;
+            //Vector3 spawnDirection = Vector3.Slerp(_EjectionDirection.normalized, randomDirection, _EjectionDirectionVariance);
+            //Vector3 directionVector = (_ControllerObject.transform.position - spawnPosition).normalized;
+            //Quaternion directionRotation = Quaternion.FromToRotation(spawnDirection, directionVector);
+            //Vector3 rotatedDirection = directionRotation * directionVector;
+            //Vector3 spawnVelocity = rotatedDirection * Random.Range(_EjectionSpeedRange.x, _EjectionSpeedRange.y);
+            //rb.velocity = spawnDirection * Random.Range(_EjectionSpeedRange.x, _EjectionSpeedRange.y);
+            rb.velocity = spawnDirection * Rando.Range(_EjectionSpeedRange);
             return true;
         }
 
@@ -266,17 +259,18 @@ namespace PlaneWaver.Interaction
         }
 
         // !TODO: Decouple Synthesis authoring from this
-        public void ConfigureEmitterHost(GameObject go, SpawnableManager spawnable)
+        public void ConfigureEmitterHost(GameObject actorA, GameObject actorB, SpawnableManager spawnable)
         {
-            if (!go.TryGetComponent(out HostAuthoring newHost))
-                newHost = go.GetComponentInChildren(typeof(HostAuthoring), true) as HostAuthoring;
+            if (!actorA.TryGetComponent(out HostAuthoring newHost))
+                newHost = actorA.GetComponentInChildren(typeof(HostAuthoring), true) as HostAuthoring;
 
             if (newHost == null)
                 return;
 
             newHost._Spawner = this;
-            newHost._LocalObject = go;
-            newHost._RemoteObject = _ControllerObject;
+            newHost._ActorPair = new MaxVRAM.Actors.ActorPair(actorA.transform, actorB.transform);
+            newHost._LocalObject = actorA;
+            newHost._RemoteObject = actorB;
             newHost.AddBehaviourInputSource(spawnable);
         }
 

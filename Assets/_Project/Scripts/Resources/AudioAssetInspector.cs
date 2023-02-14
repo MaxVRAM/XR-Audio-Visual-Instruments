@@ -15,6 +15,7 @@ namespace PlaneWaver.Resources
 
             GUILayout.BeginHorizontal();
 
+            // TODO: Move this preview function over to IPlayable window
             if (GUILayout.Button("Preview Sound"))
             {
                 if (audioLibrary._PreviewAudioSource != null && audioLibrary.AudioAssets != null)
@@ -28,6 +29,10 @@ namespace PlaneWaver.Resources
                     }
                 }
             }
+
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
 
             if (GUILayout.Button("Reload Audio Assets"))
             {

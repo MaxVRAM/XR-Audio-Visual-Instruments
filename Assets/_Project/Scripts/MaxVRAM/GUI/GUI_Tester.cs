@@ -1,5 +1,5 @@
 using UnityEngine;
-using MaxVRAM.GUI.MinMidMaxSlider;
+using MaxVRAM.GUI;
 
 public class GUI_Tester : MonoBehaviour
 {

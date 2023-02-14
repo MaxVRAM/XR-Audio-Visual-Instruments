@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using MaxVRAM.GUI;
 using PlaneWaver.Synthesis;
 
 namespace PlaneWaver.Interaction

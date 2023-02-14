@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MaxVRAM.GUI.MinMidMaxSlider
+namespace MaxVRAM.GUI
 {    
     public class MinMidMaxSliderAttribute : PropertyAttribute
     {

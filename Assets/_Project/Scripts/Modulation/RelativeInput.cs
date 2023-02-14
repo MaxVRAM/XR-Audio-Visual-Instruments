@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 
-using MaxVRAM.Math;
 using static MaxVRAM.Math.MaxMath;
 
 namespace PlaneWaver.Modulation
@@ -24,6 +23,20 @@ namespace PlaneWaver.Modulation
             TangentialSpeed
         }
 
+
+        public enum ModulationInput
+        {
+            RelativeDistanceX,
+            RelativeDistanceY,
+            RelativeDistanceZ,
+            RelativeRadius,
+            RelativePolar,
+            RelativeElevation,
+            RelativeSpeed,
+            RelativeTangentialSpeed
+        }
+
+
         public RelativeProperty _InputProperty;
 
         [Range(0f, 1f)]
@@ -35,7 +48,7 @@ namespace PlaneWaver.Modulation
         {
             float newValue = _PreviousValue;
 
-            if (_Actors.BothHaveRigidBodies)
+            if (_Actors.HaveRBs)
             {
                 Quaternion rotationAboutObject = Quaternion.FromToRotation(_PreviousDirection, _Actors.DirectionAB);
                 _PreviousDirection = _Actors.DirectionAB;
@@ -43,25 +56,25 @@ namespace PlaneWaver.Modulation
                 switch (_InputProperty)
                 {
                     case RelativeProperty.DistanceX:
-                        newValue = Mathf.Abs(_Actors.DeltaPosition.x);
+                        newValue = Mathf.Abs(_Actors.RelativePosition.x);
                         break;
                     case RelativeProperty.DistanceY:
-                        newValue = Mathf.Abs(_Actors.DeltaPosition.y);
+                        newValue = Mathf.Abs(_Actors.RelativePosition.y);
                         break;
                     case RelativeProperty.DistanceZ:
-                        newValue = Mathf.Abs(_Actors.DeltaPosition.z);
+                        newValue = Mathf.Abs(_Actors.RelativePosition.z);
                         break;
                     case RelativeProperty.Radius:
-                        newValue = _Actors.SphericalCoords.radius;
+                        newValue = _Actors.SphericalCoords.Radius;
                         break;
                     case RelativeProperty.Polar:
-                        newValue = _Actors.SphericalCoords.polar;
+                        newValue = _Actors.SphericalCoords.Polar;
                         break;
                     case RelativeProperty.Elevation:
-                        newValue = _Actors.SphericalCoords.elevation;
+                        newValue = _Actors.SphericalCoords.Elevation;
                         break;
                     case RelativeProperty.SpeedToward:
-                        newValue = _Actors.SpeedTowards;
+                        newValue = _Actors.RelativeSpeed;
                         break;
                     case RelativeProperty.TangentialSpeed:
                         // TODO: Implementing in _Actors class. Will do shortly.

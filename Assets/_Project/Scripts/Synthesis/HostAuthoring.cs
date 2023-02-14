@@ -3,6 +3,7 @@ using UnityEngine;
 using Unity.Entities;
 using Unity.Transforms;
 
+using MaxVRAM.Actors;
 using MaxVRAM.Audio.Utils;
 using PlaneWaver.Output;
 using PlaneWaver.Visual;
@@ -41,6 +42,7 @@ namespace PlaneWaver.Synthesis
         [SerializeField] private AttachmentLine _AttachmentLine;
 
         [Header("Interactions")]
+        public ActorPair _ActorPair;
         public ObjectSpawner _Spawner;
         public SpawnableManager _SpawnLife;
         public GameObject _LocalObject;
@@ -78,21 +80,14 @@ namespace PlaneWaver.Synthesis
 
         void Start()
         {
+            _ActorPair ??= new ActorPair(transform);
+
             _HeadTransform = FindObjectOfType<Camera>().transform;
             _SpeakerTarget = _SpeakerTarget != null ? _SpeakerTarget : transform;
             _SpeakerTransform = _SpeakerTarget;
 
             if (_AttachmentLine = TryGetComponent(out _AttachmentLine) ? _AttachmentLine : gameObject.AddComponent<AttachmentLine>())
-            {
-                if (_AttachmentLine.TryGetComponent(out LineRenderer lineRenderer))
-                {
-                    lineRenderer.material.color = Color.cyan;
-                    lineRenderer.material.SetAlpha(0.1f);
-                }
-
-
-                _AttachmentLine._TransformA = _SpeakerTarget;
-            }
+            _AttachmentLine._TransformA = _SpeakerTarget;
 
             if (TryGetComponent(out _SurfaceProperties) || transform.parent.TryGetComponent(out _SurfaceProperties))
                 _SurfaceRigidity = _SurfaceProperties._Rigidity;
@@ -181,25 +176,20 @@ namespace PlaneWaver.Synthesis
 
         public void ProcessRigidity()
         {
-            // Clear lingering null contact objects and add rigidity values to list
+            // Clear lingering null contact objects and find most rigid collider value
             _CollidingObjects.RemoveAll(item => item == null);
-            _ContactRigidValues.Clear();
+            _TargetCollidingRigidity = 0;
 
             foreach (GameObject go in _CollidingObjects)
                 if (go.TryGetComponent(out SurfaceProperties props))
-                    _ContactRigidValues.Add(props._Rigidity);
-                else _ContactRigidValues.Add(0.5f);
-            // Sort and find largest rigidity value to set as target
-            if (_ContactRigidValues.Count > 0)
-            {
-                _ContactRigidValues.Sort();
-                _TargetCollidingRigidity = _ContactRigidValues[^1];
-                // Smooth transition to upward rigidity values to avoid random bursts of roll emitters from short collisions
-                if (_TargetCollidingRigidity < _CurrentCollidingRigidity + 0.001f || _RigiditySmoothUp <= 0)
-                    _CurrentCollidingRigidity = _TargetCollidingRigidity;
-                else
-                    _CurrentCollidingRigidity = _CurrentCollidingRigidity.Lerp(_TargetCollidingRigidity, RigiditySmoothUp * Time.deltaTime);
-            }
+                {
+                    _TargetCollidingRigidity = _TargetCollidingRigidity > props._Rigidity ? _TargetCollidingRigidity : props._Rigidity;
+                }
+            // Smooth transition to upward rigidity values to avoid randomly triggering surface contact emitters from short collisions
+            if (_TargetCollidingRigidity < _CurrentCollidingRigidity + 0.001f || _RigiditySmoothUp <= 0)
+                _CurrentCollidingRigidity = _TargetCollidingRigidity;
+            else
+                _CurrentCollidingRigidity = _CurrentCollidingRigidity.Lerp(_TargetCollidingRigidity, RigiditySmoothUp * Time.deltaTime);
             if (_CurrentCollidingRigidity < 0.001f) _CurrentCollidingRigidity = 0;
         }
 
@@ -229,7 +219,7 @@ namespace PlaneWaver.Synthesis
 
                 foreach (ModulationSource source in _ModulationSources)
                     if (!(source is BlankModulation))
-                        source._Actors.SetLocal(_LocalObject.transform);
+                        source._Actors.SetActorA(_LocalObject.transform);
             }
         }
 
@@ -239,7 +229,7 @@ namespace PlaneWaver.Synthesis
             if (go != null)
                 foreach (ModulationSource source in _ModulationSources)
                     if (source is not BlankModulation)
-                        source._Actors.SetRemote(_RemoteObject.transform);
+                        source._Actors.SetActorB(_RemoteObject.transform);
         }
 
         public void AddBehaviourInputSource(BehaviourClass behaviour)
