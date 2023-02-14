@@ -1,5 +1,3 @@
-
-using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -40,6 +38,16 @@ namespace MaxVRAM.Math
         public static bool InRange(float value, Vector2 range)
         {
             return value >= range.x && value <= range.y;
+        }
+
+        public static void SortFloats(ref float floatA, ref float floatB)
+        {
+            if (floatA > floatB)
+            {
+                float temp = floatA;
+                floatA = floatB;
+                floatB = temp;
+            }
         }
 
         public static float FadeInOut(float norm, float inEnd, float outStart)

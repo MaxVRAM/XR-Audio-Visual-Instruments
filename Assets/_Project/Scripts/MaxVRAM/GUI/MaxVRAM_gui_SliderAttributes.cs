@@ -1,7 +1,7 @@
 using UnityEngine;
 
 namespace MaxVRAM.GUI
-{    
+{
     public class MinMidMaxSliderAttribute : PropertyAttribute
     {
         public float min;
@@ -13,6 +13,20 @@ namespace MaxVRAM.GUI
             this.min = min;
             this.mid = mid;
             this.max = max;
+        }
+    }
+
+    public class BidirectionalSliderLockedAttribute : PropertyAttribute
+    {
+        public float min;
+        public float max;
+        public bool lockAtCentre;
+
+        public BidirectionalSliderLockedAttribute(float min, float max, bool lockAtCentre = false)
+        {
+            this.min = min;
+            this.max = max;
+            this.lockAtCentre = lockAtCentre;
         }
     }
 }

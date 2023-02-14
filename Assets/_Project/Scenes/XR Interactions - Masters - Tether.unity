@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 2138677392}
-  m_IndirectSpecularColor: {r: 4599.6924, g: 4337.0176, b: 4433.375, a: 1}
+  m_IndirectSpecularColor: {r: 4599.7334, g: 4337.0312, b: 4433.492, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -516,12 +516,10 @@ MonoBehaviour:
   _EmissiveBrightness: {x: 0, y: 10}
   _ControllerRenderers:
   - {fileID: 1716587906}
-  _EjectionRadiusRange: {x: 1, y: 1}
-  _EjectionPosition: {x: 0, y: 0, z: -1}
-  _EjectionPositionVariance: 0.1
-  _EjectionSpeedRange: {x: 20, y: 30}
   _EjectionDirection: {x: 0, y: 0, z: -1}
   _EjectionDirectionVariance: 0.1
+  _EjectionRadiusRange: {x: 1, y: 1}
+  _EjectionSpeedRange: {x: 20, y: 30}
   _AllowSiblingSurfaceContact: 1
   _AllowSiblingCollisionBurst: 1
 --- !u!1 &24721011
@@ -3834,6 +3832,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18d85530775693343adef74410d70fd7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _Actors: {}
   _InputValue: 0
   _InputMin: 0
   _InputMax: 1
@@ -7273,12 +7272,10 @@ MonoBehaviour:
   _EmissiveBrightness: {x: 0, y: 10}
   _ControllerRenderers:
   - {fileID: 1739783625}
-  _EjectionRadiusRange: {x: 0, y: 0.5}
-  _EjectionPosition: {x: 0, y: 0, z: 0}
-  _EjectionPositionVariance: 1
-  _EjectionSpeedRange: {x: 25.020245, y: 38.180244}
   _EjectionDirection: {x: 0, y: 0, z: 0}
   _EjectionDirectionVariance: 1
+  _EjectionRadiusRange: {x: 0, y: 0.5}
+  _EjectionSpeedRange: {x: 25.020245, y: 38.180244}
   _AllowSiblingSurfaceContact: 1
   _AllowSiblingCollisionBurst: 1
 --- !u!1 &1221644287
@@ -12118,12 +12115,10 @@ MonoBehaviour:
   _EmissiveFlashEvent: 1
   _EmissiveBrightness: {x: -10, y: 10}
   _ControllerRenderers: []
-  _EjectionRadiusRange: {x: 5, y: 10}
-  _EjectionPosition: {x: 0, y: 0, z: 0}
-  _EjectionPositionVariance: 0
-  _EjectionSpeedRange: {x: 5, y: 10}
   _EjectionDirection: {x: 0, y: 0, z: 0}
   _EjectionDirectionVariance: 1
+  _EjectionRadiusRange: {x: 5, y: 10}
+  _EjectionSpeedRange: {x: 5, y: 10}
   _AllowSiblingSurfaceContact: 1
   _AllowSiblingCollisionBurst: 1
 --- !u!1001 &880635110509678896

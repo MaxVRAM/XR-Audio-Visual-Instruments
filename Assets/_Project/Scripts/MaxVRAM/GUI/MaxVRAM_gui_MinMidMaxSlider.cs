@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+
 using MaxVRAM.Math;
 using MaxVRAM.Extensions;
 

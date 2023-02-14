@@ -1,9 +1,10 @@
 using System;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace MaxVRAM.Extensions
 {
-    public static class FloatExtensions
+    public static class ExtendFloats
     {
         public static bool InRange(this float value, bool inclusive = true)
         {
@@ -25,6 +26,16 @@ namespace MaxVRAM.Extensions
                 return value >= minMax.x && value <= minMax.y;
             else
                 return value > minMax.x && value < minMax.y;
+        }
+        public static float GetMirroredValue(this float value, float mid)
+        {
+            float diff = value - mid;
+            return diff > 0 ? mid - diff: mid + mid;
+        }
+        public static Vector2 MakeMirroredVector(this float value, float mid)
+        {
+            float diff = Mathf.Abs(value - mid);
+            return new Vector2(mid - diff, mid + diff);
         }
     }
 }
