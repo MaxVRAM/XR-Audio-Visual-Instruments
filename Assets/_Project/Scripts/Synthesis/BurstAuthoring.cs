@@ -32,6 +32,7 @@ namespace PlaneWaver.Synthesis
                 _AudioClipIndex = _AudioAsset.ClipEntityIndex,
                 _SpeakerIndex = _Host._AttachedSpeakerIndex,
                 _HostIndex = _Host.EntityIndex,
+                _VolumeAdjust = _VolumeAdjust,
                 _DistanceAmplitude = 1,
                 _PingPong = _PingPongGrainPlayheads,
                 _OutputSampleRate = _SampleRate,
@@ -141,6 +142,7 @@ namespace PlaneWaver.Synthesis
                 burstData._SpeakerIndex = _Host._AttachedSpeakerIndex;
                 burstData._HostIndex = _Host.EntityIndex;
                 burstData._PingPong = _PingPongGrainPlayheads;
+                burstData._VolumeAdjust = _VolumeAdjust;
                 burstData._DistanceAmplitude = _DistanceAmplitude;
                 burstData._OutputSampleRate = _SampleRate;
 

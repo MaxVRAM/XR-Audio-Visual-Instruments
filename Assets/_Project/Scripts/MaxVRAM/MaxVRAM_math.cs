@@ -14,6 +14,10 @@ namespace MaxVRAM.Math
         {
             return Mathf.Pow((val - inMin) / (inMax - inMin), exp) * (outMax - outMin) + outMin;
         }
+        public static float MapToNorm(float val, float inMin, float inMax)
+        {
+            return 1 / (inMax - inMin) * (val - inMin);
+        }
 
         public static bool ClampCheck(ref float value, float min, float max)
         {
@@ -128,7 +132,7 @@ namespace MaxVRAM.Math
             }
         }
 
-        public static float AngularSpeedFromQuaternion(Quaternion quat)
+        public static float TangentalSpeedFromQuaternion(Quaternion quat)
         {
             float angleInDegrees;
             Vector3 rotationAxis;

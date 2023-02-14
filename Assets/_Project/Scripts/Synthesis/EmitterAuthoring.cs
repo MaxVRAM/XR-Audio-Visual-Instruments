@@ -23,7 +23,6 @@ namespace PlaneWaver.Synthesis
 
         [Header("Runtime Dynamics")]
         public bool _IsPlaying = true;
-        public float _TimeExisted = 0;
         public float _AdjustedDistance = 0;
         public float _DistanceAmplitude = 0;
         [SerializeField] protected float _ContactSurfaceAttenuation = 1;
@@ -43,6 +42,7 @@ namespace PlaneWaver.Synthesis
         public AudioAsset _AudioAsset;
 
         [Header("Playback Config")]
+        [Range(0.01f, 2f)]public float _VolumeAdjust = 0.5f;
         [Tooltip("Scaling factor applied to the global listener radius value. The result defines the emitter's distance-volume attenuation.")]
         [Range(0.001f, 1f)] public float _DistanceAttenuationFactor = 1f;
         [Tooltip("Normalised age to begin fadeout of spawned emitter if a DestroyTimer component is attached.")]
@@ -61,6 +61,8 @@ namespace PlaneWaver.Synthesis
 
         void Start()
         {
+            if (_Host == null) Destroy(this);
+
             _SampleRate = AudioSettings.outputSampleRate;
             _SamplesPerMS = _SampleRate * 0.001f;
 
@@ -83,8 +85,6 @@ namespace PlaneWaver.Synthesis
 
         public void UpdateEntityTags()
         {
-            _TimeExisted += Time.deltaTime;
-
             if (_Host.InListenerRadius != _EntityManager.HasComponent<InListenerRadiusTag>(_Entity))
             {
                 if (_Host.InListenerRadius)

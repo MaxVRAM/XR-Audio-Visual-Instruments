@@ -32,11 +32,12 @@ namespace PlaneWaver.Synthesis
                 _AudioClipIndex = _AudioAsset.ClipEntityIndex,
                 _SpeakerIndex = _Host._AttachedSpeakerIndex,
                 _HostIndex = _Host.EntityIndex,
+                _VolumeAdjust = _VolumeAdjust,
                 _DistanceAmplitude = 1,
                 _PingPong = _PingPongGrainPlayheads,
                 _SamplesUntilFade = _Host._SpawnLife.GetSamplesUntilFade(_AgeFadeout),
                 _SamplesUntilDeath = _Host._SpawnLife.GetSamplesUntilDeath(),
-                _LastSampleIndex = GrainSynth.Instance._CurrentSampleIndex,
+                _LastSampleIndex = -1,
                 _OutputSampleRate = _SampleRate,
 
                 _Playhead = new ModulationComponent
@@ -129,6 +130,7 @@ namespace PlaneWaver.Synthesis
                 continuousData._PingPong = _PingPongGrainPlayheads;
                 continuousData._SamplesUntilFade = _Host._SpawnLife.GetSamplesUntilFade(_AgeFadeout);
                 continuousData._SamplesUntilDeath = _Host._SpawnLife.GetSamplesUntilDeath();
+                continuousData._VolumeAdjust = _VolumeAdjust;
                 continuousData._DistanceAmplitude = _DistanceAmplitude;
                 continuousData._OutputSampleRate = _SampleRate;
 

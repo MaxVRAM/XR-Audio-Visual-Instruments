@@ -26,8 +26,7 @@ namespace PlaneWaver.Modulation
 
         public ContinuousProperty _InputProperty;
 
-        [Range(0f, 1f)]
-        public float _Smoothing = 0.2f;
+        [Range(0f, 1f)] public float _Smoothing = 0.2f;
 
         private void Update()
         {

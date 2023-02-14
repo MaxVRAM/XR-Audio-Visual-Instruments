@@ -5,6 +5,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using Unity.Jobs.LowLevel.Unsafe;
 using MaxVRAM.Math;
+using UnityEngine.Rendering;
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 class RandomSystem : ComponentSystem
@@ -91,7 +92,7 @@ public partial class GrainSynthSystem : SystemBase
                 float pitch = Mathf.Pow(2, Mathf.Clamp(transpose, -4f, 4f));
 
                 float fadeFactor = FadeFactor(sampleIndexNextGrainStart - dspTimer._NextFrameIndexEstimate, emitter._SamplesUntilFade, emitter._SamplesUntilDeath);
-                float volume = ComputeEmitterParameter(emitter._Volume, randomVolume) * emitter._DistanceAmplitude * fadeFactor;
+                float volume = ComputeEmitterParameter(emitter._Volume, randomVolume) * emitter._DistanceAmplitude * emitter._VolumeAdjust * fadeFactor;
 
                 // Create new grain
                 while (sampleIndexNextGrainStart <= dspTimer._NextFrameIndexEstimate + dspTimer._GrainQueueSampleDuration && grainCount < maxGrains)
@@ -156,7 +157,7 @@ public partial class GrainSynthSystem : SystemBase
                     pitch = Mathf.Pow(2, Mathf.Clamp(transpose, -4f, 4f));
 
                     fadeFactor = FadeFactor(sampleIndexNextGrainStart - dspTimer._NextFrameIndexEstimate, emitter._SamplesUntilFade, emitter._SamplesUntilDeath);
-                    volume = ComputeEmitterParameter(emitter._Volume, randomVolume) * emitter._DistanceAmplitude * fadeFactor;
+                    volume = ComputeEmitterParameter(emitter._Volume, randomVolume) * emitter._DistanceAmplitude * emitter._VolumeAdjust * fadeFactor;
                 }
             }
         ).ScheduleParallel(Dependency);
@@ -199,7 +200,7 @@ public partial class GrainSynthSystem : SystemBase
                 float transpose = ComputeBurstParameter(burst._Transpose, offset, totalBurstSampleCount, randomTranspose);
                 float pitch = Mathf.Pow(2, Mathf.Clamp(transpose, -4f, 4f));
 
-                float volume = ComputeBurstParameter(burst._Volume, offset, totalBurstSampleCount, randomVolume) * burst._DistanceAmplitude;
+                float volume = ComputeBurstParameter(burst._Volume, offset, totalBurstSampleCount, randomVolume) * burst._VolumeAdjust * burst._DistanceAmplitude;
 
                 while (offset < totalBurstSampleCount)
                 {
@@ -262,7 +263,7 @@ public partial class GrainSynthSystem : SystemBase
                     playhead = ComputeBurstParameter(burst._Playhead, offset, totalBurstSampleCount, randomPlayhead);
                     transpose = ComputeBurstParameter(burst._Transpose, offset, totalBurstSampleCount, randomTranspose);
                     pitch = Mathf.Pow(2, Mathf.Clamp(transpose, -4f, 4f));
-                    volume = ComputeBurstParameter(burst._Volume, offset, totalBurstSampleCount, randomVolume) * burst._DistanceAmplitude;
+                    volume = ComputeBurstParameter(burst._Volume, offset, totalBurstSampleCount, randomVolume) * burst._VolumeAdjust * burst._DistanceAmplitude;
                 }
                 burst._IsPlaying = false;
             }

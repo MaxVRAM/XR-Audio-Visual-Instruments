@@ -80,7 +80,7 @@ AudioSource:
   Spatialize: 1
   SpatializePostEffects: 0
   Priority: 128
-  DopplerLevel: 2
+  DopplerLevel: 1.5
   MinDistance: 0.2
   MaxDistance: 200
   Pan2D: 0
@@ -211,7 +211,7 @@ MonoBehaviour:
   near: 0.2
   far: 50
   volumetricRadius: 0
-  reverbSend: 0
+  reverbSend: 20
   enableRfl: 1
 --- !u!33 &4513045899119229682
 MeshFilter:

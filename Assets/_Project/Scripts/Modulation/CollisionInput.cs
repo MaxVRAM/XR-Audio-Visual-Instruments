@@ -28,7 +28,9 @@ namespace PlaneWaver.Modulation
                 case CollisionProperty.CollisionForceTimesMass:
                     if (_Actors.ActorA.HasRB)
                         if (_UseMassOfCollider && collision.rigidbody)
+                        {
                             newValue = collision.relativeVelocity.magnitude * (1 - collision.rigidbody.mass / 2);
+                        }
                         else
                             newValue = collision.relativeVelocity.magnitude * _Actors.ActorA.Rigidbody.mass;
                     break;
@@ -38,6 +40,7 @@ namespace PlaneWaver.Modulation
                     break;
                 default:
                     break;
+            
             }
 
             _InputValue = newValue;
