@@ -2,7 +2,7 @@ using System;
 using UnityEditor;
 using UnityEngine;
 
-namespace PlaneWaver.Resources
+namespace PlaneWaver
 {
     /// < summary >
     /// Scriptable Object for creating audio clip assets with assignable types and other properties.

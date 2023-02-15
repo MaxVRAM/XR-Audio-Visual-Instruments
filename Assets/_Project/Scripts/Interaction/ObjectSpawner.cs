@@ -6,12 +6,11 @@ using System;
 
 using GD.MinMaxSlider;
 
-using MaxVRAM.Math;
+using MaxVRAM;
 using MaxVRAM.Ticker;
-using PlaneWaver.Synthesis;
 
 
-namespace PlaneWaver.Interaction
+namespace PlaneWaver
 {
     /// <summary>
     //  Manager for spawning child game objects with a variety of existance and controller behaviours.
@@ -268,7 +267,7 @@ namespace PlaneWaver.Interaction
                 return;
 
             newHost._Spawner = this;
-            newHost._ActorPair = new MaxVRAM.Actors.ActorPair(actorA.transform, actorB.transform);
+            newHost._ActorPair = new ActorPair(actorA.transform, actorB.transform);
             newHost._LocalObject = actorA;
             newHost._RemoteObject = actorB;
             newHost.AddBehaviourInputSource(spawnable);

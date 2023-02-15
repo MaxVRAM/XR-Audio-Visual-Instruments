@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 
-using MaxVRAM.Math;
+using MaxVRAM;
 using MaxVRAM.Extensions;
 
 namespace MaxVRAM.GUI
@@ -36,8 +36,8 @@ namespace MaxVRAM.GUI
 
                 EditorGUI.MinMaxSlider(splittedRect[1], ref lower, ref upper, minMidMaxAttribute.min, minMidMaxAttribute.max);
 
-                if (lower.InRange(minMidMaxAttribute.min, minMidMaxAttribute.mid) &&
-                    upper.InRange(minMidMaxAttribute.mid, minMidMaxAttribute.max))
+                if (lower.IsInRange(minMidMaxAttribute.min, minMidMaxAttribute.mid) &&
+                    upper.IsInRange(minMidMaxAttribute.mid, minMidMaxAttribute.max))
                 {
                     _PreviousRange = upper - lower;
                 }
@@ -71,8 +71,8 @@ namespace MaxVRAM.GUI
 
                 EditorGUI.MinMaxSlider(splittedRect[1], ref lower, ref upper, minMidMaxAttribute.min, minMidMaxAttribute.max);
 
-                if (lower.InRange(minMidMaxAttribute.min, minMidMaxAttribute.mid) &&
-                    upper.InRange(minMidMaxAttribute.mid, minMidMaxAttribute.max))
+                if (lower.IsInRange(minMidMaxAttribute.min, minMidMaxAttribute.mid) &&
+                    upper.IsInRange(minMidMaxAttribute.mid, minMidMaxAttribute.max))
                 {
                     _PreviousRange = upper - lower;
                 }

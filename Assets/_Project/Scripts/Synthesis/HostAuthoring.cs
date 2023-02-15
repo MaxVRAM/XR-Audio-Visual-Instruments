@@ -3,15 +3,9 @@ using UnityEngine;
 using Unity.Entities;
 using Unity.Transforms;
 
-using MaxVRAM.Actors;
-using MaxVRAM.Audio.Utils;
-using PlaneWaver.Output;
-using PlaneWaver.Visual;
-using PlaneWaver.Entities;
-using PlaneWaver.Modulation;
-using PlaneWaver.Interaction;
+using MaxVRAM.Audio;
 
-namespace PlaneWaver.Synthesis
+namespace PlaneWaver
 {
     /// <summary>
     //      Multiple emitters are often spawned and attached to the same object and modulated by

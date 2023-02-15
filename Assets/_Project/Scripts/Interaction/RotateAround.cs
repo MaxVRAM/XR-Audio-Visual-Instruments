@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RotateAround : MonoBehaviour {
-
+public class RotateAround : MonoBehaviour
+{
     public Transform child;
     public float distToCenter = 1;
     public float speed = 1f;
@@ -34,9 +34,8 @@ public class RotateAround : MonoBehaviour {
         else {
             transform.Rotate(transform.up, speed * Time.deltaTime);
         }
-
-
     }
+
     private void OnDrawGizmos()
     {
     //    if (!active) return;

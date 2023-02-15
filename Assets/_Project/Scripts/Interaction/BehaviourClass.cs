@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace PlaneWaver.Interaction
+namespace PlaneWaver
 {
     public class BehaviourClass : MonoBehaviour
     {

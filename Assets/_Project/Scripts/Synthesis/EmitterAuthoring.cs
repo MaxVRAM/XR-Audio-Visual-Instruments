@@ -2,12 +2,9 @@
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-using MaxVRAM.Audio.Utils;
-using PlaneWaver.Entities;
-using PlaneWaver.Resources;
-using PlaneWaver.Interaction;
+using MaxVRAM.Audio;
 
-namespace PlaneWaver.Synthesis
+namespace PlaneWaver
 {
     /// <summary>
     //  Abstract class for managing emitter entities

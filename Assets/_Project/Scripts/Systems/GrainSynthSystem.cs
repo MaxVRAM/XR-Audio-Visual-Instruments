@@ -4,8 +4,8 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using Unity.Jobs.LowLevel.Unsafe;
-using MaxVRAM.Math;
-using UnityEngine.Rendering;
+
+using MaxVRAM;
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 class RandomSystem : ComponentSystem

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace PlaneWaver.Modulation
+namespace PlaneWaver
 {
     [System.Serializable]
     public class ContinuousNoiseInput

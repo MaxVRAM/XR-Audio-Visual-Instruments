@@ -1,7 +1,7 @@
 using UnityEngine;
 
 
-namespace PlaneWaver.Interaction
+namespace PlaneWaver
 {
     public class SpawnableManager : BehaviourClass
     {

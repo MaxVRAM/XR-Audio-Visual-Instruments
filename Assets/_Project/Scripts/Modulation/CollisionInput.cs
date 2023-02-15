@@ -1,8 +1,6 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 
-
-namespace PlaneWaver.Modulation
+namespace PlaneWaver
 {
     public class CollisionInput : ModulationSource
     {

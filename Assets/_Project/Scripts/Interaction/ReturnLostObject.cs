@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace PlaneWaver.Interaction
+namespace PlaneWaver
 {
     public class ReturnLostObject : MonoBehaviour
     {
@@ -19,8 +19,11 @@ namespace PlaneWaver.Interaction
             _InitialPosition = transform.position;
             _InitialRotation = transform.rotation;
 
-            if (_BoundingObject != null && !_BoundingObject.TryGetComponent(out _BoundingCollider))
+            if (_BoundingObject != null && _BoundingObject.activeSelf &&
+                _BoundingObject && !_BoundingObject.TryGetComponent(out _BoundingCollider))
+            {
                 _Radius = (_BoundingObject.transform.localScale.x + _BoundingObject.transform.localScale.z) / 2;
+            }
 
             _RigidBody = GetComponent<Rigidbody>();
         }

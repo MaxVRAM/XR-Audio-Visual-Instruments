@@ -1,10 +1,7 @@
 ﻿using System;
 using Unity.Entities;
 
-using PlaneWaver.Entities;
-using PlaneWaver.Modulation;
-
-namespace PlaneWaver.Synthesis
+namespace PlaneWaver
 {
     /// <summary>
     //  Emitter class for building and spawning bursts of audio grains.
@@ -239,10 +236,7 @@ namespace PlaneWaver.Synthesis
 
         #endregion
     }
-}
 
-namespace PlaneWaver.Modulation
-{
     #region BURST PARAMETERS
 
     [Serializable]

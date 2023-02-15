@@ -3,7 +3,7 @@ using System.Reflection;
 using Unity.Entities;
 using UnityEngine;
 
-namespace PlaneWaver.Entities
+namespace PlaneWaver
 {
     /// <summary>
     //  Abstract class for managing synth entities

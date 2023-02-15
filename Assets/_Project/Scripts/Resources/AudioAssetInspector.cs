@@ -1,8 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-
-namespace PlaneWaver.Resources
+namespace PlaneWaver
 {
     [CustomEditor(typeof(AudioLibrary))]
     public class AudioAssetInspector : Editor
@@ -10,7 +9,6 @@ namespace PlaneWaver.Resources
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
-
             AudioLibrary audioLibrary = (AudioLibrary)target;
 
             GUILayout.BeginHorizontal();

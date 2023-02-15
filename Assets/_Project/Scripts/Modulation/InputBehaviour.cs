@@ -2,9 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-using PlaneWaver.Interaction;
-
-namespace PlaneWaver.Modulation
+namespace PlaneWaver
 {
     public class InputBehaviour : ModulationSource
     {

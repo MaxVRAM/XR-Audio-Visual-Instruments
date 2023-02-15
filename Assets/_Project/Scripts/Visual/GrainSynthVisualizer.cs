@@ -5,8 +5,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using PlaneWaver;
-using PlaneWaver.Output;
-using PlaneWaver.Synthesis;
 
 public class GrainSynthVisualizer : MonoBehaviour
 {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace PlaneWaver.Modulation
+namespace PlaneWaver
 {
     /// <summary>
     //     Provides an input value to use on a Grain Emitter, based on a physical interaction from the source rigid body.

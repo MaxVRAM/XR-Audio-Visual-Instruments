@@ -1,22 +1,31 @@
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace MaxVRAM.Math
+namespace MaxVRAM
 {
     public struct MaxMath
     {
         public static float Map(float val, float inMin, float inMax, float outMin, float outMax)
         {
-            return outMin + (outMax - outMin) / (inMax - inMin) * (val - inMin);
+            return (val - inMin) / (inMax - inMin) * (outMax - outMin) + outMin;
         }
 
         public static float Map(float val, float inMin, float inMax, float outMin, float outMax, float exp)
         {
             return Mathf.Pow((val - inMin) / (inMax - inMin), exp) * (outMax - outMin) + outMin;
         }
-        public static float MapToNorm(float val, float inMin, float inMax)
+
+        public static float ScaleToNormNoClamp(float value, Vector2 range)
         {
-            return 1 / (inMax - inMin) * (val - inMin);
+            return range.x == range.y ? 0 : (value - range.y) / (range.y - range.x);
+        }
+
+        public static float Smooth(float newValue, float currentValue, float smoothing, float deltaTime, float epsilon = 0.001f)
+        {
+            if (smoothing > epsilon && Mathf.Abs(currentValue - newValue) > epsilon)
+                return Mathf.Lerp(currentValue, newValue, (1 - smoothing) * 10f * deltaTime);
+            else
+                return newValue;
         }
 
         public static bool ClampCheck(ref float value, float min, float max)
@@ -34,12 +43,12 @@ namespace MaxVRAM.Math
             return false;
         }
 
-        public static bool InRange(float value, float min, float max)
+        public static bool IsInRange(float value, float min, float max)
         {
             return value >= min && value <= max;
         }
 
-        public static bool InRange(float value, Vector2 range)
+        public static bool IsInRange(float value, Vector2 range)
         {
             return value >= range.x && value <= range.y;
         }
@@ -48,9 +57,7 @@ namespace MaxVRAM.Math
         {
             if (floatA > floatB)
             {
-                float temp = floatA;
-                floatA = floatB;
-                floatB = temp;
+                (floatB, floatA) = (floatA, floatB);
             }
         }
 
@@ -103,7 +110,7 @@ namespace MaxVRAM.Math
             private float _Elevation;
             public float Radius { get { return _Radius; } }
             public float Polar { get { return _Polar; } }
-            public float Elevation{ get { return _Elevation; } }
+            public float Elevation { get { return _Elevation; } }
 
             public SphericalCoords(Vector3 cartesianCoords)
             {
@@ -147,5 +154,12 @@ namespace MaxVRAM.Math
     {
         public static float Range(Vector2 range) { return Random.Range(range.x, range.y); }
         public static int PickOne(int[] selection) { return selection[Random.Range(0, selection.Length)]; }
+
+        public static int[] RandomIntList(int size = 10, int min = 0, int max = 100) 
+        { 
+            int[] outputArray = new int[size];
+            for (int i = 0; i < size; i++) { outputArray[i] = Random.Range(min, max); }
+            return outputArray;
+        }
     }
 }

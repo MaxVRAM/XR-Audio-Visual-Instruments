@@ -2,9 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-using PlaneWaver.Synthesis;
-
-namespace PlaneWaver.Interaction
+namespace PlaneWaver
 {
     [RequireComponent(typeof(Collider))]
     public class CollisionPipe : MonoBehaviour

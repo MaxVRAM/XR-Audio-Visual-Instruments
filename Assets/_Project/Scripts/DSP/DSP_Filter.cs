@@ -1,6 +1,6 @@
 ﻿using Unity.Entities;
 using UnityEngine;
-using MaxVRAM.Audio.Utils;
+using MaxVRAM.Audio;
 
 // A classic bi-quad filter design
 public class DSP_Filter : DSP_Class

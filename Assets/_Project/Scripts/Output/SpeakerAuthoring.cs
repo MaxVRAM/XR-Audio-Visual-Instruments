@@ -2,9 +2,7 @@
 using Unity.Transforms;
 using UnityEngine;
 
-using PlaneWaver.Entities;
-
-namespace PlaneWaver.Output
+namespace PlaneWaver
 {
     /// <summary>
     //  Speakers are passed Grains entities by the GrainSynth, which they write directly to the attached AudioSource output buffer.

@@ -9,9 +9,8 @@ using System.IO;
 using Unity.Collections;
 using Unity.Entities;
 
-using PlaneWaver.Entities;
 
-namespace PlaneWaver.Resources
+namespace PlaneWaver
 {
     [RequireComponent(typeof(AudioSource))]
     public class AudioLibrary : MonoBehaviour

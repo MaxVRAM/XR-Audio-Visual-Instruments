@@ -1,8 +1,7 @@
 ﻿using System;
 using UnityEngine;
-using MaxVRAM.Math;
 
-namespace MaxVRAM.Audio.Utils
+namespace MaxVRAM.Audio
 {
     [Serializable]
     public class WindowFunction

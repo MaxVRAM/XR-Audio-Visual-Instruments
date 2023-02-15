@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace PlaneWaver.Visual
+namespace PlaneWaver
 {
     public class AttachmentLine : MonoBehaviour
     {

@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-using MaxVRAM.Math;
-using MaxVRAM.Actors;
-using PlaneWaver.Interaction;
+using MaxVRAM;
 
-namespace PlaneWaver.Modulation
+namespace PlaneWaver
 {
     #region MODULATION SOURCE CLASS
 

@@ -8,11 +8,8 @@ using Unity.Collections.LowLevel.Unsafe;
 using TMPro;
 
 using MaxVRAM.Ticker;
-using MaxVRAM.Audio.Utils;
+using MaxVRAM.Audio;
 
-using PlaneWaver.Output;
-using PlaneWaver.Entities;
-using PlaneWaver.Synthesis;
 
 // PROJECT AUDIO CONFIGURATION NOTES
 // ---------------------------------
