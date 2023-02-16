@@ -31,7 +31,7 @@ namespace PlaneWaver
         private void Update()
         {
             float newValue = _PreviousValue;
-            Rigidbody rb = _Actors.ActorA.Rigidbody;
+            Rigidbody rb = null; // ActorRigidbody;
             if (rb != null)
             {
                 switch (_InputProperty)
@@ -56,7 +56,7 @@ namespace PlaneWaver
                         _PreviousValue = rb.velocity.magnitude;
                         break;
                     case ContinuousProperty.Scale:
-                        newValue = _Actors.ActorA.Transform.localScale.magnitude;
+                        //newValue = _Actors.ActorA.ActorTransform.localScale.magnitude;
                         break;
                     case ContinuousProperty.Roll:
                         if (_Colliding) newValue = rb.angularVelocity.magnitude;

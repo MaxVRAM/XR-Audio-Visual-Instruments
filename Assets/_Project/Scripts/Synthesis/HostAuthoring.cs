@@ -17,7 +17,7 @@ namespace PlaneWaver
         #region FIELDS & PROPERTIES
 
         private Transform _HeadTransform;
-        private BlankModulation _BlankInputComponent;
+        //private BlankModulation _BlankInputComponent;
 
         [Header("Runtime Dynamics")]
         [SerializeField] private bool _Connected = false;
@@ -36,12 +36,13 @@ namespace PlaneWaver
         [SerializeField] private AttachmentLine _AttachmentLine;
 
         [Header("Interactions")]
-        public ActorPair _ActorPair;
         public ObjectSpawner _Spawner;
         public SpawnableManager _SpawnLife;
-        public GameObject _LocalObject;
-        [Tooltip("Additional object used to generate 'relative' values with against the interaction object. E.g. distance, relative speed, etc.")]
-        public GameObject _RemoteObject;
+        public Actor _LocalActor = new(false);
+        public Actor _RemoteActor = new(false);
+        //public GameObject _LocalObject;
+        //[Tooltip("Additional object used to generate 'relative' values with against the interaction object. E.g. distance, relative speed, etc.")]
+        //public GameObject _RemoteObject;
         [Tooltip("(generated) Paired component that pipes collision data from the local object target to this host.")]
         public CollisionPipe _CollisionPipeComponent;
         private SurfaceProperties _SurfaceProperties;
@@ -52,8 +53,8 @@ namespace PlaneWaver
 
         [Tooltip("(generated) Sibling emitters components for this host to manage.")]
         public EmitterAuthoring[] _HostedEmitters;
-        [Tooltip("(generated) Sibling modulation input source components this host provides to its emitters.")]
-        public ModulationSource[] _ModulationSources;
+        //[Tooltip("(generated) Sibling modulation input source components this host provides to its emitters.")]
+        //public ModulationSource[] _ModulationSources;
         [Tooltip("(generated) List of objects currently in-contact with the host's local object target.")]
         public List<GameObject> _CollidingObjects;
         public List<float> _ContactRigidValues;
@@ -68,14 +69,12 @@ namespace PlaneWaver
 
         void Awake()
         {
-            if (!TryGetComponent(out _BlankInputComponent))
-                _BlankInputComponent = gameObject.AddComponent(typeof(BlankModulation)) as BlankModulation;
+            //if (!TryGetComponent(out _BlankInputComponent))
+            //    _BlankInputComponent = gameObject.AddComponent(typeof(BlankModulation)) as BlankModulation;
         }
 
         void Start()
         {
-            _ActorPair ??= new ActorPair(transform);
-
             _HeadTransform = FindObjectOfType<Camera>().transform;
             _SpeakerTarget = _SpeakerTarget != null ? _SpeakerTarget : transform;
             _SpeakerTransform = _SpeakerTarget;
@@ -90,12 +89,12 @@ namespace PlaneWaver
             foreach (EmitterAuthoring emitter in _HostedEmitters)
                 emitter._Host = this;
 
-            _ModulationSources = transform.parent.GetComponentsInChildren<ModulationSource>();
-            if (_LocalObject == null)
-                _LocalObject = transform.parent.gameObject;
-            SetLocalInputSource(_LocalObject);
-            SetRemoteInputSource(_RemoteObject);
-            UpdateBehaviourModulationInputs();
+            //_ModulationSources = transform.parent.GetComponentsInChildren<ModulationSource>();
+            //if (_LocalObject == null)
+            //    _LocalObject = transform.parent.gameObject;
+            //InitialiseActor(_LocalObject);
+            //SetRemoteActor(_RemoteObject);
+            //UpdateBehaviourModulationInputs();
 
             _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
             _Archetype = _EntityManager.CreateArchetype(
@@ -200,49 +199,56 @@ namespace PlaneWaver
                     _AttachmentLine._Active = false;
         }
 
-        public void SetLocalInputSource(GameObject go)
+        public void InitialiseActor()
         {
-            _LocalObject = go;
-            if (go != null)
+            _LocalActor = _LocalActor.Exists() ? _LocalActor : new Actor(transform);
+            _SpawnLife = _SpawnLife != null ? _SpawnLife : gameObject.AddComponent<SpawnableManager>();
+
+
+            // Set up a collision pipe to send collisions from the targeted object here
+            // TODO: Move to event system via Actor struct
+            if (!_LocalActor.ActorTransform.TryGetComponent(out _CollisionPipeComponent))
+                _CollisionPipeComponent = _LocalActor.ActorGameObject.AddComponent<CollisionPipe>();
+
+            _CollisionPipeComponent.AddHost(this);
+
+            foreach (BehaviourClass behaviour in GetComponents<BehaviourClass>())
             {
-                // Set up a collision pipe to send collisions from the targeted object here
-                if (!_LocalObject.TryGetComponent(out _CollisionPipeComponent))
-                    _CollisionPipeComponent = _LocalObject.AddComponent<CollisionPipe>();
-                if (_CollisionPipeComponent != null)
-                    _CollisionPipeComponent.AddHost(this);
-
-                foreach (ModulationSource source in _ModulationSources)
-                    if (!(source is BlankModulation))
-                        source._Actors.SetActorA(_LocalObject.transform);
+                behaviour._SpawnedObject = _LocalActor.ActorGameObject;
+                behaviour._ControllerObject = _RemoteActor.ActorGameObject;
+                behaviour._ObjectSpawner = _Spawner;
             }
+            //foreach (ModulationSource source in _ModulationSources)
+            //    if (!(source is BlankModulation))
+            //        source._Actors.SetActorA(_LocalObject.transform);
         }
 
-        public void SetRemoteInputSource(GameObject go)
-        {
-            _RemoteObject = go;
-            if (go != null)
-                foreach (ModulationSource source in _ModulationSources)
-                    if (source is not BlankModulation)
-                        source._Actors.SetActorB(_RemoteObject.transform);
-        }
+        //public void SetRemoteActor(ActorTransform actorTransform)
+        //{
+        //    _RemoteActor = new(actorTransform);
+        //    //if (go != null)
+        //    //    foreach (ModulationSource source in _ModulationSources)
+        //    //        if (source is not BlankModulation)
+        //    //            source._Actors.SetActorB(_RemoteObject.transform);
+        //}
 
-        public void AddBehaviourInputSource(BehaviourClass behaviour)
-        {
-            if (behaviour != null && !_Behaviours.Contains(behaviour))
-                _Behaviours.Add(behaviour);
-        }
+        //public void AddBehaviourInputSource(BehaviourClass behaviour)
+        //{
+        //    if (behaviour != null && !_Behaviours.Contains(behaviour))
+        //        _Behaviours.Add(behaviour);
+        //}
 
-        public void UpdateBehaviourModulationInputs()
-        {
-            foreach (BehaviourClass behaviour in _Behaviours)
-            {
-                if (behaviour is SpawnableManager manager)
-                    _SpawnLife = manager;
-                foreach (ModulationSource source in _ModulationSources)
-                    if (source is InputBehaviour)
-                        source.SetBehaviourInput(behaviour);
-            }
-        }
+        //public void UpdateBehaviourModulationInputs()
+        //{
+        //    foreach (BehaviourClass behaviour in _Behaviours)
+        //    {
+        //        if (behaviour is SpawnableManager manager)
+        //            _SpawnLife = manager;
+        //        foreach (ModulationSource source in _ModulationSources)
+        //            if (source is InputBehaviour)
+        //                source.SetBehaviourInput(behaviour);
+        //    }
+        //}
 
         #endregion
 
@@ -258,11 +264,13 @@ namespace PlaneWaver
                 if (other.TryGetComponent(out SurfaceProperties surface))
                     _ContactRigidValues.Add(surface._Rigidity);
 
-                foreach (ModulationSource source in _ModulationSources)
-                    source.ProcessCollisionValue(collision);
+                _LocalActor.LatestCollision = collision;
+
+                //foreach (ModulationSource source in _ModulationSources)
+                //    source.ProcessCollisionValue(collision);
             }
 
-            if (_Spawner == null || _Spawner.UniqueCollision(_LocalObject, other))
+            if (_Spawner == null || _Spawner.UniqueCollision(_LocalActor.ActorGameObject, other))
                 foreach (EmitterAuthoring emitter in _HostedEmitters)
                     emitter.NewCollision(collision);
         }
@@ -274,8 +282,9 @@ namespace PlaneWaver
 
             if (ContactAllowed(collider.gameObject))
             {
-                foreach (ModulationSource source in _ModulationSources)
-                    source.SetInputCollision(true, collider.material);
+                //foreach (ModulationSource source in _ModulationSources)
+                //    source.SetInputCollision(true, collider.material);
+                _LocalActor.IsColliding = true;
 
                 foreach (EmitterAuthoring emitter in _HostedEmitters)
                     emitter.UpdateContactStatus(collision);
@@ -289,11 +298,12 @@ namespace PlaneWaver
             if (_CollidingObjects.Count == 0)
             {
                 _IsColliding = false;
+                _LocalActor.IsColliding = false;
                 _TargetCollidingRigidity = 0;
                 _CurrentCollidingRigidity = 0;
                 _ContactRigidValues.Clear();
-                foreach (ModulationSource source in _ModulationSources)
-                    source.SetInputCollision(false, collision.collider.material);
+                //foreach (ModulationSource source in _ModulationSources)
+                //    source.SetInputCollision(false, collision.collider.material);
                 foreach (EmitterAuthoring emitter in _HostedEmitters)
                     emitter.UpdateContactStatus(null);
             }

@@ -38,6 +38,9 @@ namespace PlaneWaver
         [Tooltip("Audio clip used as the emitter's content source.")]
         public AudioAsset _AudioAsset;
 
+        [SerializeField]
+        private ModulationInput[] _ModulationInputs = new ModulationInput[6];
+
         [Header("Playback Config")]
         [Range(0.01f, 2f)]public float _VolumeAdjust = 0.5f;
         [Tooltip("Scaling factor applied to the global listener radius value. The result defines the emitter's distance-volume attenuation.")]
@@ -133,6 +136,7 @@ namespace PlaneWaver
 
         public void NewCollision(Collision collision)
         {
+            // TODO: Move this over to Actor struct
             if (_EmitterType == EmitterType.Burst && _PlaybackCondition != Condition.NotColliding)
             {
                 if (Time.fixedTime < _LastTriggeredAt + GrainSynth.Instance._BurstDebounceDurationMS * 0.001f)
@@ -149,6 +153,7 @@ namespace PlaneWaver
 
         public void UpdateContactStatus(Collision collision)
         {
+            // TODO: Move this over to Actor struct
             if (_EmitterType != EmitterType.Continuous)
                 return;
 

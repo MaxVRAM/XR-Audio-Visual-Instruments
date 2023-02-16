@@ -13,10 +13,41 @@ namespace PlaneWaver
     [Serializable]
     public class ModulationInput
     {
-        private ActorPair _Actors;
+        private Actor _LocalActor;
+        private Actor _RemoteActor;
+
+        public void SetLocalActor(Actor actor)
+        {
+            _LocalActor = actor;
+        }
+
+        public void SetRemoteActor(Actor actor)
+        {
+            _RemoteActor = actor;
+        }
+
+        public void SetBothActors(Actor actorA, Actor actorB)
+        {
+            _LocalActor = actorA;
+            _RemoteActor = actorB;
+        }
+
+        public ModulationInput()
+        {
+        }
+        public ModulationInput(Actor actorA)
+        {
+            _LocalActor = actorA;
+        }
+        public ModulationInput(Actor actorA, Actor actorB)
+        {
+            _LocalActor = actorA;
+            _RemoteActor = actorB;
+        }
 
         [AllowNesting]
         [SerializeField]
+        [HorizontalLine(color: EColor.Gray)]
         private InputSourceGroups _ValueSource = InputSourceGroups.PrimaryActor;
 
         [AllowNesting]
@@ -42,18 +73,20 @@ namespace PlaneWaver
         [AllowNesting]
         [OnValueChanged("EditorInputValueChangeCallback")]
         [SerializeField] private float _InputValue = 0;
-        private float _PreviousInputValue = 0;
+        private float _PreviousSmoothedValue = 0;
+
+        [HorizontalLine(color: EColor.Gray)]
+        [SerializeField] private Vector2 _InputRange = new(0, 1);
+        [SerializeField] private float _AdjustMultiplier = 1;
+
+        [AllowNesting]
+        [OnValueChanged("EditorAccumulateChangeCallback")]
+        [SerializeField] private InputOnNewValue _OnNewValue;
+        
+        [SerializeField] private float _PreSmoothValue = 0;
 
         [HorizontalLine(color: EColor.Gray)]
         [SerializeField][Range(0f, 1f)] private float _Smoothing = 0.2f;
-        [SerializeField] private Vector2 _InputRange = new(0, 1);
-        [SerializeField] private InputOnNewValue _OnNewValue;
-        [AllowNesting]
-        [EnableIf("AccumulateSelected")]
-        [SerializeField] private float _AccumulateFactor = 1;
-        [SerializeField] private float _PreLimitValue = 0;
-
-        [HorizontalLine(color: EColor.Gray)]
         [SerializeField] private InputLimitMode _InputLimiter;
         [SerializeField] private bool _FlipOutput = false;
         [SerializeField][Range(0f, 1f)] private float _OutputValue = 0;
@@ -62,8 +95,7 @@ namespace PlaneWaver
         public float OutputValue => _OutputValue;
 
         private Vector3 _PreviousVector = Vector3.zero;
-        private bool _RandomHasBeenSet = false;
-        private float _DeltaTime = 0.02f;
+        //private float _RandomValue = -1;
 
         public bool ScenePropertySelected() { return _ValueSource == InputSourceGroups.SceneProperties; }
         public bool PrimaryActorSelected() { return _ValueSource == InputSourceGroups.PrimaryActor; }
@@ -72,20 +104,24 @@ namespace PlaneWaver
         public bool AccumulateSelected() { return _OnNewValue == InputOnNewValue.Accumulate; }
         public bool RandomAtSpawnSelected() { return ScenePropertySelected() && _SceneProperties == ScenePropertySources.RandomAtSpawn; }
 
-
         public void ProcessValue()
         {
-            if (RandomAtSpawnSelected())
-                return;
+            //if (RandomAtSpawnSelected())
+            //{
+            //    _InputValue = _RandomValue;
+            //    return;
+            //}
 
+            GenerateRawValue();
             ProcessValue(_InputValue);
         }
         
         private void ProcessValue(float newValue)
         {
-            newValue = newValue.Smooth(ref _PreviousInputValue, Smoothing, _DeltaTime);
-            newValue = MaxMath.ScaleToNormNoClamp(newValue, _InputRange);
-            newValue = AccumulateSelected() ? _PreLimitValue.AccumulateScaledValue(newValue, _AccumulateFactor) : newValue;
+            newValue = MaxMath.ScaleToNormNoClamp(newValue, _InputRange) * _AdjustMultiplier;
+            _PreSmoothValue = AccumulateSelected() ? _PreSmoothValue + newValue : newValue;
+            newValue = MaxMath.Smooth(_PreviousSmoothedValue, _PreSmoothValue, Smoothing, Time.deltaTime);
+            _PreviousSmoothedValue = newValue;
 
             if (_InputLimiter == InputLimitMode.Repeat)
                 newValue = Mathf.Repeat(newValue, 1);
@@ -98,16 +134,36 @@ namespace PlaneWaver
             _OutputValue = newValue;
         }
 
-        public void GenerateRawValue()
+        private void GenerateRawValue()
         {
-            _DeltaTime = Time.deltaTime;
+            switch (_ValueSource)
+            {
+                case InputSourceGroups.SceneProperties:
+                    GenerateScenePropertyValue();
+                    break;
+                case InputSourceGroups.PrimaryActor:
+                    _LocalActor.GetActorValue(ref _InputValue, ref _PreviousVector, _PrimaryActor);
+                    break;
+                case InputSourceGroups.LinkedActors:
+                    _LocalActor.GetActorPairValue(ref _InputValue, ref _PreviousVector, _RemoteActor, _LinkedActors);
+                    break;
+                case InputSourceGroups.ActorCollisions:
+                    _LocalActor.GetCollisionValue(ref _InputValue, _ActorCollisions);
+                    break;
+                default:
+                    break;
+            }
 
-            if (ScenePropertySelected())
-                GenerateScenePropertyValue();
-            else if (PrimaryActorSelected())
-                _Actors.GetActorValue(ref _InputValue, ref _PreviousVector, _PrimaryActor);
-            else if (LinkedActorsSelected())
-                _Actors.GetActorValue(ref _InputValue, ref _PreviousVector, _LinkedActors);
+            //Debug.Log($"Return Value:   {returnValue}");
+
+            //if (ScenePropertySelected())
+            //    GenerateScenePropertyValue();
+            //else if (PrimaryActorSelected())
+            //    _LocalActor.GetActorValue(ref _InputValue, ref _PreviousVector, _PrimaryActor);
+            //else if (LinkedActorsSelected())
+            //    _LocalActor.GetActorPairValue(ref _InputValue, ref _PreviousVector, _RemoteActor, _LinkedActors);
+            //else if (CollisionInputSelected())
+            //    _LocalActor.GetCollisionValue(ref _InputValue, _ActorCollisions);
         }
 
         private void GenerateScenePropertyValue()
@@ -116,38 +172,20 @@ namespace PlaneWaver
             {
                 case ScenePropertySources.Static:
                     break;
+                case ScenePropertySources.RandomAtSpawn:
+                    //_RandomValue = _RandomValue == -1 ? Random.Range(0, 1) : _RandomValue;
+                    //_InputValue = _RandomValue;
+                    //_OutputValue = _RandomValue;
+                    break;
+                case ScenePropertySources.TimeSinceStart:
+                    _InputValue = Time.time;
+                    break;
                 case ScenePropertySources.DeltaTime:
                     _InputValue = Time.deltaTime;
                     break;
                 case ScenePropertySources.SpawnAge:
                     break;
                 case ScenePropertySources.SpawnAgeNorm:
-                    break;
-                case ScenePropertySources.RandomAtSpawn:
-                    if (!_RandomHasBeenSet)
-                    {
-                        _RandomHasBeenSet = true;
-                        _InputValue = Random.Range(0, 1);
-                        _OutputValue = _InputValue;
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        public void GenerateCollisionValue(Collision collision)
-        {
-            if (!CollisionInputSelected())
-                return;
-
-            switch (_ActorCollisions)
-            {
-                case ActorCollisionSources.CollisionSpeed:
-                    _InputValue = _Actors.CollisionSpeed(collision);
-                    break;
-                case ActorCollisionSources.CollisionForce:
-                    _InputValue = _Actors.CollisionForce(collision);
                     break;
                 default:
                     break;
@@ -158,6 +196,11 @@ namespace PlaneWaver
         {
             ProcessValue(_InputValue);
         }
+        private void EditorAccumulateChangeCallback()
+        {
+            _PreSmoothValue = 0f;
+            _PreviousSmoothedValue = 0f;
+        }
     }
 
     public enum InputLimitMode { Clip, Repeat, PingPong }
@@ -166,7 +209,7 @@ namespace PlaneWaver
 
     public enum InputSourceGroups { SceneProperties, PrimaryActor, LinkedActors, ActorCollisions }
 
-    public enum ScenePropertySources { Static, DeltaTime, SpawnAge, SpawnAgeNorm, RandomAtSpawn }
+    public enum ScenePropertySources { Static, TimeSinceStart, DeltaTime, SpawnAge, SpawnAgeNorm, RandomAtSpawn }
 
     public enum PrimaryActorSources { Scale, Mass, MassTimesScale, Speed, AngularSpeed, Acceleration, SlideMomentum, RollMomentum }
 

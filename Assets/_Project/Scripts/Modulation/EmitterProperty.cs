@@ -23,13 +23,13 @@ namespace PlaneWaver
     [System.Serializable]
     public class EmitterProperty
     {
-        public ModulationSource _InputSource;
+        public ModulationInput _InputSource;
         public float _InputValue = 0f;
 
         public float GetValue()
         {
-            if (_InputSource != null)
-                _InputValue = _InputSource.GetValue();
+            //if (_InputSource != null)
+            //    _InputValue = _InputSource.GetValue();
             return _InputValue;
         }
     }

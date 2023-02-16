@@ -85,7 +85,7 @@ namespace PlaneWaver
         private Trigger _SpeakerAllocationTimer;
         [Tooltip("Speaker prefab to spawn when dynamically allocating speakers.")]
         public SpeakerAuthoring _SpeakerPrefab;
-        [Tooltip("Transform to contain spawned speakers.")]
+        [Tooltip("ActorTransform to contain spawned speakers.")]
         [SerializeField] private Transform _SpeakerParentTransform;
         [Tooltip("World coordinates to store pooled speakers.")]
         [SerializeField] private Vector3 _SpeakerPoolingPosition = Vector3.down * 20;

@@ -6,7 +6,7 @@ public static class Matrix4x4Extensions
     /// <summary>
     /// Extract translation from transform matrix.
     /// </summary>
-    /// <param name="matrix">Transform matrix. This parameter is passed by reference
+    /// <param name="matrix">ActorTransform matrix. This parameter is passed by reference
     /// to improve performance; no changes will be made to it.</param>
     /// <returns>
     /// Translation offset.
@@ -24,7 +24,7 @@ public static class Matrix4x4Extensions
     /// <summary>
     /// Extract rotation quaternion from transform matrix.
     /// </summary>
-    /// <param name="matrix">Transform matrix. This parameter is passed by reference
+    /// <param name="matrix">ActorTransform matrix. This parameter is passed by reference
     /// to improve performance; no changes will be made to it.</param>
     /// <returns>
     /// Quaternion representation of rotation transform.
@@ -50,7 +50,7 @@ public static class Matrix4x4Extensions
     /// <summary>
     /// Extract scale from transform matrix.
     /// </summary>
-    /// <param name="matrix">Transform matrix. This parameter is passed by reference
+    /// <param name="matrix">ActorTransform matrix. This parameter is passed by reference
     /// to improve performance; no changes will be made to it.</param>
     /// <returns>
     /// Scale vector.
@@ -67,7 +67,7 @@ public static class Matrix4x4Extensions
     /// <summary>
     /// Extract position, rotation and scale from TRS matrix.
     /// </summary>
-    /// <param name="matrix">Transform matrix. This parameter is passed by reference
+    /// <param name="matrix">ActorTransform matrix. This parameter is passed by reference
     /// to improve performance; no changes will be made to it.</param>
     /// <param name="localPosition">Output position.</param>
     /// <param name="localRotation">Output rotation.</param>
@@ -82,8 +82,8 @@ public static class Matrix4x4Extensions
     /// <summary>
     /// Set transform component from TRS matrix.
     /// </summary>
-    /// <param name="transform">Transform component.</param>
-    /// <param name="matrix">Transform matrix. This parameter is passed by reference
+    /// <param name="transform">ActorTransform component.</param>
+    /// <param name="matrix">ActorTransform matrix. This parameter is passed by reference
     /// to improve performance; no changes will be made to it.</param>
     public static void SetTransformFromMatrix(Transform transform, ref Matrix4x4 matrix)
     {

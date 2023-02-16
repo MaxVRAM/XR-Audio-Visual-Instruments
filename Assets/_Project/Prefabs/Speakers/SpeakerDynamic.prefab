@@ -211,8 +211,8 @@ MonoBehaviour:
   near: 0.2
   far: 50
   volumetricRadius: 0
-  reverbSend: 10
-  enableRfl: 1
+  reverbSend: 0
+  enableRfl: 0
 --- !u!33 &4513045899119229682
 MeshFilter:
   m_ObjectHideFlags: 0

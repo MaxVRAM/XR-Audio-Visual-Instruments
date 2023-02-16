@@ -15,6 +15,17 @@ namespace MaxVRAM
             return Mathf.Pow((val - inMin) / (inMax - inMin), exp) * (outMax - outMin) + outMin;
         }
 
+        public static float Smooth(float currentValue, float targetValue, float smoothing, float deltaTime, float epsilon = -1)
+        {
+            epsilon = epsilon == -1 ? Mathf.Epsilon : epsilon;
+
+            if (smoothing > epsilon && Mathf.Abs(currentValue - targetValue) > epsilon)
+                return Mathf.Lerp(currentValue, targetValue, (1 - smoothing) * 10f * deltaTime);
+            else
+                return targetValue;
+        }
+
+
         public static float ScaleToNormNoClamp(float value, Vector2 range)
         {
             return range.x == range.y ? 0 : (value - range.x) / (range.y - range.x);

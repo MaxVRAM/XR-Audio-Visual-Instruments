@@ -189,7 +189,7 @@ namespace PlaneWaver
 
             InstantiatePrefab(out GameObject newObject);
             SpawnableManager spawnableManager = AttachSpawnableManager(newObject);
-            ConfigureSpawnableBehaviour(newObject);
+            //ConfigureSpawnableBehaviour(newObject);
             ConfigureEmitterHost(newObject, _ControllerObject, spawnableManager);
             newObject.SetActive(true);
             _ActiveObjects.Add(newObject);
@@ -238,15 +238,15 @@ namespace PlaneWaver
             return spawnableManager;
         }
 
-        public void ConfigureSpawnableBehaviour(GameObject go)
-        {
-            foreach (var behaviour in go.GetComponents<BehaviourClass>())
-            {
-                behaviour._SpawnedObject = go;
-                behaviour._ControllerObject = _ControllerObject;
-                behaviour._ObjectSpawner = this;
-            }
-        }
+        //public void ConfigureSpawnableBehaviour(GameObject go)
+        //{
+        //    foreach (var behaviour in go.GetComponents<BehaviourClass>())
+        //    {
+        //        behaviour._SpawnedObject = go;
+        //        behaviour._ControllerObject = _ControllerObject;
+        //        behaviour._ObjectSpawner = this;
+        //    }
+        //}
 
         // !TODO: Decouple Synthesis authoring from this
         public void ConfigureEmitterHost(GameObject actorA, GameObject actorB, SpawnableManager spawnable)
@@ -258,10 +258,9 @@ namespace PlaneWaver
                 return;
 
             newHost._Spawner = this;
-            newHost._ActorPair = new ActorPair(actorA.transform, actorB.transform);
-            newHost._LocalObject = actorA;
-            newHost._RemoteObject = actorB;
-            newHost.AddBehaviourInputSource(spawnable);
+            newHost._SpawnLife = spawnable;
+            newHost._LocalActor = new Actor(actorA.transform);
+            newHost._RemoteActor = new Actor(actorB.transform);
         }
 
         #endregion
@@ -285,8 +284,7 @@ namespace PlaneWaver
                 return true;
             else if (_AllowSiblingCollisionBurst == SiblingCollision.None)
                 return false;
-            else if (_AllowSiblingCollisionBurst == SiblingCollision.Single &
-                    _CollidedThisUpdate.Add(goA) | _CollidedThisUpdate.Add(goB))
+            else if (_AllowSiblingCollisionBurst == SiblingCollision.Single & _CollidedThisUpdate.Add(goA) | _CollidedThisUpdate.Add(goB))
                 return true;
             else
                 return false;

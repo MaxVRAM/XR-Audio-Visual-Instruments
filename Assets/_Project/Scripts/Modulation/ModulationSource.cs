@@ -10,7 +10,6 @@ namespace PlaneWaver
 
     public class ModulationSource : MonoBehaviour
     {
-        public ActorPair _Actors;
         public float _InputValue = 0;
         public float _InputMin = 0f;
         public float _InputMax = 1f;

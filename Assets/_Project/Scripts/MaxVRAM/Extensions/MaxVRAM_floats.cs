@@ -6,20 +6,19 @@ namespace MaxVRAM.Extensions
 {
     public static class ExtendFloats
     {
-        public static float AccumulateScaledValue(this float accumulator, float newValue, float newValueScaling)
+        public static float AccumulateScaledValue(this float accumulator, float valueToAdd, float scaleFactor)
         {
-            accumulator += newValue * newValueScaling;
-            return accumulator;
+            return accumulator + valueToAdd * scaleFactor;
         }
 
-        public static float Smooth(this float newValue, ref float currentValue, float smoothing, float deltaTime, float epsilon = 0.001f)
+        public static float Smooth(this float targetValue, float currentValue, float smoothing, float deltaTime, float epsilon = -1)
         {
-            if (smoothing > epsilon && Mathf.Abs(currentValue - newValue) > epsilon)
-                currentValue = Mathf.Lerp(currentValue, newValue, (1 - smoothing) * 10f * deltaTime);
-            else
-                currentValue = newValue;
+            epsilon = epsilon == -1 ? Mathf.Epsilon : epsilon;
 
-            return currentValue;
+            if (smoothing > epsilon && Mathf.Abs(currentValue - targetValue) > epsilon)
+                return Mathf.Lerp(currentValue, targetValue, (1 - smoothing) * 10f * deltaTime);
+            else
+                return targetValue;
         }
 
         public static bool IsInRange(this float value, bool inclusive = true)
