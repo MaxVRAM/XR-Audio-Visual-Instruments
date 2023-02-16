@@ -18,7 +18,7 @@ namespace PlaneWaver
         {
             _ActorA = new(transform);
             _ActorB = new(_GameObjectB.transform);
-            _ModulationInput.SetBothActors(_ActorA, _ActorB);
+            _ModulationInput.SetActors(_ActorA, _ActorB);
         }
 
 

@@ -3,6 +3,8 @@ using System.Reflection;
 using Unity.Entities;
 using UnityEngine;
 
+using NaughtyAttributes;
+
 namespace PlaneWaver
 {
     /// <summary>
@@ -15,11 +17,17 @@ namespace PlaneWaver
         protected EntityManager _EntityManager;
         protected EntityArchetype _Archetype;
         protected Entity _Entity;
+
+        [AllowNesting]
+        [Foldout("Entity Status")]
         [SerializeField] protected SynthEntityType _EntityType = SynthEntityType.Blank;
+        [Foldout("Entity Status")]
         [SerializeField] protected int _EntityIndex = int.MaxValue;
+        [Foldout("Entity Status")]
         [SerializeField] protected bool _EntityInitialised = false;
+        [Foldout("Entity Status")]
         [SerializeField] protected bool _ManagerInitialised = false;
-        public int EntityIndex { get { return _EntityIndex; } }
+        public int EntityIndex => _EntityIndex;
 
         #endregion
 

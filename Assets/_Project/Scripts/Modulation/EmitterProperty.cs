@@ -1,238 +1,240 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using Serializable = System.SerializableAttribute;
+
+using NaughtyAttributes;
+
+// TODO: Replace all these various with single struct/object.
+// Use normalised values for consistency, and display scaled values in editor via custom drawers
 
 namespace PlaneWaver
 {
-    [System.Serializable]
+    // TODO: It would super sweet if the amount of noise could be modulated too.
+    // If I went down that path, it would be worth investing in a totally modular modulation system
+    // using lists of modulators applying whatever operators between them.
+
+    [Serializable]
     public class ContinuousNoiseInput
     {
+        [AllowNesting]
+        [BoxGroup("")]
         [Range(0f, 1.0f)]
         public float _Amount = 0f;
+        [AllowNesting]
+        [BoxGroup("")]
+        public float _Speed = 1f;
+        [AllowNesting]
+        [BoxGroup("")]
         public bool _Perlin = false;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class BurstNoiseInput
     {
+        [AllowNesting]
+        [BoxGroup("")]
         [Range(0f, 1.0f)]
         public float _Amount = 0f;
-        public bool _FreezeOnTrigger = false;
+        [AllowNesting]
+        [BoxGroup("")]
+        public bool _HoldForBurstDuration = false;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class EmitterProperty
     {
-        public ModulationInput _InputSource;
-        public float _InputValue = 0f;
+        public ModulationInput _ModulationSource;
+
+        public void SetModulationInput(ModulationInput modulationSource)
+        {
+            _ModulationSource = modulationSource;
+        }
+
+        public void SetModulationActors(Actor localActor, Actor remoteActor)
+        {
+            _ModulationSource.SetActors(localActor, remoteActor);
+        }
 
         public float GetValue()
         {
-            //if (_InputSource != null)
-            //    _InputValue = _InputSource.GetValue();
-            return _InputValue;
+            return _ModulationSource.OutputValue;
         }
     }
 
-    [System.Serializable]
+    [Serializable]
     public class ContinuousDensity : EmitterProperty
     {
+        [Range(-9.9f, 9.9f)]
+        public float _ModulationAmount = 0f;
+        [Range(0.5f, 5.0f)]
+        public float _ModulationExponent = 1f;
         [Range(0.1f, 10f)]
         public float _Idle = 2f;
-        [Range(-9.9f, 9.9f)]
-        public float _InteractionAmount = 0f;
-        [Range(0.5f, 5.0f)]
-        public float _InteractionShape = 1f;
         public ContinuousNoiseInput _Noise;
 
-        [HideInInspector]
-        public float _Min = 0.1f;
-        [HideInInspector]
-        public float _Max = 10f;
+        [HideInInspector] public float _Min = 0.1f;
+        [HideInInspector] public float _Max = 10f;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class ContinuousDuration : EmitterProperty
     {
+        [Range(-502f, 502f)]
+        public float _ModulationAmount = 0f;
+        [Range(0.5f, 5.0f)]
+        public float _ModulationExponent = 1f;
         [Range(2f, 500f)]
         public float _Idle = 50f;
-        [Range(-502f, 502f)]
-        public float _InteractionAmount = 0f;
-        [Range(0.5f, 5.0f)]
-        public float _InteractionShape = 1f;
         public ContinuousNoiseInput _Noise;
 
-        [HideInInspector]
-        public float _Min = 2f;
-        [HideInInspector]
-        public float _Max = 500f;
+        [HideInInspector] public float _Min = 2f;
+        [HideInInspector] public float _Max = 500f;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class ContinuousPlayhead : EmitterProperty
     {
+        [Range(-1f, 1f)]
+        public float _ModulationAmount = 0f;
+        [Range(0.5f, 5.0f)]
+        public float _ModulationExponent = 1f;
         [Range(0f, 1f)]
         public float _Idle = 0f;
-        [Range(-1f, 1f)]
-        public float _InteractionAmount = 0f;
-        [Range(0.5f, 5.0f)]
-        public float _InteractionShape = 1f;
         public ContinuousNoiseInput _Noise;
 
-        [HideInInspector]
-        public float _Min = 0f;
-        [HideInInspector]
-        public float _Max = 1f;
+        [HideInInspector] public float _Min = 0f;
+        [HideInInspector] public float _Max = 1f;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class ContinuousTranspose : EmitterProperty
     {
+        [Range(-6f, 6f)]
+        public float _ModulationAmount = 0f;
+        [Range(0.5f, 5.0f)]
+        public float _ModulationExponent = 1f;
         [Range(-3f, 3f)]
         public float _Idle = 1;
-        [Range(-6f, 6f)]
-        public float _InteractionAmount = 0f;
-        [Range(0.5f, 5.0f)]
-        public float _InteractionShape = 1f;
         public ContinuousNoiseInput _Noise;
 
-        [HideInInspector]
-        public float _Min = -3f;
-        [HideInInspector]
-        public float _Max = 3f;
+        [HideInInspector] public float _Min = -3f;
+        [HideInInspector] public float _Max = 3f;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class ContinuousVolume : EmitterProperty
     {
+        [Range(-2f, 2f)]
+        public float _ModulationAmount = 0f;
+        [Range(0.5f, 5.0f)]
+        public float _ModulationExponent = 1f;
         [Range(0f, 2f)]
         public float _Idle = 1f;
-        [Range(-2f, 2f)]
-        public float _InteractionAmount = 0f;
-        [Range(0.5f, 5.0f)]
-        public float _InteractionShape = 1f;
         public ContinuousNoiseInput _Noise;
 
-        [HideInInspector]
-        public float _Min = 0f;
-        [HideInInspector]
-        public float _Max = 2f;
+        [HideInInspector] public float _Min = 0f;
+        [HideInInspector] public float _Max = 2f;
     }
 
-
-
-    [System.Serializable]
+    [Serializable]
     public class BurstDensity : EmitterProperty
     {
+        [Range(-9.9f, 9.9f)]
+        public float _ModulationAmount = 0f;
+        [Range(0.5f, 5.0f)]
+        public float _ModulationExponent = 1f;
         [Range(0.1f, 10f)]
         public float _Start = 2f;
         [Range(0.1f, 10f)]
         public float _End = 2f;
-        [Range(-9.9f, 9.9f)]
-        public float _InteractionAmount = 0f;
-        [Range(0.5f, 5.0f)]
-        public float _InteractionShape = 1f;
         public BurstNoiseInput _Noise;
 
-        [HideInInspector]
-        public float _Min = 0.1f;
-        [HideInInspector]
-        public float _Max = 10f;
+        [HideInInspector] public float _Min = 0.1f;
+        [HideInInspector] public float _Max = 10f;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class BurstDuration : EmitterProperty
     {
+        [Range(-990f, 990f)]
+        public float _ModulationAmount = 0f;
+        [Range(0.5f, 5.0f)]
+        public float _ModulationExponent = 1f;
         [Range(10f, 1000f)]
         public float _Default = 100f;
-        [Range(-990f, 990f)]
-        public float _InteractionAmount = 0f;
-        [Range(0.5f, 5.0f)]
-        public float _InteractionShape = 1f;
         public BurstNoiseInput _Noise;
 
-        [HideInInspector]
-        public float _Min = 10f;
-        [HideInInspector]
-        public float _Max = 1000f;
+        [HideInInspector] public float _Min = 10f;
+        [HideInInspector] public float _Max = 1000f;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class BurstGrainDuration : EmitterProperty
     {
+        [Range(-495f, 495f)]
+        public float _ModulationAmount = 0f;
+        [Range(0.5f, 5.0f)]
+        public float _ModulationExponent = 1f;
         [Range(5f, 500f)]
         public float _Start = 20f;
         [Range(5f, 500f)]
         public float _End = 20f;
-        [Range(-495f, 495f)]
-        public float _InteractionAmount = 0f;
-        [Range(0.5f, 5.0f)]
-        public float _InteractionShape = 1f;
         public BurstNoiseInput _Noise;
 
-        [HideInInspector]
-        public float _Min = 5f;
-        [HideInInspector]
-        public float _Max = 500f;
+        [HideInInspector] public float _Min = 5f;
+        [HideInInspector] public float _Max = 500f;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class BurstPlayhead : EmitterProperty
     {
+        [Range(-1f, 1f)]
+        public float _ModulationAmount = 0f;
+        [Range(0.5f, 5.0f)]
+        public float _ModulationExponent = 1f;
         [Range(0f, 1f)]
         public float _Start = 0f;
-        public bool _LockStartValue = true;
         [Range(0f, 1f)]
         public float _End = 1f;
-        [Range(-1f, 1f)]
-        public float _InteractionAmount = 0f;
-        [Range(0.5f, 5.0f)]
-        public float _InteractionShape = 1f;
+        public bool _StartIgnoresModulation = true;
         public BurstNoiseInput _Noise;
 
-        [HideInInspector]
-        public float _Min = 0f;
-        [HideInInspector]
-        public float _Max = 1f;
+        [HideInInspector] public float _Min = 0f;
+        [HideInInspector] public float _Max = 1f;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class BurstTranspose : EmitterProperty
     {
         [Range(-3f, 3f)]
+        public float _ModulationAmount = 0f;
+        [Range(0.5f, 5.0f)]
+        public float _ModulationExponent = 1f;
+        [Range(-3f, 3f)]
         public float _Start = 0f;
         [Range(-3f, 3f)]
         public float _End = 0f;
-        public bool _LockEndValue = true;
-        [Range(-3f, 3f)]
-        public float _InteractionAmount = 0f;
-        [Range(0.5f, 5.0f)]
-        public float _InteractionShape = 1f;
+        public bool _EndIgnoresModulation = true;
         public BurstNoiseInput _Noise;
 
-        [HideInInspector]
-        public float _Min = -3f;
-        [HideInInspector]
-        public float _Max = 3f;
+        [HideInInspector] public float _Min = -3f;
+        [HideInInspector] public float _Max = 3f;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class BurstVolume : EmitterProperty
     {
+        [Range(-2f, 2f)]
+        public float _ModulationAmount = 1f;
+        [Range(0.5f, 5.0f)]
+        public float _ModulationExponent = 1f;
         [Range(0f, 1f)]
         public float _Start = 0f;
         [Range(0f, 1f)]
         public float _End = 0f;
-        public bool _LockEndValue = true;
-        [Range(-2f, 2f)]
-        public float _InteractionAmount = 1f;
-        [Range(0.5f, 5.0f)]
-        public float _InteractionShape = 1f;
+        public bool _EndIgnoresModulation = true;
         public BurstNoiseInput _Noise;
 
-        [HideInInspector]
-        public float _Min = 0f;
-        [HideInInspector]
-        public float _Max = 2f;
+        [HideInInspector] public float _Min = 0f;
+        [HideInInspector] public float _Max = 2f;
     }
 }

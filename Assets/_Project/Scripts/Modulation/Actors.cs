@@ -25,7 +25,6 @@ namespace PlaneWaver
             _LatestCollision = null;
             _IsColliding = false;
             _IsAlive = true;
-            Debug.Log($"Created new Actor: {ActorGameObject.name}     Has rigidbody? {HasRigidBody}     Has collider? {HasCollider}");
         }
 
         public Actor(bool isSet = false)
@@ -44,12 +43,12 @@ namespace PlaneWaver
             return _IsAlive;
         }
 
-        public bool HasRigidBody => (_Rigidbody != null);
+        public bool HasRigidBody => _Rigidbody != null;
         public bool HasCollider => _Collider != null;
         public bool IsColliding { get => _IsColliding; set => _IsColliding = value; }
 
         public Transform ActorTransform => _Transform;
-        public GameObject ActorGameObject => _Transform.gameObject;
+        public GameObject ActorGameObject => _IsAlive ? _Transform.gameObject : null;
         public Rigidbody ActorRigidbody => _Rigidbody;
 
         public Vector3 Position => ActorTransform.position;

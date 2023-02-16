@@ -1,6 +1,8 @@
 ﻿using System;
 using Unity.Entities;
 
+using NaughtyAttributes;
+
 namespace PlaneWaver
 {
     /// <summary>
@@ -8,6 +10,8 @@ namespace PlaneWaver
     /// <summary>
     public class ContinuousAuthoring : EmitterAuthoring
     {
+        [AllowNesting]
+        [HorizontalLine(color: EColor.White)]
         public ContinuousProperties _Properties;
 
         #region CRAZY CONTINUOUS COMPONENT INIT
@@ -16,8 +20,15 @@ namespace PlaneWaver
         {
             _EmitterType = EmitterType.Continuous;
             _EntityType = SynthEntityType.Emitter;
+
+            _Properties._Volume.SetModulationInput(_ModulationInputs[0]);
+            _Properties._Playhead.SetModulationInput(_ModulationInputs[1]);
+            _Properties._GrainDuration.SetModulationInput(_ModulationInputs[2]);
+            _Properties._Density.SetModulationInput(_ModulationInputs[3]);
+            _Properties._Transpose.SetModulationInput(_ModulationInputs[4]);
+
             _Archetype = _EntityManager.CreateArchetype(typeof(ContinuousComponent));
-            _IsPlaying = false;
+            _IsPlaying = _PlaybackCondition != Condition.NotColliding;
         }
 
         public override void InitialiseComponents()
@@ -27,21 +38,21 @@ namespace PlaneWaver
                 _IsPlaying = _PlaybackCondition != Condition.NotColliding,
                 _EmitterIndex = _EntityIndex,
                 _AudioClipIndex = _AudioAsset.ClipEntityIndex,
-                _SpeakerIndex = _Host._AttachedSpeakerIndex,
-                _HostIndex = _Host.EntityIndex,
+                _SpeakerIndex = Host.AttachedSpeakerIndex,
+                _HostIndex = Host.EntityIndex,
                 _VolumeAdjust = _VolumeAdjust,
                 _DistanceAmplitude = 1,
                 _PingPong = _PingPongGrainPlayheads,
-                _SamplesUntilFade = _Host._SpawnLife.GetSamplesUntilFade(_AgeFadeout),
-                _SamplesUntilDeath = _Host._SpawnLife.GetSamplesUntilDeath(),
+                _SamplesUntilFade = Host._SpawnLife.GetSamplesUntilFade(_AgeFadeout),
+                _SamplesUntilDeath = Host._SpawnLife.GetSamplesUntilDeath(),
                 _LastSampleIndex = -1,
                 _OutputSampleRate = _SampleRate,
 
                 _Playhead = new ModulationComponent
                 {
                     _StartValue = _Properties._Playhead._Idle,
-                    _InteractionAmount = _Properties._Playhead._InteractionAmount,
-                    _Shape = _Properties._Playhead._InteractionShape,
+                    _InteractionAmount = _Properties._Playhead._ModulationAmount,
+                    _Shape = _Properties._Playhead._ModulationExponent,
                     _Noise = _Properties._Playhead._Noise._Amount,
                     _PerlinNoise = _Properties._Playhead._Noise._Perlin,
                     _Min = _Properties._Playhead._Min,
@@ -50,8 +61,8 @@ namespace PlaneWaver
                 _Density = new ModulationComponent
                 {
                     _StartValue = _Properties._Density._Idle,
-                    _InteractionAmount = _Properties._Density._InteractionAmount,
-                    _Shape = _Properties._Density._InteractionShape,
+                    _InteractionAmount = _Properties._Density._ModulationAmount,
+                    _Shape = _Properties._Density._ModulationExponent,
                     _Noise = _Properties._Density._Noise._Amount,
                     _PerlinNoise = _Properties._Density._Noise._Perlin,
                     _Min = _Properties._Density._Min,
@@ -60,8 +71,8 @@ namespace PlaneWaver
                 _Duration = new ModulationComponent
                 {
                     _StartValue = _Properties._GrainDuration._Idle * _SamplesPerMS,
-                    _InteractionAmount = _Properties._GrainDuration._InteractionAmount * _SamplesPerMS,
-                    _Shape = _Properties._GrainDuration._InteractionShape,
+                    _InteractionAmount = _Properties._GrainDuration._ModulationAmount * _SamplesPerMS,
+                    _Shape = _Properties._GrainDuration._ModulationExponent,
                     _Noise = _Properties._GrainDuration._Noise._Amount,
                     _PerlinNoise = _Properties._GrainDuration._Noise._Perlin,
                     _Min = _Properties._GrainDuration._Min * _SamplesPerMS,
@@ -70,8 +81,8 @@ namespace PlaneWaver
                 _Transpose = new ModulationComponent
                 {
                     _StartValue = _Properties._Transpose._Idle,
-                    _InteractionAmount = _Properties._Transpose._InteractionAmount,
-                    _Shape = _Properties._Transpose._InteractionShape,
+                    _InteractionAmount = _Properties._Transpose._ModulationAmount,
+                    _Shape = _Properties._Transpose._ModulationExponent,
                     _Noise = _Properties._Transpose._Noise._Amount,
                     _PerlinNoise = _Properties._Transpose._Noise._Perlin,
                     _Min = _Properties._Transpose._Min,
@@ -80,8 +91,8 @@ namespace PlaneWaver
                 _Volume = new ModulationComponent
                 {
                     _StartValue = _Properties._Volume._Idle,
-                    _InteractionAmount = _Properties._Volume._InteractionAmount,
-                    _Shape = _Properties._Volume._InteractionShape,
+                    _InteractionAmount = _Properties._Volume._ModulationAmount,
+                    _Shape = _Properties._Volume._ModulationExponent,
                     _Noise = _Properties._Volume._Noise._Amount,
                     _PerlinNoise = _Properties._Volume._Noise._Perlin,
                     _Min = _Properties._Volume._Min,
@@ -104,14 +115,17 @@ namespace PlaneWaver
 
         public override void ProcessComponents()
         {
+            _IsPlaying = _PlaybackCondition == Condition.Always ? true : _IsPlaying;
+
             UpdateEntityTags();
 
-            if (_IsPlaying)
+            if (IsPlaying)
             {
+                UpdateModulationValues();
                 ContinuousComponent continuousData = _EntityManager.GetComponentData<ContinuousComponent>(_Entity);
 
                 // Reset grain offset if attached to a new speaker
-                if (_Host._AttachedSpeakerIndex != continuousData._SpeakerIndex)
+                if (Host.AttachedSpeakerIndex != continuousData._SpeakerIndex)
                 {
                     _LastSampleIndex = -1;
                     continuousData._PreviousGrainDuration = -1;
@@ -119,26 +133,26 @@ namespace PlaneWaver
 
                 _LastSampleIndex = continuousData._LastSampleIndex;
 
-                continuousData._IsPlaying = _IsPlaying;
+                continuousData._IsPlaying = IsPlaying;
                 continuousData._AudioClipIndex = _AudioAsset.ClipEntityIndex;
-                continuousData._SpeakerIndex = _Host._AttachedSpeakerIndex;
-                continuousData._HostIndex = _Host.EntityIndex;
+                continuousData._SpeakerIndex = Host.AttachedSpeakerIndex;
+                continuousData._HostIndex = Host.EntityIndex;
                 continuousData._LastSampleIndex = _LastSampleIndex;
                 continuousData._PingPong = _PingPongGrainPlayheads;
-                continuousData._SamplesUntilFade = _Host._SpawnLife.GetSamplesUntilFade(_AgeFadeout);
-                continuousData._SamplesUntilDeath = _Host._SpawnLife.GetSamplesUntilDeath();
+                continuousData._SamplesUntilFade = Host._SpawnLife.GetSamplesUntilFade(_AgeFadeout);
+                continuousData._SamplesUntilDeath = Host._SpawnLife.GetSamplesUntilDeath();
                 continuousData._VolumeAdjust = _VolumeAdjust;
-                continuousData._DistanceAmplitude = _DistanceAmplitude;
+                continuousData._DistanceAmplitude = DistanceAmplitude;
                 continuousData._OutputSampleRate = _SampleRate;
 
                 continuousData._Playhead = new ModulationComponent
                 {
                     _StartValue = _Properties._Playhead._Idle,
-                    _InteractionAmount = _Properties._Playhead._InteractionAmount,
-                    _Shape = _Properties._Playhead._InteractionShape,
+                    _InteractionAmount = _Properties._Playhead._ModulationAmount,
+                    _Shape = _Properties._Playhead._ModulationExponent,
                     _Noise = _Properties._Playhead._Noise._Amount,
                     _PerlinNoise = _Properties._Playhead._Noise._Perlin,
-                    _PerlinValue = GeneratePerlinForParameter(0),
+                    _PerlinValue = GeneratePerlinForParameter(0, _Properties._Playhead._Noise._Speed),
                     _Min = _Properties._Playhead._Min,
                     _Max = _Properties._Playhead._Max,
                     _InteractionInput = _Properties._Playhead.GetValue()
@@ -146,11 +160,11 @@ namespace PlaneWaver
                 continuousData._Density = new ModulationComponent
                 {
                     _StartValue = _Properties._Density._Idle,
-                    _InteractionAmount = _Properties._Density._InteractionAmount,
-                    _Shape = _Properties._Density._InteractionShape,
+                    _InteractionAmount = _Properties._Density._ModulationAmount,
+                    _Shape = _Properties._Density._ModulationExponent,
                     _Noise = _Properties._Density._Noise._Amount,
                     _PerlinNoise = _Properties._Density._Noise._Perlin,
-                    _PerlinValue = GeneratePerlinForParameter(1),
+                    _PerlinValue = GeneratePerlinForParameter(1, _Properties._Density._Noise._Speed),
                     _Min = _Properties._Density._Min,
                     _Max = _Properties._Density._Max,
                     _InteractionInput = _Properties._Density.GetValue()
@@ -158,11 +172,11 @@ namespace PlaneWaver
                 continuousData._Duration = new ModulationComponent
                 {
                     _StartValue = _Properties._GrainDuration._Idle * _SamplesPerMS,
-                    _InteractionAmount = _Properties._GrainDuration._InteractionAmount * _SamplesPerMS,
-                    _Shape = _Properties._GrainDuration._InteractionShape,
+                    _InteractionAmount = _Properties._GrainDuration._ModulationAmount * _SamplesPerMS,
+                    _Shape = _Properties._GrainDuration._ModulationExponent,
                     _Noise = _Properties._GrainDuration._Noise._Amount,
                     _PerlinNoise = _Properties._GrainDuration._Noise._Perlin,
-                    _PerlinValue = GeneratePerlinForParameter(2),
+                    _PerlinValue = GeneratePerlinForParameter(2, _Properties._GrainDuration._Noise._Speed),
                     _Min = _Properties._GrainDuration._Min * _SamplesPerMS,
                     _Max = _Properties._GrainDuration._Max * _SamplesPerMS,
                     _InteractionInput = _Properties._GrainDuration.GetValue()
@@ -170,11 +184,11 @@ namespace PlaneWaver
                 continuousData._Transpose = new ModulationComponent
                 {
                     _StartValue = _Properties._Transpose._Idle,
-                    _InteractionAmount = _Properties._Transpose._InteractionAmount,
-                    _Shape = _Properties._Transpose._InteractionShape,
+                    _InteractionAmount = _Properties._Transpose._ModulationAmount,
+                    _Shape = _Properties._Transpose._ModulationExponent,
                     _Noise = _Properties._Transpose._Noise._Amount,
                     _PerlinNoise = _Properties._Transpose._Noise._Perlin,
-                    _PerlinValue = GeneratePerlinForParameter(3),
+                    _PerlinValue = GeneratePerlinForParameter(3, _Properties._Transpose._Noise._Speed),
                     _Min = _Properties._Transpose._Min,
                     _Max = _Properties._Transpose._Max,
                     _InteractionInput = _Properties._Transpose.GetValue()
@@ -182,8 +196,8 @@ namespace PlaneWaver
                 continuousData._Volume = new ModulationComponent
                 {
                     _StartValue = _Properties._Volume._Idle,
-                    _InteractionAmount = _Properties._Volume._InteractionAmount,
-                    _Shape = _Properties._Volume._InteractionShape,
+                    _InteractionAmount = _Properties._Volume._ModulationAmount,
+                    _Shape = _Properties._Volume._ModulationExponent,
                     _Noise = _Properties._Volume._Noise._Amount,
                     _PerlinNoise = _Properties._Volume._Noise._Perlin,
                     _PerlinValue = GeneratePerlinForParameter(4),
@@ -205,11 +219,21 @@ namespace PlaneWaver
     [Serializable]
     public class ContinuousProperties
     {
-        public ContinuousPlayhead _Playhead;
-        public ContinuousDensity _Density;
-        public ContinuousDuration _GrainDuration;
-        public ContinuousTranspose _Transpose;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Clear)]
         public ContinuousVolume _Volume;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Clear)]
+        public ContinuousPlayhead _Playhead;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Clear)]
+        public ContinuousDuration _GrainDuration;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Clear)]
+        public ContinuousDensity _Density;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Clear)]
+        public ContinuousTranspose _Transpose;
     }
 
     #endregion

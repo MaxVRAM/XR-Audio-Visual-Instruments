@@ -3,6 +3,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 using MaxVRAM.Audio;
+using NaughtyAttributes;
 
 namespace PlaneWaver
 {
@@ -18,42 +19,72 @@ namespace PlaneWaver
 
         protected float[] _PerlinSeedArray;
 
-        [Header("Runtime Dynamics")]
-        public bool _IsPlaying = true;
-        public float _AdjustedDistance = 0;
-        public float _DistanceAmplitude = 0;
-        [SerializeField] protected float _ContactSurfaceAttenuation = 1;
-        [SerializeField] protected float _LastTriggeredAt = 0;
-        [SerializeField] protected int _LastSampleIndex = 0;
+        [AllowNesting]
+        [Foldout("Emitter Setup")]
+        [SerializeField] protected HostAuthoring _Host;
+        [AllowNesting]
+        [Foldout("Emitter Setup")]
+        [SerializeField] protected EmitterType _EmitterType;
+        [AllowNesting]
+        [Foldout("Emitter Setup")]
+        [SerializeField] protected Condition _PlaybackCondition = Condition.Always;
+        [AllowNesting]
+        [Foldout("Emitter Setup")]
+        [Expandable]
+        [SerializeField] protected AudioAsset _AudioAsset;
 
-        [Header("Emitter Configuration")]
-        [Tooltip("(generated) Host component managing this emitter.")]
-        public HostAuthoring _Host;
-        [Tooltip("(generated) This emitter's subtype. Current subtypes are either 'Continuous' or 'Burst'.")]
-        public EmitterType _EmitterType;
-        [Tooltip("Limit the emitter's playback to collision/contact states.")]
-        public Condition _PlaybackCondition = Condition.Always;
-        [Tooltip("Audio clip used as the emitter's content source.")]
-        public int _ClipIndex = 0;
-        [Tooltip("Audio clip used as the emitter's content source.")]
-        public AudioAsset _AudioAsset;
+        public HostAuthoring Host { get => _Host; set => _Host = value; }
 
-        [SerializeField]
-        private ModulationInput[] _ModulationInputs = new ModulationInput[6];
-
-        [Header("Playback Config")]
-        [Range(0.01f, 2f)]public float _VolumeAdjust = 0.5f;
+        [AllowNesting]
+        [Foldout("Playback Setup")]
+        [Range(0.01f, 2f)] public float _VolumeAdjust = 0.5f;
+        [AllowNesting]
+        [Foldout("Playback Setup")]
         [Tooltip("Scaling factor applied to the global listener radius value. The result defines the emitter's distance-volume attenuation.")]
         [Range(0.001f, 1f)] public float _DistanceAttenuationFactor = 1f;
+        [AllowNesting]
+        [Foldout("Playback Setup")]
         [Tooltip("Normalised age to begin fadeout of spawned emitter if a DestroyTimer component is attached.")]
-        [Range(0, 1)] public float _AgeFadeout = .9f;  // TODO - not implemented yet
+        [Range(0, 1)] public float _AgeFadeout = .9f;
+        [AllowNesting]
+        [Foldout("Playback Setup")]
         [Tooltip("Reverses the playhead of an individual grain if it reaches the end of the clip during playback instead of outputting 0s.")]
-        public bool _PingPongGrainPlayheads = true;
+        [SerializeField] protected bool _PingPongGrainPlayheads = true;
+        [AllowNesting]
+        [Foldout("Playback Setup")]
         [Tooltip("Multiplies the emitter's output by the rigidity value of the colliding surface.")]
         public bool _ColliderRigidityVolumeScale = false;
+
+        [SerializeField]
+        [HideInInspector]
+        protected ModulationInput[] _ModulationInputs = new ModulationInput[6];
+
         public DSP_Class[] _DSPChainParams;
+
         protected int _SampleRate;
         protected float _SamplesPerMS = 0;
+
+        [AllowNesting]
+        [Foldout("Runtime Dynamics")]
+        [SerializeField] protected bool _IsPlaying;
+        [AllowNesting]
+        [Foldout("Runtime Dynamics")]
+        [SerializeField] private float _AdjustedDistance = 0;
+        [AllowNesting]
+        [Foldout("Runtime Dynamics")]
+        [SerializeField] private float _DistanceAmplitude = 0;
+        [AllowNesting]
+        [Foldout("Runtime Dynamics")]
+        [SerializeField] protected float _ContactSurfaceAttenuation = 1;
+        [AllowNesting]
+        [Foldout("Runtime Dynamics")]
+        [SerializeField] protected float _LastTriggeredAt = 0;
+        [AllowNesting]
+        [Foldout("Runtime Dynamics")]
+        [SerializeField] protected int _LastSampleIndex = 0;
+
+        public bool IsPlaying => _IsPlaying;
+        public float DistanceAmplitude => _DistanceAmplitude;
 
         #endregion
 
@@ -71,6 +102,11 @@ namespace PlaneWaver
             {
                 float offset = Random.Range(0, 1000);
                 _PerlinSeedArray[i] = Mathf.PerlinNoise(offset, offset * 0.5f);
+            }
+
+            for (int i = 0; i < _ModulationInputs.Length; i++)
+            {
+                _ModulationInputs[i].SetActors(Host._LocalActor, Host._RemoteActor);
             }
 
             _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
@@ -101,12 +137,20 @@ namespace PlaneWaver
                     _EntityManager.RemoveComponent<ConnectedTag>(_Entity);
             }
 
-            if (_IsPlaying != _EntityManager.HasComponent<PlayingTag>(_Entity))
+            if (IsPlaying != _EntityManager.HasComponent<PlayingTag>(_Entity))
             {
-                if (_IsPlaying)
+                if (IsPlaying)
                     _EntityManager.AddComponent<PlayingTag>(_Entity);
                 else
                     _EntityManager.RemoveComponent<PlayingTag>(_Entity);
+            }
+        }
+
+        protected void UpdateModulationValues()
+        {
+            for (int i = 0; i < _ModulationInputs.Length; i++)
+            {
+                _ModulationInputs[i].ProcessValue();
             }
         }
 
@@ -164,13 +208,13 @@ namespace PlaneWaver
                 return;
             }
 
-            if (ColliderMoreRigid(collision.collider, _Host._CurrentCollidingRigidity, out float otherRigidity) && OnlyTriggerMostRigid)
+            if (ColliderMoreRigid(collision.collider, _Host.CollidingRigidity, out float otherRigidity) && OnlyTriggerMostRigid)
             {
                 _IsPlaying = false;
             }
             else
             {
-                _ContactSurfaceAttenuation = _ColliderRigidityVolumeScale ? (_Host._CurrentCollidingRigidity + otherRigidity) / 2 : 0;
+                _ContactSurfaceAttenuation = _ColliderRigidityVolumeScale ? (_Host.CollidingRigidity + otherRigidity) / 2 : 0;
                 _IsPlaying = true;
             }
         }
@@ -183,11 +227,10 @@ namespace PlaneWaver
             return otherSurface != null && otherSurface.IsEmitter && otherSurface._Rigidity >= rigidity;
         }
 
-        public float GeneratePerlinForParameter(int parameterIndex)
+        public float GeneratePerlinForParameter(int parameterIndex, float speed = 1f)
         {
-            return Mathf.PerlinNoise(
-                Time.time + _PerlinSeedArray[parameterIndex],
-                (Time.time + _PerlinSeedArray[parameterIndex]) * 0.5f);
+            float time = Time.time * speed;
+            return Mathf.PerlinNoise(time + _PerlinSeedArray[parameterIndex],(time + _PerlinSeedArray[parameterIndex]) * 0.5f);
         }
 
         #endregion

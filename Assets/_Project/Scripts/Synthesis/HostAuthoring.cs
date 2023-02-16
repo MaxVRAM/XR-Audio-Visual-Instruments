@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Transforms;
 
 using MaxVRAM.Audio;
+using NaughtyAttributes;
 
 namespace PlaneWaver
 {
@@ -17,51 +18,79 @@ namespace PlaneWaver
         #region FIELDS & PROPERTIES
 
         private Transform _HeadTransform;
-        //private BlankModulation _BlankInputComponent;
 
-        [Header("Runtime Dynamics")]
-        [SerializeField] private bool _Connected = false;
-        [SerializeField] public int _AttachedSpeakerIndex = int.MaxValue;
-        [SerializeField] private bool _InListenerRadius = false;
-        [SerializeField] private float _ListenerDistance = 0;
-        public bool _IsColliding = false;
-
-        public bool IsConnected { get { return _Connected; } }
-        public bool InListenerRadius { get { return _InListenerRadius; } }
-
-        [Header("Speaker assignment")]
+        [AllowNesting]
+        [BoxGroup("Speaker Assignment")]
         [Tooltip("Parent transform position for speakers to target for this host. Defaults to this transform.")]
         [SerializeField] private Transform _SpeakerTarget;
+        [AllowNesting]
+        [BoxGroup("Speaker Assignment")]
         [SerializeField] private Transform _SpeakerTransform;
-        [SerializeField] private AttachmentLine _AttachmentLine;
 
-        [Header("Interactions")]
+        private AttachmentLine _AttachmentLine;
+
+        [AllowNesting]
+        [BoxGroup("Interaction")]
         public ObjectSpawner _Spawner;
+        [AllowNesting]
+        [BoxGroup("Interaction")]
         public SpawnableManager _SpawnLife;
-        public Actor _LocalActor = new(false);
-        public Actor _RemoteActor = new(false);
-        //public GameObject _LocalObject;
-        //[Tooltip("Additional object used to generate 'relative' values with against the interaction object. E.g. distance, relative speed, etc.")]
-        //public GameObject _RemoteObject;
-        [Tooltip("(generated) Paired component that pipes collision data from the local object target to this host.")]
+        [AllowNesting]
+        [BoxGroup("Interaction")]
+        public GameObject _LocalActorGameObject;
+        [AllowNesting]
+        [BoxGroup("Interaction")]
+        public Actor _LocalActor;
+        [AllowNesting]
+        [BoxGroup("Interaction")]
+        public Actor _RemoteActor;
+        [AllowNesting]
+        [BoxGroup("Interaction")]
+        [Tooltip("(runtime) Paired component that pipes collision data from the local object target to this host.")]
         public CollisionPipe _CollisionPipeComponent;
-        private SurfaceProperties _SurfaceProperties;
-        [SerializeField] private float _SurfaceRigidity = 0.5f;
-        public float SurfaceRigidity { get { return _SurfaceRigidity; } }
-        [Tooltip("List of attached behaviour scripts to use as modulation input sources.")]
-        [SerializeField] private List<BehaviourClass> _Behaviours;
+        [AllowNesting]
+        [BoxGroup("Interaction")]
+        [SerializeField] private float _SelfRigidity = 0.5f;
+        [BoxGroup("Interaction")]
+        [AllowNesting]
+        [SerializeField] private float _EaseCollidingRigidity = 0.5f;
+        [AllowNesting]
+        [BoxGroup("Interaction")]
+        [SerializeField] private float _CollidingRigidity = 0;
+        private float _TargetCollidingRigidity = 0;
 
-        [Tooltip("(generated) Sibling emitters components for this host to manage.")]
+        public float SurfaceRigidity => _SelfRigidity;
+        public float RigiditySmoothUp => 1 / _EaseCollidingRigidity;
+        public float CollidingRigidity => _CollidingRigidity;
+
+
+        private SurfaceProperties _SurfaceProperties;
+        private List<BehaviourClass> _Behaviours;
+
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Gray)]
         public EmitterAuthoring[] _HostedEmitters;
-        //[Tooltip("(generated) Sibling modulation input source components this host provides to its emitters.")]
-        //public ModulationSource[] _ModulationSources;
-        [Tooltip("(generated) List of objects currently in-contact with the host's local object target.")]
         public List<GameObject> _CollidingObjects;
-        public List<float> _ContactRigidValues;
-        public float _RigiditySmoothUp = 0.5f;
-        public float RigiditySmoothUp { get { return 1 / _RigiditySmoothUp; } }
-        public float _CurrentCollidingRigidity = 0;
-        public float _TargetCollidingRigidity = 0;
+
+        [AllowNesting]
+        [Foldout("Runtime Dynamics")]
+        [SerializeField] private bool _Connected = false;
+        [AllowNesting]
+        [Foldout("Runtime Dynamics")]
+        [SerializeField] private int _AttachedSpeakerIndex = int.MaxValue;
+        [AllowNesting]
+        [Foldout("Runtime Dynamics")]
+        [SerializeField] private bool _InListenerRadius = false;
+        [AllowNesting]
+        [Foldout("Runtime Dynamics")]
+        [SerializeField] private float _ListenerDistance = 0;
+        [AllowNesting]
+        [Foldout("Runtime Dynamics")]
+        public bool _IsColliding = false;
+
+        public bool IsConnected => _Connected;
+        public int AttachedSpeakerIndex => _AttachedSpeakerIndex;
+        public bool InListenerRadius => _InListenerRadius;
 
         #endregion
 
@@ -69,12 +98,12 @@ namespace PlaneWaver
 
         void Awake()
         {
-            //if (!TryGetComponent(out _BlankInputComponent))
-            //    _BlankInputComponent = gameObject.AddComponent(typeof(BlankModulation)) as BlankModulation;
         }
 
         void Start()
         {
+            InitialiseActor();
+
             _HeadTransform = FindObjectOfType<Camera>().transform;
             _SpeakerTarget = _SpeakerTarget != null ? _SpeakerTarget : transform;
             _SpeakerTransform = _SpeakerTarget;
@@ -82,19 +111,14 @@ namespace PlaneWaver
             if (_AttachmentLine = TryGetComponent(out _AttachmentLine) ? _AttachmentLine : gameObject.AddComponent<AttachmentLine>())
             _AttachmentLine._TransformA = _SpeakerTarget;
 
-            if (TryGetComponent(out _SurfaceProperties) || transform.parent.TryGetComponent(out _SurfaceProperties))
-                _SurfaceRigidity = _SurfaceProperties._Rigidity;
+            if (TryGetComponent(out _SurfaceProperties) || _LocalActor.ActorGameObject.TryGetComponent(out _SurfaceProperties))
+                _SelfRigidity = _SurfaceProperties._Rigidity;
 
-            _HostedEmitters = transform.parent.GetComponentsInChildren<EmitterAuthoring>();
+            if (transform.parent != null)
+                _HostedEmitters = transform.parent.GetComponentsInChildren<EmitterAuthoring>();
+    
             foreach (EmitterAuthoring emitter in _HostedEmitters)
-                emitter._Host = this;
-
-            //_ModulationSources = transform.parent.GetComponentsInChildren<ModulationSource>();
-            //if (_LocalObject == null)
-            //    _LocalObject = transform.parent.gameObject;
-            //InitialiseActor(_LocalObject);
-            //SetRemoteActor(_RemoteObject);
-            //UpdateBehaviourModulationInputs();
+                emitter.Host = this;
 
             _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
             _Archetype = _EntityManager.CreateArchetype(
@@ -179,11 +203,11 @@ namespace PlaneWaver
                     _TargetCollidingRigidity = _TargetCollidingRigidity > props._Rigidity ? _TargetCollidingRigidity : props._Rigidity;
                 }
             // Smooth transition to upward rigidity values to avoid randomly triggering surface contact emitters from short collisions
-            if (_TargetCollidingRigidity < _CurrentCollidingRigidity + 0.001f || _RigiditySmoothUp <= 0)
-                _CurrentCollidingRigidity = _TargetCollidingRigidity;
+            if (_TargetCollidingRigidity < CollidingRigidity + 0.001f || _EaseCollidingRigidity <= 0)
+                _CollidingRigidity = _TargetCollidingRigidity;
             else
-                _CurrentCollidingRigidity = _CurrentCollidingRigidity.Lerp(_TargetCollidingRigidity, RigiditySmoothUp * Time.deltaTime);
-            if (_CurrentCollidingRigidity < 0.001f) _CurrentCollidingRigidity = 0;
+                _CollidingRigidity = CollidingRigidity.Lerp(_TargetCollidingRigidity, RigiditySmoothUp * Time.deltaTime);
+            if (CollidingRigidity < 0.001f) _CollidingRigidity = 0;
         }
 
 
@@ -204,20 +228,21 @@ namespace PlaneWaver
             _LocalActor = _LocalActor.Exists() ? _LocalActor : new Actor(transform);
             _SpawnLife = _SpawnLife != null ? _SpawnLife : gameObject.AddComponent<SpawnableManager>();
 
-
-            // Set up a collision pipe to send collisions from the targeted object here
-            // TODO: Move to event system via Actor struct
-            if (!_LocalActor.ActorTransform.TryGetComponent(out _CollisionPipeComponent))
-                _CollisionPipeComponent = _LocalActor.ActorGameObject.AddComponent<CollisionPipe>();
-
-            _CollisionPipeComponent.AddHost(this);
-
             foreach (BehaviourClass behaviour in GetComponents<BehaviourClass>())
             {
                 behaviour._SpawnedObject = _LocalActor.ActorGameObject;
                 behaviour._ControllerObject = _RemoteActor.ActorGameObject;
                 behaviour._ObjectSpawner = _Spawner;
             }
+
+            // Set up a collision pipe to send collisions from the targeted object here
+            // TODO: Move to event system via Actor struct
+            if (!_LocalActor.ActorGameObject.TryGetComponent(out Collider _))
+                return;
+
+            _CollisionPipeComponent = _LocalActor.ActorGameObject.TryGetComponent(out _CollisionPipeComponent) ?
+                _CollisionPipeComponent : _LocalActor.ActorGameObject.AddComponent<CollisionPipe>();
+
             //foreach (ModulationSource source in _ModulationSources)
             //    if (!(source is BlankModulation))
             //        source._Actors.SetActorA(_LocalObject.transform);
@@ -259,16 +284,7 @@ namespace PlaneWaver
             GameObject other = collision.collider.gameObject;
             _CollidingObjects.Add(other);
 
-            if (ContactAllowed(other))
-            {
-                if (other.TryGetComponent(out SurfaceProperties surface))
-                    _ContactRigidValues.Add(surface._Rigidity);
-
-                _LocalActor.LatestCollision = collision;
-
-                //foreach (ModulationSource source in _ModulationSources)
-                //    source.ProcessCollisionValue(collision);
-            }
+            if (ContactAllowed(other)) _LocalActor.LatestCollision = collision;
 
             if (_Spawner == null || _Spawner.UniqueCollision(_LocalActor.ActorGameObject, other))
                 foreach (EmitterAuthoring emitter in _HostedEmitters)
@@ -300,8 +316,7 @@ namespace PlaneWaver
                 _IsColliding = false;
                 _LocalActor.IsColliding = false;
                 _TargetCollidingRigidity = 0;
-                _CurrentCollidingRigidity = 0;
-                _ContactRigidValues.Clear();
+                _CollidingRigidity = 0;
                 //foreach (ModulationSource source in _ModulationSources)
                 //    source.SetInputCollision(false, collision.collider.material);
                 foreach (EmitterAuthoring emitter in _HostedEmitters)

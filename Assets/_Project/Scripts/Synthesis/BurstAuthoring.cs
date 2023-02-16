@@ -1,6 +1,8 @@
 ﻿using System;
 using Unity.Entities;
 
+using NaughtyAttributes;
+
 namespace PlaneWaver
 {
     /// <summary>
@@ -8,6 +10,8 @@ namespace PlaneWaver
     /// <summary>
     public class BurstAuthoring : EmitterAuthoring
     {
+        [AllowNesting]
+        [HorizontalLine(color: EColor.White)]
         public BurstParameters _Properties;
 
         #region EMBOLDENED BURST COMPONENT INIT
@@ -16,6 +20,14 @@ namespace PlaneWaver
         {
             _EmitterType = EmitterType.Burst;
             _EntityType = SynthEntityType.Emitter;
+            
+            _Properties._Volume.SetModulationInput(_ModulationInputs[0]);
+            _Properties._Playhead.SetModulationInput(_ModulationInputs[1]);
+            _Properties._BurstDuration.SetModulationInput(_ModulationInputs[2]);
+            _Properties._GrainDuration.SetModulationInput(_ModulationInputs[3]);
+            _Properties._Density.SetModulationInput(_ModulationInputs[4]);
+            _Properties._Transpose.SetModulationInput(_ModulationInputs[5]);
+
             _Archetype = _EntityManager.CreateArchetype(typeof(BurstComponent));
             _IsPlaying = false;
         }
@@ -27,8 +39,8 @@ namespace PlaneWaver
                 _IsPlaying = false,
                 _EmitterIndex = _EntityIndex,
                 _AudioClipIndex = _AudioAsset.ClipEntityIndex,
-                _SpeakerIndex = _Host._AttachedSpeakerIndex,
-                _HostIndex = _Host.EntityIndex,
+                _SpeakerIndex = Host.AttachedSpeakerIndex,
+                _HostIndex = Host.EntityIndex,
                 _VolumeAdjust = _VolumeAdjust,
                 _DistanceAmplitude = 1,
                 _PingPong = _PingPongGrainPlayheads,
@@ -37,10 +49,10 @@ namespace PlaneWaver
                 _BurstDuration = new ModulationComponent
                 {
                     _StartValue = _Properties._BurstDuration._Default * _SamplesPerMS,
-                    _InteractionAmount = _Properties._BurstDuration._InteractionAmount * _SamplesPerMS,
-                    _Shape = _Properties._BurstDuration._InteractionShape,
+                    _InteractionAmount = _Properties._BurstDuration._ModulationAmount * _SamplesPerMS,
+                    _Shape = _Properties._BurstDuration._ModulationExponent,
                     _Noise = _Properties._BurstDuration._Noise._Amount,
-                    _LockNoise = _Properties._BurstDuration._Noise._FreezeOnTrigger,
+                    _LockNoise = _Properties._BurstDuration._Noise._HoldForBurstDuration,
                     _Min = _Properties._BurstDuration._Min * _SamplesPerMS,
                     _Max = _Properties._BurstDuration._Max * _SamplesPerMS,
                     _LockStartValue = false,
@@ -50,23 +62,23 @@ namespace PlaneWaver
                 {
                     _StartValue = _Properties._Playhead._Start,
                     _EndValue = _Properties._Playhead._End,
-                    _InteractionAmount = _Properties._Playhead._InteractionAmount,
-                    _Shape = _Properties._Playhead._InteractionShape,
+                    _InteractionAmount = _Properties._Playhead._ModulationAmount,
+                    _Shape = _Properties._Playhead._ModulationExponent,
                     _Noise = _Properties._Playhead._Noise._Amount,
-                    _LockNoise = _Properties._Playhead._Noise._FreezeOnTrigger,
+                    _LockNoise = _Properties._Playhead._Noise._HoldForBurstDuration,
                     _Min = _Properties._Playhead._Min,
                     _Max = _Properties._Playhead._Max,
-                    _LockStartValue = _Properties._Playhead._LockStartValue,
+                    _LockStartValue = _Properties._Playhead._StartIgnoresModulation,
                     _LockEndValue = false
                 },
                 _Density = new ModulationComponent
                 {
                     _StartValue = _Properties._Density._Start,
                     _EndValue = _Properties._Density._End,
-                    _InteractionAmount = _Properties._Density._InteractionAmount,
-                    _Shape = _Properties._Density._InteractionShape,
+                    _InteractionAmount = _Properties._Density._ModulationAmount,
+                    _Shape = _Properties._Density._ModulationExponent,
                     _Noise = _Properties._Density._Noise._Amount,
-                    _LockNoise = _Properties._Density._Noise._FreezeOnTrigger,
+                    _LockNoise = _Properties._Density._Noise._HoldForBurstDuration,
                     _Min = _Properties._Density._Min,
                     _Max = _Properties._Density._Max,
                     _LockStartValue = false,
@@ -76,10 +88,10 @@ namespace PlaneWaver
                 {
                     _StartValue = _Properties._GrainDuration._Start * _SamplesPerMS,
                     _EndValue = _Properties._GrainDuration._End * _SamplesPerMS,
-                    _InteractionAmount = _Properties._GrainDuration._InteractionAmount * _SamplesPerMS,
-                    _Shape = _Properties._GrainDuration._InteractionShape,
+                    _InteractionAmount = _Properties._GrainDuration._ModulationAmount * _SamplesPerMS,
+                    _Shape = _Properties._GrainDuration._ModulationExponent,
                     _Noise = _Properties._GrainDuration._Noise._Amount,
-                    _LockNoise = _Properties._GrainDuration._Noise._FreezeOnTrigger,
+                    _LockNoise = _Properties._GrainDuration._Noise._HoldForBurstDuration,
                     _Min = _Properties._GrainDuration._Min * _SamplesPerMS,
                     _Max = _Properties._GrainDuration._Max * _SamplesPerMS,
                     _LockStartValue = false,
@@ -89,27 +101,27 @@ namespace PlaneWaver
                 {
                     _StartValue = _Properties._Transpose._Start,
                     _EndValue = _Properties._Transpose._End,
-                    _InteractionAmount = _Properties._Transpose._InteractionAmount,
-                    _Shape = _Properties._Transpose._InteractionShape,
+                    _InteractionAmount = _Properties._Transpose._ModulationAmount,
+                    _Shape = _Properties._Transpose._ModulationExponent,
                     _Noise = _Properties._Transpose._Noise._Amount,
-                    _LockNoise = _Properties._Transpose._Noise._FreezeOnTrigger,
+                    _LockNoise = _Properties._Transpose._Noise._HoldForBurstDuration,
                     _Min = _Properties._Transpose._Min,
                     _Max = _Properties._Transpose._Max,
                     _LockStartValue = false,
-                    _LockEndValue = _Properties._Transpose._LockEndValue
+                    _LockEndValue = _Properties._Transpose._EndIgnoresModulation
                 },
                 _Volume = new ModulationComponent
                 {
                     _StartValue = _Properties._Volume._Start,
                     _EndValue = _Properties._Volume._End,
-                    _Shape = _Properties._Volume._InteractionShape,
-                    _InteractionAmount = _Properties._Volume._InteractionAmount,
+                    _Shape = _Properties._Volume._ModulationExponent,
+                    _InteractionAmount = _Properties._Volume._ModulationAmount,
                     _Noise = _Properties._Volume._Noise._Amount,
-                    _LockNoise = _Properties._Volume._Noise._FreezeOnTrigger,
+                    _LockNoise = _Properties._Volume._Noise._HoldForBurstDuration,
                     _Min = _Properties._Volume._Min,
                     _Max = _Properties._Volume._Max,
                     _LockStartValue = false,
-                    _LockEndValue = _Properties._Volume._LockEndValue
+                    _LockEndValue = _Properties._Volume._EndIgnoresModulation
                 }
             });
 
@@ -132,24 +144,25 @@ namespace PlaneWaver
 
             if (_IsPlaying)
             {
+                UpdateModulationValues();
                 BurstComponent burstData = _EntityManager.GetComponentData<BurstComponent>(_Entity);
 
                 burstData._IsPlaying = true;
                 burstData._AudioClipIndex = _AudioAsset.ClipEntityIndex;
-                burstData._SpeakerIndex = _Host._AttachedSpeakerIndex;
-                burstData._HostIndex = _Host.EntityIndex;
+                burstData._SpeakerIndex = Host.AttachedSpeakerIndex;
+                burstData._HostIndex = Host.EntityIndex;
                 burstData._PingPong = _PingPongGrainPlayheads;
                 burstData._VolumeAdjust = _VolumeAdjust;
-                burstData._DistanceAmplitude = _DistanceAmplitude;
+                burstData._DistanceAmplitude = DistanceAmplitude;
                 burstData._OutputSampleRate = _SampleRate;
 
                 burstData._BurstDuration = new ModulationComponent
                 {
                     _StartValue = _Properties._BurstDuration._Default * _SamplesPerMS,
-                    _InteractionAmount = _Properties._BurstDuration._InteractionAmount * _SamplesPerMS,
-                    _Shape = _Properties._BurstDuration._InteractionShape,
+                    _InteractionAmount = _Properties._BurstDuration._ModulationAmount * _SamplesPerMS,
+                    _Shape = _Properties._BurstDuration._ModulationExponent,
                     _Noise = _Properties._BurstDuration._Noise._Amount,
-                    _LockNoise = _Properties._BurstDuration._Noise._FreezeOnTrigger,
+                    _LockNoise = _Properties._BurstDuration._Noise._HoldForBurstDuration,
                     _Min = _Properties._BurstDuration._Min * _SamplesPerMS,
                     _Max = _Properties._BurstDuration._Max * _SamplesPerMS,
                     _LockStartValue = false,
@@ -160,13 +173,13 @@ namespace PlaneWaver
                 {
                     _StartValue = _Properties._Playhead._Start,
                     _EndValue = _Properties._Playhead._End,
-                    _InteractionAmount = _Properties._Playhead._InteractionAmount,
-                    _Shape = _Properties._Playhead._InteractionShape,
+                    _InteractionAmount = _Properties._Playhead._ModulationAmount,
+                    _Shape = _Properties._Playhead._ModulationExponent,
                     _Noise = _Properties._Playhead._Noise._Amount,
-                    _LockNoise = _Properties._Playhead._Noise._FreezeOnTrigger,
+                    _LockNoise = _Properties._Playhead._Noise._HoldForBurstDuration,
                     _Min = _Properties._Playhead._Min,
                     _Max = _Properties._Playhead._Max,
-                    _LockStartValue = _Properties._Playhead._LockStartValue,
+                    _LockStartValue = _Properties._Playhead._StartIgnoresModulation,
                     _LockEndValue = false,
                     _InteractionInput = _Properties._Playhead.GetValue()
                 };
@@ -174,10 +187,10 @@ namespace PlaneWaver
                 {
                     _StartValue = _Properties._Density._Start,
                     _EndValue = _Properties._Density._End,
-                    _InteractionAmount = _Properties._Density._InteractionAmount,
-                    _Shape = _Properties._Density._InteractionShape,
+                    _InteractionAmount = _Properties._Density._ModulationAmount,
+                    _Shape = _Properties._Density._ModulationExponent,
                     _Noise = _Properties._Density._Noise._Amount,
-                    _LockNoise = _Properties._Density._Noise._FreezeOnTrigger,
+                    _LockNoise = _Properties._Density._Noise._HoldForBurstDuration,
                     _Min = _Properties._Density._Min,
                     _Max = _Properties._Density._Max,
                     _LockStartValue = false,
@@ -188,10 +201,10 @@ namespace PlaneWaver
                 {
                     _StartValue = _Properties._GrainDuration._Start * _SamplesPerMS,
                     _EndValue = _Properties._GrainDuration._End * _SamplesPerMS,
-                    _InteractionAmount = _Properties._GrainDuration._InteractionAmount * _SamplesPerMS,
-                    _Shape = _Properties._GrainDuration._InteractionShape,
+                    _InteractionAmount = _Properties._GrainDuration._ModulationAmount * _SamplesPerMS,
+                    _Shape = _Properties._GrainDuration._ModulationExponent,
                     _Noise = _Properties._GrainDuration._Noise._Amount,
-                    _LockNoise = _Properties._GrainDuration._Noise._FreezeOnTrigger,
+                    _LockNoise = _Properties._GrainDuration._Noise._HoldForBurstDuration,
                     _Min = _Properties._GrainDuration._Min * _SamplesPerMS,
                     _Max = _Properties._GrainDuration._Max * _SamplesPerMS,
                     _LockStartValue = false,
@@ -202,28 +215,28 @@ namespace PlaneWaver
                 {
                     _StartValue = _Properties._Transpose._Start,
                     _EndValue = _Properties._Transpose._End,
-                    _InteractionAmount = _Properties._Transpose._InteractionAmount,
-                    _Shape = _Properties._Transpose._InteractionShape,
+                    _InteractionAmount = _Properties._Transpose._ModulationAmount,
+                    _Shape = _Properties._Transpose._ModulationExponent,
                     _Noise = _Properties._Transpose._Noise._Amount,
-                    _LockNoise = _Properties._Transpose._Noise._FreezeOnTrigger,
+                    _LockNoise = _Properties._Transpose._Noise._HoldForBurstDuration,
                     _Min = _Properties._Transpose._Min,
                     _Max = _Properties._Transpose._Max,
                     _LockStartValue = false,
-                    _LockEndValue = _Properties._Transpose._LockEndValue,
+                    _LockEndValue = _Properties._Transpose._EndIgnoresModulation,
                     _InteractionInput = _Properties._Transpose.GetValue()
                 };
                 burstData._Volume = new ModulationComponent
                 {
                     _StartValue = _Properties._Volume._Start,
                     _EndValue = _Properties._Volume._End,
-                    _InteractionAmount = _Properties._Volume._InteractionAmount,
-                    _Shape = _Properties._Volume._InteractionShape,
+                    _InteractionAmount = _Properties._Volume._ModulationAmount,
+                    _Shape = _Properties._Volume._ModulationExponent,
                     _Noise = _Properties._Volume._Noise._Amount,
-                    _LockNoise = _Properties._Volume._Noise._FreezeOnTrigger,
+                    _LockNoise = _Properties._Volume._Noise._HoldForBurstDuration,
                     _Min = _Properties._Volume._Min,
                     _Max = _Properties._Volume._Max,
                     _LockStartValue = false,
-                    _LockEndValue = _Properties._Volume._LockEndValue,
+                    _LockEndValue = _Properties._Volume._EndIgnoresModulation,
                     _InteractionInput = _Properties._Volume.GetValue() * _ContactSurfaceAttenuation
                 };
                 _EntityManager.SetComponentData(_Entity, burstData);
@@ -242,12 +255,24 @@ namespace PlaneWaver
     [Serializable]
     public class BurstParameters
     {
-        public BurstPlayhead _Playhead;
-        public BurstDuration _BurstDuration;
-        public BurstDensity _Density;
-        public BurstGrainDuration _GrainDuration;
-        public BurstTranspose _Transpose;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Gray)]
         public BurstVolume _Volume;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Gray)]
+        public BurstPlayhead _Playhead;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Gray)]
+        public BurstDuration _BurstDuration;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Gray)]
+        public BurstGrainDuration _GrainDuration;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Gray)]
+        public BurstDensity _Density;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Gray)]
+        public BurstTranspose _Transpose;
     }
 
     #endregion

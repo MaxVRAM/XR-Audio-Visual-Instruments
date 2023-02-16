@@ -1,11 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using System;
 using Random = UnityEngine.Random;
 
 using MaxVRAM;
-using MaxVRAM.Extensions;
 using NaughtyAttributes;
 
 namespace PlaneWaver
@@ -16,44 +13,44 @@ namespace PlaneWaver
         private Actor _LocalActor;
         private Actor _RemoteActor;
 
-        public void SetLocalActor(Actor actor)
+        public void SetLocalActor(Actor localActor)
         {
-            _LocalActor = actor;
+            _LocalActor = localActor;
         }
 
-        public void SetRemoteActor(Actor actor)
+        public void SetRemoteActor(Actor remoteActor)
         {
-            _RemoteActor = actor;
+            _RemoteActor = remoteActor;
         }
 
-        public void SetBothActors(Actor actorA, Actor actorB)
+        public void SetActors(Actor localActor, Actor remoteActor)
         {
-            _LocalActor = actorA;
-            _RemoteActor = actorB;
+            _LocalActor = localActor;
+            _RemoteActor = remoteActor;
         }
 
         public ModulationInput()
         {
         }
-        public ModulationInput(Actor actorA)
+        public ModulationInput(Actor localActor)
         {
-            _LocalActor = actorA;
+            _LocalActor = localActor;
         }
-        public ModulationInput(Actor actorA, Actor actorB)
+        public ModulationInput(Actor localActor, Actor remoteActor)
         {
-            _LocalActor = actorA;
-            _RemoteActor = actorB;
+            _LocalActor = localActor;
+            _RemoteActor = remoteActor;
         }
 
         [AllowNesting]
         [SerializeField]
-        [HorizontalLine(color: EColor.Gray)]
+        [HorizontalLine(color: EColor.Blue)]
         private InputSourceGroups _ValueSource = InputSourceGroups.PrimaryActor;
 
         [AllowNesting]
         [SerializeField]
         [EnableIf("ScenePropertySelected")]
-        private ScenePropertySources _SceneProperties = ScenePropertySources.DeltaTime;
+        private ScenePropertySources _SceneProperties = ScenePropertySources.Static;
 
         [AllowNesting]
         [SerializeField]
@@ -75,27 +72,41 @@ namespace PlaneWaver
         [SerializeField] private float _InputValue = 0;
         private float _PreviousSmoothedValue = 0;
 
-        [HorizontalLine(color: EColor.Gray)]
-        [SerializeField] private Vector2 _InputRange = new(0, 1);
-        [SerializeField] private float _AdjustMultiplier = 1;
-
         [AllowNesting]
+        [HorizontalLine(color: EColor.Clear)]
+        [DisableIf("RandomAtSpawnSelected")]
+        [SerializeField] private Vector2 _InputRange = new(0, 1);
+        [AllowNesting]
+        [DisableIf("RandomAtSpawnSelected")]
+        [SerializeField] private float _AdjustMultiplier = 1;
+        [AllowNesting]
+        [DisableIf("RandomAtSpawnSelected")]
         [OnValueChanged("EditorAccumulateChangeCallback")]
         [SerializeField] private InputOnNewValue _OnNewValue;
-        
+
+        [AllowNesting]
+        [DisableIf("RandomAtSpawnSelected")]
         [SerializeField] private float _PreSmoothValue = 0;
 
-        [HorizontalLine(color: EColor.Gray)]
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Clear)]
+        [DisableIf("RandomAtSpawnSelected")]
         [SerializeField][Range(0f, 1f)] private float _Smoothing = 0.2f;
+        [AllowNesting]
+        [DisableIf("RandomAtSpawnSelected")]
         [SerializeField] private InputLimitMode _InputLimiter;
+        [AllowNesting]
+        [DisableIf("RandomAtSpawnSelected")]
         [SerializeField] private bool _FlipOutput = false;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Blue)]
         [SerializeField][Range(0f, 1f)] private float _OutputValue = 0;
 
         public float Smoothing => _ValueSource != InputSourceGroups.ActorCollisions ? _Smoothing : 0;
         public float OutputValue => _OutputValue;
 
         private Vector3 _PreviousVector = Vector3.zero;
-        //private float _RandomValue = -1;
+        private float _RandomValue = -1;
 
         public bool ScenePropertySelected() { return _ValueSource == InputSourceGroups.SceneProperties; }
         public bool PrimaryActorSelected() { return _ValueSource == InputSourceGroups.PrimaryActor; }
@@ -108,7 +119,7 @@ namespace PlaneWaver
         {
             //if (RandomAtSpawnSelected())
             //{
-            //    _InputValue = _RandomValue;
+            //    _ModulationOutput = _RandomValue;
             //    return;
             //}
 
@@ -153,17 +164,6 @@ namespace PlaneWaver
                 default:
                     break;
             }
-
-            //Debug.Log($"Return Value:   {returnValue}");
-
-            //if (ScenePropertySelected())
-            //    GenerateScenePropertyValue();
-            //else if (PrimaryActorSelected())
-            //    _LocalActor.GetActorValue(ref _InputValue, ref _PreviousVector, _PrimaryActor);
-            //else if (LinkedActorsSelected())
-            //    _LocalActor.GetActorPairValue(ref _InputValue, ref _PreviousVector, _RemoteActor, _LinkedActors);
-            //else if (CollisionInputSelected())
-            //    _LocalActor.GetCollisionValue(ref _InputValue, _ActorCollisions);
         }
 
         private void GenerateScenePropertyValue()
@@ -173,9 +173,9 @@ namespace PlaneWaver
                 case ScenePropertySources.Static:
                     break;
                 case ScenePropertySources.RandomAtSpawn:
-                    //_RandomValue = _RandomValue == -1 ? Random.Range(0, 1) : _RandomValue;
-                    //_InputValue = _RandomValue;
-                    //_OutputValue = _RandomValue;
+                    _RandomValue = _RandomValue == -1 ? Random.Range(0f, 1f) : _RandomValue;
+                    _InputValue = _RandomValue;
+                    _OutputValue = _RandomValue;
                     break;
                 case ScenePropertySources.TimeSinceStart:
                     _InputValue = Time.time;
@@ -217,3 +217,20 @@ namespace PlaneWaver
 
     public enum ActorCollisionSources { CollisionSpeed, CollisionForce }
 }
+
+
+
+/*
+ *      Clear,
+        White,
+        Black,
+        Gray,
+        Red,
+        Pink,
+        Orange,
+        Yellow,
+        Green,
+        Blue,
+        Indigo,
+        Violet
+*/
