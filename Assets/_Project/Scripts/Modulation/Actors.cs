@@ -6,7 +6,7 @@ using MaxVRAM;
 namespace PlaneWaver
 {
     [Serializable]
-    public class Actor
+    public struct Actor
     {
         // TODO: Add collision events and return implementation within this actor class.
         [SerializeField] private readonly Transform _Transform;
@@ -14,12 +14,32 @@ namespace PlaneWaver
         private readonly Collider _Collider;
         private Collision _LatestCollision;
         private bool _IsColliding;
+        private bool _IsAlive;
 
         public Actor(Transform transform)
         {
             _Transform = transform;
             _Rigidbody = transform.GetComponent<Rigidbody>();
             _Collider = transform.GetComponent<Collider>();
+            _LatestCollision = null;
+            _IsColliding = false;
+            _IsAlive = true;
+        }
+
+        public Actor(bool isSet = false)
+        {
+            _Transform = null;
+            _Rigidbody = null;
+            _Collider = null;
+            _LatestCollision = null;
+            _IsColliding = false;
+            _IsAlive = isSet;
+        }
+
+        public bool StillAlive()
+        {
+            _IsAlive = _Transform != null;
+            return _IsAlive;
         }
 
         public bool HasRB => (_Rigidbody != null);
@@ -43,7 +63,6 @@ namespace PlaneWaver
         public float Acceleration(float previousSpeed) { return Speed - previousSpeed; }
         public Collision LatestCollision { get => _LatestCollision; set => _LatestCollision = value; }
         public bool CollidingState { get => _IsColliding; set => _IsColliding = value; }
-
     }
 
     [Serializable]
@@ -52,17 +71,28 @@ namespace PlaneWaver
         [SerializeField] private Actor _ActorA;
         [SerializeField] private Actor _ActorB;
 
-        public ActorPair(Transform actorA) { SetActorA(actorA);}
-        public ActorPair(Transform actorA, Transform actorB) {  SetActorA(actorA); SetActorB(actorB); }
+        public ActorPair(Transform actorA)
+        {
+            _ActorA = new(actorA);
+            _ActorB = new(true);
+        }
+        public ActorPair(Transform actorA, Transform actorB)
+        { 
+            _ActorA = new(actorA);
+            _ActorB = new(actorB); 
+        }
 
         public void SetActorA(Transform transform) { _ActorA = new Actor(transform); }
         public void SetActorB(Transform transform) { _ActorB = new Actor(transform); }
         public Actor ActorA => _ActorA;
         public Actor ActorB => _ActorB;
 
-        public bool BothSet => _ActorA != null && _ActorB != null;
+        public bool BothSet => _ActorA.StillAlive() && _ActorB.StillAlive();
         public bool HaveRBs => _ActorA.HasRB && _ActorB.HasRB;
 
+        // TODO: Move these functions to a static struct that's used by the Actor struct.
+        // Arrays of Actors can be added to a field with ActorB instance passed into linked comparison functions at runtime.
+        // Way more flexiblity and unties Actors from the "Pair" concept.
         public Vector3 RelativePosition => BothSet ? ActorB.Position - ActorA.Position : Vector3.zero;
         public Vector3 DirectionAB => BothSet ? (ActorB.Position - ActorA.Position).normalized : Vector3.zero;
         public Vector3 DirectionBA => BothSet ? (ActorA.Position - ActorB.Position).normalized : Vector3.zero;
@@ -75,34 +105,34 @@ namespace PlaneWaver
         public float TangentalSpeed(Vector3 previousDirection) { return MaxMath.TangentalSpeedFromQuaternion(Rotation(previousDirection)); }
         public float CollisionSpeed(Collision collision) { return collision.relativeVelocity.magnitude; }
         public float CollisionForce(Collision collision) { return collision.impulse.magnitude; }
-        public bool CollidingState { get => ActorA.CollidingState; set => ActorA.CollidingState = value; }
+        public bool CollidingState { get => ActorA.CollidingState; set => _ActorA.CollidingState = value; }
 
-        public void GetActorValue(ActorInteractionSource selection, ref float returnValue, ref Vector3 previousVector)
+        public void GetActorValue(ref float returnValue, ref Vector3 previousVector, PrimaryActorSources selection)
         {
             switch (selection)
             {
-                case ActorInteractionSource.Speed:
+                case PrimaryActorSources.Speed:
                     returnValue = ActorA.Speed;
                     break;
-                case ActorInteractionSource.Scale:
+                case PrimaryActorSources.Scale:
                     returnValue = ActorA.Scale;
                     break;
-                case ActorInteractionSource.Mass:
+                case PrimaryActorSources.Mass:
                     returnValue = ActorA.Mass;
                     break;
-                case ActorInteractionSource.MassTimesScale:
+                case PrimaryActorSources.MassTimesScale:
                     returnValue = ActorA.Mass * ActorA.Scale;
                     break;
-                case ActorInteractionSource.ContactMomentum:
+                case PrimaryActorSources.SlideMomentum:
                     returnValue = ActorA.ContactMomentum;
                     break;
-                case ActorInteractionSource.AngularSpeed:
+                case PrimaryActorSources.AngularSpeed:
                     returnValue = ActorA.AngularSpeed;
                     break;
-                case ActorInteractionSource.AngularMomentum:
+                case PrimaryActorSources.RollMomentum:
                     returnValue = ActorA.AngularMomentum;
                     break;
-                case ActorInteractionSource.Acceleration:
+                case PrimaryActorSources.Acceleration:
                     returnValue = ActorA.Acceleration(previousVector);
                     previousVector = ActorA.Velocity;
                     break;
@@ -111,32 +141,39 @@ namespace PlaneWaver
             }
         }
 
-        public void GetActorValue(RelativeInteractionSource selection, ref float returnValue, ref Vector3 previousVector)
+        public void GetActorValue(ref float returnValue, ref Vector3 previousVector, LinkedActorSources selection)
         {
+            if (!_ActorB.StillAlive())
+            {
+                returnValue = 0;
+                previousVector = Vector3.zero;
+                return;
+            }
+
             switch (selection)
             {
-                case RelativeInteractionSource.DistanceX:
+                case LinkedActorSources.DistanceX:
                     returnValue = Mathf.Abs(RelativePosition.x);
                     break;
-                case RelativeInteractionSource.DistanceY:
+                case LinkedActorSources.DistanceY:
                     returnValue = Mathf.Abs(RelativePosition.y);
                     break;
-                case RelativeInteractionSource.DistanceZ:
+                case LinkedActorSources.DistanceZ:
                     returnValue = Mathf.Abs(RelativePosition.z);
                     break;
-                case RelativeInteractionSource.Radius:
+                case LinkedActorSources.Radius:
                     returnValue = SphericalCoords.Radius;
                     break;
-                case RelativeInteractionSource.Polar:
+                case LinkedActorSources.Polar:
                     returnValue = SphericalCoords.Polar;
                     break;
-                case RelativeInteractionSource.Elevation:
+                case LinkedActorSources.Elevation:
                     returnValue = SphericalCoords.Elevation;
                     break;
-                case RelativeInteractionSource.RelativeSpeed:
+                case LinkedActorSources.RelativeSpeed:
                     returnValue = RelativeSpeed;
                     break;
-                case RelativeInteractionSource.TangentialSpeed:
+                case LinkedActorSources.TangentialSpeed:
                     returnValue = TangentalSpeed(previousVector);
                     previousVector = DirectionBA;
                     break;

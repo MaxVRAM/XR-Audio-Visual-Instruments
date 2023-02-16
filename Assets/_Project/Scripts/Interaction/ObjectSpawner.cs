@@ -213,9 +213,6 @@ namespace PlaneWaver
             int index = (!_RandomiseSpawnPrefab || _SpawnablePrefabs.Count < 2) ? Random.Range(0, _SpawnablePrefabs.Count) : 0;
             GameObject objectToSpawn = _SpawnablePrefabs[index];
 
-            //Vector3 spawnPositionOffset = Vector3.Slerp(_EjectionPosition.normalized, spawnOnSphere, _EjectionPositionVariance);
-            //Vector3 spawnPosition = _ControllerObject.transform.position + spawnPositionOffset * Random.Range(_EjectionRadiusRange.x, _EjectionRadiusRange.y);
-
             Vector3 randomDirection = Random.onUnitSphere;
             Vector3 spawnDirection = Vector3.Slerp(_EjectionDirection.normalized, randomDirection, _EjectionDirectionVariance);
             Vector3 spawnPosition = _ControllerObject.transform.position + spawnDirection * Rando.Range(_EjectionRadiusRange);
@@ -225,14 +222,8 @@ namespace PlaneWaver
             newObject.name = newObject.name + " (" + _ObjectCounter + ")";
 
             if (!newObject.TryGetComponent(out Rigidbody rb)) rb = newObject.AddComponent<Rigidbody>();
-
-            //Vector3 spawnDirection = Vector3.Slerp(_EjectionDirection.normalized, randomDirection, _EjectionDirectionVariance);
-            //Vector3 directionVector = (_ControllerObject.transform.position - spawnPosition).normalized;
-            //Quaternion directionRotation = Quaternion.FromToRotation(spawnDirection, directionVector);
-            //Vector3 rotatedDirection = directionRotation * directionVector;
-            //Vector3 spawnVelocity = rotatedDirection * Random.Range(_EjectionSpeedRange.x, _EjectionSpeedRange.y);
-            //rb.velocity = spawnDirection * Random.Range(_EjectionSpeedRange.x, _EjectionSpeedRange.y);
             rb.velocity = spawnDirection * Rando.Range(_EjectionSpeedRange);
+
             return true;
         }
 

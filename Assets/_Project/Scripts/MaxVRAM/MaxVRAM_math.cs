@@ -17,15 +17,7 @@ namespace MaxVRAM
 
         public static float ScaleToNormNoClamp(float value, Vector2 range)
         {
-            return range.x == range.y ? 0 : (value - range.y) / (range.y - range.x);
-        }
-
-        public static float Smooth(float newValue, float currentValue, float smoothing, float deltaTime, float epsilon = 0.001f)
-        {
-            if (smoothing > epsilon && Mathf.Abs(currentValue - newValue) > epsilon)
-                return Mathf.Lerp(currentValue, newValue, (1 - smoothing) * 10f * deltaTime);
-            else
-                return newValue;
+            return range.x == range.y ? 0 : (value - range.x) / (range.y - range.x);
         }
 
         public static bool ClampCheck(ref float value, float min, float max)

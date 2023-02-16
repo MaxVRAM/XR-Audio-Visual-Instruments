@@ -2,12 +2,26 @@ using System;
 using Unity.Mathematics;
 using UnityEngine;
 
-using static UnityEngine.Rendering.DebugUI;
-
 namespace MaxVRAM.Extensions
 {
     public static class ExtendFloats
     {
+        public static float AccumulateScaledValue(this float accumulator, float newValue, float newValueScaling)
+        {
+            accumulator += newValue * newValueScaling;
+            return accumulator;
+        }
+
+        public static float Smooth(this float newValue, ref float currentValue, float smoothing, float deltaTime, float epsilon = 0.001f)
+        {
+            if (smoothing > epsilon && Mathf.Abs(currentValue - newValue) > epsilon)
+                currentValue = Mathf.Lerp(currentValue, newValue, (1 - smoothing) * 10f * deltaTime);
+            else
+                currentValue = newValue;
+
+            return currentValue;
+        }
+
         public static bool IsInRange(this float value, bool inclusive = true)
         {
             if (inclusive)
