@@ -125,13 +125,13 @@ public struct ModulationComponent : IComponentData
     public bool _PerlinNoise;
     public bool _LockNoise;
     public float _PerlinValue;
-    public float _Shape;
-    public float _InteractionAmount;
+    public float _Exponent;
+    public float _Modulation;
     public float _Min;
     public float _Max;
     public bool _LockStartValue;
     public bool _LockEndValue;
-    public float _InteractionInput;
+    public float _Input;
 }
 
 public struct ContinuousComponent : IComponentData
@@ -167,10 +167,10 @@ public struct BurstComponent : IComponentData
     public int _OutputSampleRate;
     public float _VolumeAdjust;
     public float _DistanceAmplitude;
-    public ModulationComponent _BurstDuration;
+    public ModulationComponent _Length;
     public ModulationComponent _Density;
     public ModulationComponent _Playhead;
-    public ModulationComponent _GrainDuration;
+    public ModulationComponent _Duration;
     public ModulationComponent _Transpose;
     public ModulationComponent _Volume;
 }

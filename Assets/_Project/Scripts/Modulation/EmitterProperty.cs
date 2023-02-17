@@ -15,27 +15,15 @@ namespace PlaneWaver
     [Serializable]
     public class ContinuousNoiseInput
     {
-        [AllowNesting]
-        [BoxGroup("")]
-        [Range(0f, 1.0f)]
         public float _Amount = 0f;
-        [AllowNesting]
-        [BoxGroup("")]
         public float _Speed = 1f;
-        [AllowNesting]
-        [BoxGroup("")]
         public bool _Perlin = false;
     }
 
     [Serializable]
     public class BurstNoiseInput
     {
-        [AllowNesting]
-        [BoxGroup("")]
-        [Range(0f, 1.0f)]
         public float _Amount = 0f;
-        [AllowNesting]
-        [BoxGroup("")]
         public bool _HoldForBurstDuration = false;
     }
 
@@ -56,7 +44,7 @@ namespace PlaneWaver
 
         public float GetValue()
         {
-            return _ModulationSource.OutputValue;
+            return _ModulationSource.Result;
         }
     }
 

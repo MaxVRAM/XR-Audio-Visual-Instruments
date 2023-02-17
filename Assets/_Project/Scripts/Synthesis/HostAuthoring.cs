@@ -37,9 +37,6 @@ namespace PlaneWaver
         public SpawnableManager _SpawnLife;
         [AllowNesting]
         [BoxGroup("Interaction")]
-        public GameObject _LocalActorGameObject;
-        [AllowNesting]
-        [BoxGroup("Interaction")]
         public Actor _LocalActor;
         [AllowNesting]
         [BoxGroup("Interaction")]
@@ -69,7 +66,7 @@ namespace PlaneWaver
 
         [AllowNesting]
         [HorizontalLine(color: EColor.Gray)]
-        public EmitterAuthoring[] _HostedEmitters;
+        public List<EmitterAuthoring> _HostedEmitters;
         public List<GameObject> _CollidingObjects;
 
         [AllowNesting]
@@ -102,7 +99,8 @@ namespace PlaneWaver
 
         void Start()
         {
-            InitialiseActor();
+            InitialiseModules();
+            InitialiseEmitters();
 
             _HeadTransform = FindObjectOfType<Camera>().transform;
             _SpeakerTarget = _SpeakerTarget != null ? _SpeakerTarget : transform;
@@ -111,21 +109,48 @@ namespace PlaneWaver
             if (_AttachmentLine = TryGetComponent(out _AttachmentLine) ? _AttachmentLine : gameObject.AddComponent<AttachmentLine>())
             _AttachmentLine._TransformA = _SpeakerTarget;
 
-            if (TryGetComponent(out _SurfaceProperties) || _LocalActor.ActorGameObject.TryGetComponent(out _SurfaceProperties))
-                _SelfRigidity = _SurfaceProperties._Rigidity;
-
-            if (transform.parent != null)
-                _HostedEmitters = transform.parent.GetComponentsInChildren<EmitterAuthoring>();
-    
-            foreach (EmitterAuthoring emitter in _HostedEmitters)
-                emitter.Host = this;
-
             _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
             _Archetype = _EntityManager.CreateArchetype(
                 typeof(Translation),
                 typeof(HostComponent));
 
             SetIndex(GrainSynth.Instance.RegisterHost(this));
+        }
+
+        public void InitialiseModules()
+        {
+            _LocalActor = _LocalActor.Exists() ? _LocalActor : new Actor(transform);
+            _RemoteActor = _RemoteActor.Exists() ? _RemoteActor : new Actor(false);
+
+            _SpawnLife = _SpawnLife != null ? _SpawnLife : gameObject.AddComponent<SpawnableManager>();
+
+            if (TryGetComponent(out _SurfaceProperties) || _LocalActor.ActorGameObject.TryGetComponent(out _SurfaceProperties))
+                _SelfRigidity = _SurfaceProperties._Rigidity;
+
+            foreach (BehaviourClass behaviour in GetComponents<BehaviourClass>())
+            {
+                behaviour._SpawnedObject = _LocalActor.ActorGameObject;
+                behaviour._ControllerObject = _RemoteActor.ActorGameObject;
+                behaviour._ObjectSpawner = _Spawner;
+            }
+
+            if (!_LocalActor.ActorGameObject.TryGetComponent(out Collider _))
+                return;
+            // Set up a collision pipe to send collisions from the targeted object here. TODO: Move to event system via Actor struct
+            _CollisionPipeComponent = _LocalActor.ActorGameObject.TryGetComponent(out _CollisionPipeComponent) ?
+                _CollisionPipeComponent : _LocalActor.ActorGameObject.AddComponent<CollisionPipe>();
+            _CollisionPipeComponent.AddHost(this);
+        }
+
+        public void InitialiseEmitters()
+        {
+            if (transform.parent != null)
+                _HostedEmitters.AddRange(transform.parent.GetComponentsInChildren<EmitterAuthoring>());
+            else
+                _HostedEmitters.AddRange(gameObject.GetComponentsInChildren<EmitterAuthoring>());
+
+            foreach (EmitterAuthoring emitter in _HostedEmitters)
+                emitter.InitialiseHostParameters(this, _LocalActor, _RemoteActor);
         }
 
         #endregion
@@ -222,58 +247,6 @@ namespace PlaneWaver
                 else
                     _AttachmentLine._Active = false;
         }
-
-        public void InitialiseActor()
-        {
-            _LocalActor = _LocalActor.Exists() ? _LocalActor : new Actor(transform);
-            _SpawnLife = _SpawnLife != null ? _SpawnLife : gameObject.AddComponent<SpawnableManager>();
-
-            foreach (BehaviourClass behaviour in GetComponents<BehaviourClass>())
-            {
-                behaviour._SpawnedObject = _LocalActor.ActorGameObject;
-                behaviour._ControllerObject = _RemoteActor.ActorGameObject;
-                behaviour._ObjectSpawner = _Spawner;
-            }
-
-            // Set up a collision pipe to send collisions from the targeted object here
-            // TODO: Move to event system via Actor struct
-            if (!_LocalActor.ActorGameObject.TryGetComponent(out Collider _))
-                return;
-
-            _CollisionPipeComponent = _LocalActor.ActorGameObject.TryGetComponent(out _CollisionPipeComponent) ?
-                _CollisionPipeComponent : _LocalActor.ActorGameObject.AddComponent<CollisionPipe>();
-
-            //foreach (ModulationSource source in _ModulationSources)
-            //    if (!(source is BlankModulation))
-            //        source._Actors.SetActorA(_LocalObject.transform);
-        }
-
-        //public void SetRemoteActor(ActorTransform actorTransform)
-        //{
-        //    _RemoteActor = new(actorTransform);
-        //    //if (go != null)
-        //    //    foreach (ModulationSource source in _ModulationSources)
-        //    //        if (source is not BlankModulation)
-        //    //            source._Actors.SetActorB(_RemoteObject.transform);
-        //}
-
-        //public void AddBehaviourInputSource(BehaviourClass behaviour)
-        //{
-        //    if (behaviour != null && !_Behaviours.Contains(behaviour))
-        //        _Behaviours.Add(behaviour);
-        //}
-
-        //public void UpdateBehaviourModulationInputs()
-        //{
-        //    foreach (BehaviourClass behaviour in _Behaviours)
-        //    {
-        //        if (behaviour is SpawnableManager manager)
-        //            _SpawnLife = manager;
-        //        foreach (ModulationSource source in _ModulationSources)
-        //            if (source is InputBehaviour)
-        //                source.SetBehaviourInput(behaviour);
-        //    }
-        //}
 
         #endregion
 

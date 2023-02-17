@@ -22,7 +22,7 @@ namespace PlaneWaver
 
         public void RemoveHost(HostAuthoring host)
         {
-            if (host == null) return;
+            if (host == null || _HostComponentPipes == null) return;
             if (_HostComponentPipes.Contains(host))
                 _HostComponentPipes.Remove(host);
         }

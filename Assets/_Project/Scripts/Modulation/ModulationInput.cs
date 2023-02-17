@@ -43,14 +43,12 @@ namespace PlaneWaver
         }
 
         [AllowNesting]
-        [SerializeField]
         [HorizontalLine(color: EColor.Blue)]
-        private InputSourceGroups _ValueSource = InputSourceGroups.PrimaryActor;
+        [SerializeField] private InputSourceGroups _ValueSource = InputSourceGroups.PrimaryActor;
 
         [AllowNesting]
-        [SerializeField]
         [EnableIf("ScenePropertySelected")]
-        private ScenePropertySources _SceneProperties = ScenePropertySources.Static;
+        [SerializeField] private ScenePropertySources _SceneProperties = ScenePropertySources.Static;
 
         [AllowNesting]
         [SerializeField]
@@ -58,14 +56,12 @@ namespace PlaneWaver
         private PrimaryActorSources _PrimaryActor = PrimaryActorSources.Speed;
 
         [AllowNesting]
-        [SerializeField]
         [EnableIf("LinkedActorsSelected")]
-        private LinkedActorSources _LinkedActors = LinkedActorSources.Radius;
+        [SerializeField] private LinkedActorSources _LinkedActors = LinkedActorSources.Radius;
 
         [AllowNesting]
-        [SerializeField]
         [EnableIf("CollisionInputSelected")]
-        private ActorCollisionSources _ActorCollisions = ActorCollisionSources.CollisionForce;
+        [SerializeField] private ActorCollisionSources _ActorCollisions = ActorCollisionSources.CollisionForce;
 
         [AllowNesting]
         [OnValueChanged("EditorInputValueChangeCallback")]
@@ -94,16 +90,24 @@ namespace PlaneWaver
         [SerializeField][Range(0f, 1f)] private float _Smoothing = 0.2f;
         [AllowNesting]
         [DisableIf("RandomAtSpawnSelected")]
-        [SerializeField] private InputLimitMode _InputLimiter;
+        [SerializeField] private InputLimitMode _LimiterMode;
+        [AllowNesting]
+        [DisableIf("RandomAtSpawnSelected")]
+
+        // TODO ----- CREATE RANDOM OFFSET AT SPAWN FUNCTION AS ADDITIONAL TO MODULATION!! GONNA BE AWESOME!
+
+        [SerializeField] private bool _RandomOffsetAtSpawn = false;
         [AllowNesting]
         [DisableIf("RandomAtSpawnSelected")]
         [SerializeField] private bool _FlipOutput = false;
+        [SerializeField][Range(0.5f, 5.0f)] private float _ModulationExponent = 1f;
         [AllowNesting]
         [HorizontalLine(color: EColor.Blue)]
-        [SerializeField][Range(0f, 1f)] private float _OutputValue = 0;
+        [SerializeField][Range(0f, 1f)] private float _ModulationOutput = 0;
 
         public float Smoothing => _ValueSource != InputSourceGroups.ActorCollisions ? _Smoothing : 0;
-        public float OutputValue => _OutputValue;
+        public float Result => _ModulationOutput;
+        public float Exponent => _ModulationExponent;
 
         private Vector3 _PreviousVector = Vector3.zero;
         private float _RandomValue = -1;
@@ -117,12 +121,6 @@ namespace PlaneWaver
 
         public void ProcessValue()
         {
-            //if (RandomAtSpawnSelected())
-            //{
-            //    _ModulationOutput = _RandomValue;
-            //    return;
-            //}
-
             GenerateRawValue();
             ProcessValue(_InputValue);
         }
@@ -134,15 +132,15 @@ namespace PlaneWaver
             newValue = MaxMath.Smooth(_PreviousSmoothedValue, _PreSmoothValue, Smoothing, Time.deltaTime);
             _PreviousSmoothedValue = newValue;
 
-            if (_InputLimiter == InputLimitMode.Repeat)
+            if (_LimiterMode == InputLimitMode.Repeat)
                 newValue = Mathf.Repeat(newValue, 1);
-            else if (_InputLimiter == InputLimitMode.PingPong)
+            else if (_LimiterMode == InputLimitMode.PingPong)
                 newValue = Mathf.PingPong(newValue, 1);
 
             newValue = Mathf.Clamp01(newValue);
             newValue = _FlipOutput ? 1 - newValue : newValue;
 
-            _OutputValue = newValue;
+            _ModulationOutput = newValue;
         }
 
         private void GenerateRawValue()
@@ -175,7 +173,7 @@ namespace PlaneWaver
                 case ScenePropertySources.RandomAtSpawn:
                     _RandomValue = _RandomValue == -1 ? Random.Range(0f, 1f) : _RandomValue;
                     _InputValue = _RandomValue;
-                    _OutputValue = _RandomValue;
+                    _ModulationOutput = _RandomValue;
                     break;
                 case ScenePropertySources.TimeSinceStart:
                     _InputValue = Time.time;
@@ -217,20 +215,3 @@ namespace PlaneWaver
 
     public enum ActorCollisionSources { CollisionSpeed, CollisionForce }
 }
-
-
-
-/*
- *      Clear,
-        White,
-        Black,
-        Gray,
-        Red,
-        Pink,
-        Orange,
-        Yellow,
-        Green,
-        Blue,
-        Indigo,
-        Violet
-*/

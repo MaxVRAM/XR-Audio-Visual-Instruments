@@ -138,7 +138,7 @@ namespace PlaneWaver
             }
             catch (Exception ex) when (ex is NullReferenceException)
             {
-                Debug.Log($"Failed to destroy entity: {ex.Message}");
+                //Debug.Log($"Failed to destroy entity: {ex.Message}");
             }
         }
 

@@ -2,6 +2,7 @@
 using Unity.Entities;
 
 using NaughtyAttributes;
+using UnityEngine;
 
 namespace PlaneWaver
 {
@@ -10,24 +11,93 @@ namespace PlaneWaver
     /// <summary>
     public class BurstAuthoring : EmitterAuthoring
     {
-        [AllowNesting]
-        [HorizontalLine(color: EColor.White)]
-        public BurstParameters _Properties;
+        #region MODULATION PARAMETERS
 
-        #region EMBOLDENED BURST COMPONENT INIT
+        [Serializable]
+        public class NoiseModule
+        {
+            public float Influence => _Influence * _Multiplier;
+            [Range(-1f, 1f)] public float _Influence = 0f;
+            public float _Multiplier = 0.1f;
+            public bool _HoldForBurstDuration = false;
+        }
+
+        Vector2 _LengthRange = new(10f, 1000f);
+        Vector2 _VolumeRange = new(0f, 2f);
+        Vector2 _PlayheadRange = new(0f, 1f);
+        Vector2 _DurationRange = new(10f, 500f);
+        Vector2 _DensityRange = new(1f, 10f);
+        Vector2 _TransposeRange = new(-3f, 3f);
+
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Gray)]
+        [Range(10f, 1000f)] public float _LengthDefault = 200f;
+        [Range(-1, 1f)] public float _LengthModulation = 0f;
+        private bool _LengthFixedStart = false;
+        private bool _LengthFixedEnd = false;
+        public ModulationInput _LengthInput;
+        public NoiseModule _LengthNoise;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Gray)]
+        private Vector2 _VolumePath = new(0f, 0f);
+        [Range(0f, 1f)] public float _VolumeModulation = 0.5f;
+        private bool _VolumeFixedStart = false;
+        private bool _VolumeFixedEnd = true;
+        public ModulationInput _VolumeInput;
+        public NoiseModule _VolumeNoise;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Gray)]
+        [MinMaxSlider(0f, 1f)] public Vector2 _PlayheadPath = new (0f, 0.5f);
+        public bool _PlayheadFixedStart = true;
+        public bool _PlayheadFixedEnd = false;
+        [Range(-1f, 1f)] public float _PlayheadModulation = 0f;
+        public ModulationInput _PlayheadInput;
+        public NoiseModule _PlayheadNoise;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Gray)]
+        [MinMaxSlider(10f, 500f)] public Vector2 _DurationPath = new (80f, 120f);
+        public bool _DurationFixedStart = false;
+        public bool _DurationFixedEnd = true;
+        [Range(-1f, 1f)] public float _DurationModulation = -0.1f;
+        public ModulationInput _DurationInput;
+        public NoiseModule _DurationNoise;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Gray)]
+        [MinMaxSlider(1f, 10f)] public Vector2 _DensityPath = new (3f, 2f);
+        [Range(-1f, 1f)] public float _DensityModulation = 0.3f;
+        public bool _DensityFixedStart = false;
+        public bool _DensityFixedEnd = false;
+        public ModulationInput _DensityInput;
+        public NoiseModule _DensityNoise;
+        [AllowNesting]
+        [HorizontalLine(color: EColor.Gray)]
+        [MinMaxSlider(-3f, 3f)] public Vector2 _TransposePath = new(0f, 0f);
+        public bool _TransposeFixedStart = false;
+        public bool _TransposeFixedEnd = false;
+        [Range(-1f, 1f)] public float _TransposeModulation = 0f;
+        public ModulationInput _TransposeInput;
+        public NoiseModule _TransposeNoise;
+
+        public override ModulationInput[] GatherModulationInputs()
+        {
+            ModulationInput[] modulationInputs = new ModulationInput[6];
+            modulationInputs[0] = _LengthInput;
+            modulationInputs[1] = _VolumeInput;
+            modulationInputs[2] = _PlayheadInput;
+            modulationInputs[3] = _DurationInput;
+            modulationInputs[4] = _DensityInput;
+            modulationInputs[5] = _TransposeInput;
+            return modulationInputs;
+        }
+
+        #endregion
+
+        #region BANGIN BURST COMPONENT INIT
 
         public override void SetEntityType()
         {
             _EmitterType = EmitterType.Burst;
             _EntityType = SynthEntityType.Emitter;
-            
-            _Properties._Volume.SetModulationInput(_ModulationInputs[0]);
-            _Properties._Playhead.SetModulationInput(_ModulationInputs[1]);
-            _Properties._BurstDuration.SetModulationInput(_ModulationInputs[2]);
-            _Properties._GrainDuration.SetModulationInput(_ModulationInputs[3]);
-            _Properties._Density.SetModulationInput(_ModulationInputs[4]);
-            _Properties._Transpose.SetModulationInput(_ModulationInputs[5]);
-
             _Archetype = _EntityManager.CreateArchetype(typeof(BurstComponent));
             _IsPlaying = false;
         }
@@ -46,82 +116,80 @@ namespace PlaneWaver
                 _PingPong = _PingPongGrainPlayheads,
                 _OutputSampleRate = _SampleRate,
 
-                _BurstDuration = new ModulationComponent
+                _Length = new ModulationComponent
                 {
-                    _StartValue = _Properties._BurstDuration._Default * _SamplesPerMS,
-                    _InteractionAmount = _Properties._BurstDuration._ModulationAmount * _SamplesPerMS,
-                    _Shape = _Properties._BurstDuration._ModulationExponent,
-                    _Noise = _Properties._BurstDuration._Noise._Amount,
-                    _LockNoise = _Properties._BurstDuration._Noise._HoldForBurstDuration,
-                    _Min = _Properties._BurstDuration._Min * _SamplesPerMS,
-                    _Max = _Properties._BurstDuration._Max * _SamplesPerMS,
-                    _LockStartValue = false,
-                    _LockEndValue = false
-                },
-                _Playhead = new ModulationComponent
-                {
-                    _StartValue = _Properties._Playhead._Start,
-                    _EndValue = _Properties._Playhead._End,
-                    _InteractionAmount = _Properties._Playhead._ModulationAmount,
-                    _Shape = _Properties._Playhead._ModulationExponent,
-                    _Noise = _Properties._Playhead._Noise._Amount,
-                    _LockNoise = _Properties._Playhead._Noise._HoldForBurstDuration,
-                    _Min = _Properties._Playhead._Min,
-                    _Max = _Properties._Playhead._Max,
-                    _LockStartValue = _Properties._Playhead._StartIgnoresModulation,
-                    _LockEndValue = false
-                },
-                _Density = new ModulationComponent
-                {
-                    _StartValue = _Properties._Density._Start,
-                    _EndValue = _Properties._Density._End,
-                    _InteractionAmount = _Properties._Density._ModulationAmount,
-                    _Shape = _Properties._Density._ModulationExponent,
-                    _Noise = _Properties._Density._Noise._Amount,
-                    _LockNoise = _Properties._Density._Noise._HoldForBurstDuration,
-                    _Min = _Properties._Density._Min,
-                    _Max = _Properties._Density._Max,
-                    _LockStartValue = false,
-                    _LockEndValue = false
-                },
-                _GrainDuration = new ModulationComponent
-                {
-                    _StartValue = _Properties._GrainDuration._Start * _SamplesPerMS,
-                    _EndValue = _Properties._GrainDuration._End * _SamplesPerMS,
-                    _InteractionAmount = _Properties._GrainDuration._ModulationAmount * _SamplesPerMS,
-                    _Shape = _Properties._GrainDuration._ModulationExponent,
-                    _Noise = _Properties._GrainDuration._Noise._Amount,
-                    _LockNoise = _Properties._GrainDuration._Noise._HoldForBurstDuration,
-                    _Min = _Properties._GrainDuration._Min * _SamplesPerMS,
-                    _Max = _Properties._GrainDuration._Max * _SamplesPerMS,
-                    _LockStartValue = false,
-                    _LockEndValue = false
-                },
-                _Transpose = new ModulationComponent
-                {
-                    _StartValue = _Properties._Transpose._Start,
-                    _EndValue = _Properties._Transpose._End,
-                    _InteractionAmount = _Properties._Transpose._ModulationAmount,
-                    _Shape = _Properties._Transpose._ModulationExponent,
-                    _Noise = _Properties._Transpose._Noise._Amount,
-                    _LockNoise = _Properties._Transpose._Noise._HoldForBurstDuration,
-                    _Min = _Properties._Transpose._Min,
-                    _Max = _Properties._Transpose._Max,
-                    _LockStartValue = false,
-                    _LockEndValue = _Properties._Transpose._EndIgnoresModulation
+                    _StartValue = _LengthDefault * _SamplesPerMS,
+                    _Modulation = _LengthModulation,
+                    _Exponent = _LengthInput.Exponent,
+                    _Noise = _LengthNoise.Influence,
+                    _LockNoise = true,
+                    _Min = _LengthRange.x * _SamplesPerMS,
+                    _Max = _LengthRange.y * _SamplesPerMS,
+                    _LockStartValue = _LengthFixedStart,
+                    _LockEndValue = _LengthFixedStart
                 },
                 _Volume = new ModulationComponent
                 {
-                    _StartValue = _Properties._Volume._Start,
-                    _EndValue = _Properties._Volume._End,
-                    _Shape = _Properties._Volume._ModulationExponent,
-                    _InteractionAmount = _Properties._Volume._ModulationAmount,
-                    _Noise = _Properties._Volume._Noise._Amount,
-                    _LockNoise = _Properties._Volume._Noise._HoldForBurstDuration,
-                    _Min = _Properties._Volume._Min,
-                    _Max = _Properties._Volume._Max,
-                    _LockStartValue = false,
-                    _LockEndValue = _Properties._Volume._EndIgnoresModulation
+                    _StartValue = _VolumePath.x,
+                    _EndValue = _VolumePath.y,
+                    _Modulation = _VolumeModulation,
+                    _Exponent = _VolumeInput.Exponent,
+                    _Noise = _VolumeNoise.Influence,
+                    _LockNoise = _VolumeNoise._HoldForBurstDuration,
+                    _Min = _VolumeRange.x,
+                    _Max = _VolumeRange.y,
+                    _LockStartValue = _VolumeFixedStart,
+                    _LockEndValue = _VolumeFixedEnd
+                },
+                _Playhead = new ModulationComponent
+                {
+                    _StartValue = _PlayheadPath.x,
+                    _EndValue = _PlayheadPath.y,
+                    _Modulation = _PlayheadModulation,
+                    _Exponent = _PlayheadInput.Exponent,
+                    _Noise = _PlayheadNoise.Influence,
+                    _LockNoise = _PlayheadNoise._HoldForBurstDuration,
+                    _Min = _PlayheadRange.x,
+                    _Max = _PlayheadRange.y,
+                    _LockStartValue = _PlayheadFixedStart,
+                    _LockEndValue = _PlayheadFixedEnd
+                },
+                _Duration = new ModulationComponent
+                {
+                    _StartValue = _DurationPath.x * _SamplesPerMS,
+                    _EndValue = _DurationPath.y * _SamplesPerMS,
+                    _Modulation = _DurationModulation,
+                    _Exponent = _DurationInput.Exponent,
+                    _Noise = _DurationNoise.Influence,
+                    _LockNoise = _DurationNoise._HoldForBurstDuration,
+                    _Min = _DurationRange.x * _SamplesPerMS,
+                    _Max = _DurationRange.y * _SamplesPerMS,
+                    _LockStartValue = _DurationFixedStart,
+                    _LockEndValue = _DurationFixedEnd
+                },
+                _Density = new ModulationComponent
+                {
+                    _StartValue = _DensityPath.x,
+                    _EndValue = _DensityPath.y,
+                    _Modulation = _DensityModulation,
+                    _Exponent = _DensityInput.Exponent,
+                    _Noise = _DensityNoise.Influence,
+                    _Min = _DensityRange.x,
+                    _Max = _DensityRange.y,
+                    _LockStartValue = _DensityFixedStart,
+                    _LockEndValue = _DensityFixedEnd
+                },
+                _Transpose = new ModulationComponent
+                {
+                    _StartValue = _TransposePath.x,
+                    _EndValue = _TransposePath.y,
+                    _Modulation = _TransposeModulation,
+                    _Exponent = _TransposeInput.Exponent,
+                    _Noise = _TransposeNoise.Influence,
+                    _Min = _TransposeRange.x,
+                    _Max = _TransposeRange.y,
+                    _LockStartValue = _TransposeFixedStart,
+                    _LockEndValue = _TransposeFixedEnd
                 }
             });
 
@@ -136,7 +204,7 @@ namespace PlaneWaver
 
         #endregion
 
-        #region EMBOLDENED BURST COMPONENT UPDATE
+        #region BUOYANT BURST COMPONENT UPDATE
 
         public override void ProcessComponents()
         {
@@ -145,101 +213,101 @@ namespace PlaneWaver
             if (_IsPlaying)
             {
                 UpdateModulationValues();
-                BurstComponent burstData = _EntityManager.GetComponentData<BurstComponent>(_Entity);
+                BurstComponent entity = _EntityManager.GetComponentData<BurstComponent>(_Entity);
 
-                burstData._IsPlaying = true;
-                burstData._AudioClipIndex = _AudioAsset.ClipEntityIndex;
-                burstData._SpeakerIndex = Host.AttachedSpeakerIndex;
-                burstData._HostIndex = Host.EntityIndex;
-                burstData._PingPong = _PingPongGrainPlayheads;
-                burstData._VolumeAdjust = _VolumeAdjust;
-                burstData._DistanceAmplitude = DistanceAmplitude;
-                burstData._OutputSampleRate = _SampleRate;
+                entity._IsPlaying = true;
+                entity._AudioClipIndex = _AudioAsset.ClipEntityIndex;
+                entity._SpeakerIndex = Host.AttachedSpeakerIndex;
+                entity._HostIndex = Host.EntityIndex;
+                entity._PingPong = _PingPongGrainPlayheads;
+                entity._VolumeAdjust = _VolumeAdjust;
+                entity._DistanceAmplitude = DistanceAmplitude;
+                entity._OutputSampleRate = _SampleRate;
 
-                burstData._BurstDuration = new ModulationComponent
+                entity._Length = new ModulationComponent
                 {
-                    _StartValue = _Properties._BurstDuration._Default * _SamplesPerMS,
-                    _InteractionAmount = _Properties._BurstDuration._ModulationAmount * _SamplesPerMS,
-                    _Shape = _Properties._BurstDuration._ModulationExponent,
-                    _Noise = _Properties._BurstDuration._Noise._Amount,
-                    _LockNoise = _Properties._BurstDuration._Noise._HoldForBurstDuration,
-                    _Min = _Properties._BurstDuration._Min * _SamplesPerMS,
-                    _Max = _Properties._BurstDuration._Max * _SamplesPerMS,
-                    _LockStartValue = false,
-                    _LockEndValue = false,
-                    _InteractionInput = _Properties._BurstDuration.GetValue()
+                    _StartValue = _LengthDefault * _SamplesPerMS,
+                    _Modulation = _LengthModulation,
+                    _Exponent = _LengthInput.Exponent,
+                    _Noise = _LengthNoise.Influence,
+                    _LockNoise = true,
+                    _Min = _LengthRange.x * _SamplesPerMS,
+                    _Max = _LengthRange.x * _SamplesPerMS,
+                    _LockStartValue = _LengthFixedStart,
+                    _LockEndValue = _LengthFixedEnd,
+                    _Input = _LengthInput.Result
                 };
-                burstData._Playhead = new ModulationComponent
+                entity._Volume = new ModulationComponent
                 {
-                    _StartValue = _Properties._Playhead._Start,
-                    _EndValue = _Properties._Playhead._End,
-                    _InteractionAmount = _Properties._Playhead._ModulationAmount,
-                    _Shape = _Properties._Playhead._ModulationExponent,
-                    _Noise = _Properties._Playhead._Noise._Amount,
-                    _LockNoise = _Properties._Playhead._Noise._HoldForBurstDuration,
-                    _Min = _Properties._Playhead._Min,
-                    _Max = _Properties._Playhead._Max,
-                    _LockStartValue = _Properties._Playhead._StartIgnoresModulation,
-                    _LockEndValue = false,
-                    _InteractionInput = _Properties._Playhead.GetValue()
+                    _StartValue = _VolumePath.x,
+                    _EndValue = _VolumePath.y,
+                    _Modulation = _VolumeModulation,
+                    _Exponent = _VolumeInput.Exponent,
+                    _Noise = _VolumeNoise.Influence,
+                    _LockNoise = _VolumeNoise._HoldForBurstDuration,
+                    _Min = _VolumeRange.x,
+                    _Max = _VolumeRange.y,
+                    _LockStartValue = _VolumeFixedStart,
+                    _LockEndValue = _VolumeFixedEnd,
+                    _Input = _VolumeInput.Result * _ContactSurfaceAttenuation
                 };
-                burstData._Density = new ModulationComponent
+                entity._Playhead = new ModulationComponent
                 {
-                    _StartValue = _Properties._Density._Start,
-                    _EndValue = _Properties._Density._End,
-                    _InteractionAmount = _Properties._Density._ModulationAmount,
-                    _Shape = _Properties._Density._ModulationExponent,
-                    _Noise = _Properties._Density._Noise._Amount,
-                    _LockNoise = _Properties._Density._Noise._HoldForBurstDuration,
-                    _Min = _Properties._Density._Min,
-                    _Max = _Properties._Density._Max,
-                    _LockStartValue = false,
-                    _LockEndValue = false,
-                    _InteractionInput = _Properties._Density.GetValue()
+                    _StartValue = _PlayheadPath.x,
+                    _EndValue = _PlayheadPath.y,
+                    _Modulation = _PlayheadModulation,
+                    _Exponent = _PlayheadInput.Exponent,
+                    _Noise = _PlayheadNoise.Influence,
+                    _LockNoise = _PlayheadNoise._HoldForBurstDuration,
+                    _Min = _PlayheadRange.x,
+                    _Max = _PlayheadRange.y,
+                    _LockStartValue = _PlayheadFixedStart,
+                    _LockEndValue = _PlayheadFixedEnd,
+                    _Input = _PlayheadInput.Result
                 };
-                burstData._GrainDuration = new ModulationComponent
+                entity._Duration = new ModulationComponent
                 {
-                    _StartValue = _Properties._GrainDuration._Start * _SamplesPerMS,
-                    _EndValue = _Properties._GrainDuration._End * _SamplesPerMS,
-                    _InteractionAmount = _Properties._GrainDuration._ModulationAmount * _SamplesPerMS,
-                    _Shape = _Properties._GrainDuration._ModulationExponent,
-                    _Noise = _Properties._GrainDuration._Noise._Amount,
-                    _LockNoise = _Properties._GrainDuration._Noise._HoldForBurstDuration,
-                    _Min = _Properties._GrainDuration._Min * _SamplesPerMS,
-                    _Max = _Properties._GrainDuration._Max * _SamplesPerMS,
-                    _LockStartValue = false,
-                    _LockEndValue = false,
-                    _InteractionInput = _Properties._GrainDuration.GetValue()
+                    _StartValue = _DurationPath.x * _SamplesPerMS,
+                    _EndValue = _DurationPath.y * _SamplesPerMS,
+                    _Modulation = _DurationModulation,
+                    _Exponent = _DurationInput.Exponent,
+                    _Noise = _DurationNoise.Influence,
+                    _LockNoise = _DurationNoise._HoldForBurstDuration,
+                    _Min = _DurationRange.x * _SamplesPerMS,
+                    _Max = _DurationRange.y * _SamplesPerMS,
+                    _LockStartValue = _DurationFixedStart,
+                    _LockEndValue = _DurationFixedEnd,
+                    _Input = _DurationInput.Result
                 };
-                burstData._Transpose = new ModulationComponent
+                entity._Density = new ModulationComponent
                 {
-                    _StartValue = _Properties._Transpose._Start,
-                    _EndValue = _Properties._Transpose._End,
-                    _InteractionAmount = _Properties._Transpose._ModulationAmount,
-                    _Shape = _Properties._Transpose._ModulationExponent,
-                    _Noise = _Properties._Transpose._Noise._Amount,
-                    _LockNoise = _Properties._Transpose._Noise._HoldForBurstDuration,
-                    _Min = _Properties._Transpose._Min,
-                    _Max = _Properties._Transpose._Max,
-                    _LockStartValue = false,
-                    _LockEndValue = _Properties._Transpose._EndIgnoresModulation,
-                    _InteractionInput = _Properties._Transpose.GetValue()
+                    _StartValue = _DensityPath.x,
+                    _EndValue = _DensityPath.y,
+                    _Modulation = _DensityModulation,
+                    _Exponent = _DensityInput.Exponent,
+                    _Noise = _DensityNoise.Influence,
+                    _LockNoise = _DensityNoise._HoldForBurstDuration,
+                    _Min = _DensityRange.x,
+                    _Max = _DensityRange.y,
+                    _LockStartValue = _DensityFixedStart,
+                    _LockEndValue = _DensityFixedEnd,
+                    _Input = _DensityInput.Result
                 };
-                burstData._Volume = new ModulationComponent
+                entity._Transpose = new ModulationComponent
                 {
-                    _StartValue = _Properties._Volume._Start,
-                    _EndValue = _Properties._Volume._End,
-                    _InteractionAmount = _Properties._Volume._ModulationAmount,
-                    _Shape = _Properties._Volume._ModulationExponent,
-                    _Noise = _Properties._Volume._Noise._Amount,
-                    _LockNoise = _Properties._Volume._Noise._HoldForBurstDuration,
-                    _Min = _Properties._Volume._Min,
-                    _Max = _Properties._Volume._Max,
-                    _LockStartValue = false,
-                    _LockEndValue = _Properties._Volume._EndIgnoresModulation,
-                    _InteractionInput = _Properties._Volume.GetValue() * _ContactSurfaceAttenuation
+                    _StartValue = _TransposePath.x,
+                    _EndValue = _TransposePath.y,
+                    _Modulation = _TransposeModulation,
+                    _Exponent = _TransposeInput.Exponent,
+                    _Noise = _TransposeNoise.Influence,
+                    _LockNoise = _TransposeNoise._HoldForBurstDuration,
+                    _Min = _TransposeRange.x,
+                    _Max = _TransposeRange.y,
+                    _LockStartValue = _TransposeFixedStart,
+                    _LockEndValue = _TransposeFixedEnd,
+                    _Input = _TransposeInput.Result
                 };
-                _EntityManager.SetComponentData(_Entity, burstData);
+                _EntityManager.SetComponentData(_Entity, entity);
 
                 UpdateDSPEffectsBuffer();
                 // Burst emitters generate their entire output in one pass, so switching off
@@ -249,31 +317,4 @@ namespace PlaneWaver
 
         #endregion
     }
-
-    #region BURST PARAMETERS
-
-    [Serializable]
-    public class BurstParameters
-    {
-        [AllowNesting]
-        [HorizontalLine(color: EColor.Gray)]
-        public BurstVolume _Volume;
-        [AllowNesting]
-        [HorizontalLine(color: EColor.Gray)]
-        public BurstPlayhead _Playhead;
-        [AllowNesting]
-        [HorizontalLine(color: EColor.Gray)]
-        public BurstDuration _BurstDuration;
-        [AllowNesting]
-        [HorizontalLine(color: EColor.Gray)]
-        public BurstGrainDuration _GrainDuration;
-        [AllowNesting]
-        [HorizontalLine(color: EColor.Gray)]
-        public BurstDensity _Density;
-        [AllowNesting]
-        [HorizontalLine(color: EColor.Gray)]
-        public BurstTranspose _Transpose;
-    }
-
-    #endregion
 }
