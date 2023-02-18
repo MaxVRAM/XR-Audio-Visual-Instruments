@@ -5,8 +5,8 @@ using UnityEngine;
 namespace PlaneWaver
 {
     /// <summary>
-    //  Speakers are passed Grains entities by the GrainSynth, which they write directly to the attached AudioSource output buffer.
-    /// <summary>
+    /// Speakers are passed Grains entities by the GrainSynth, which they write directly to the attached AudioSource output buffer.
+    /// </summary>
     [RequireComponent(typeof(AudioSource))]
     public class SpeakerAuthoring : SynthEntity
     {
@@ -206,7 +206,7 @@ namespace PlaneWaver
             if (!_EntityInitialised)
                 return;
             _NumGrainsFree--;
-            OnGrainEmitted?.Invoke(grainData, GrainSynth.Instance._CurrentSampleIndex);
+            OnGrainEmitted?.Invoke(grainData, GrainSynth.Instance.CurrentSampleIndex);
         }
 
         public Grain GetEmptyGrain(out Grain grain)
@@ -235,7 +235,7 @@ namespace PlaneWaver
                 return;
 
             Grain grainData;
-            int _CurrentDSPSample = GrainSynth.Instance._CurrentSampleIndex;
+            int _CurrentDSPSample = GrainSynth.Instance.CurrentSampleIndex;
 
             for (int dataIndex = 0; dataIndex < data.Length; dataIndex += channels)
                 for (int i = 0; i < _GrainArray.Length; i++)

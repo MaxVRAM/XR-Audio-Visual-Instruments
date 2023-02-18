@@ -417,23 +417,28 @@ public partial class GrainSynthSystem : SystemBase
     public static float ComputeEmitterParameter(ModulationComponent mod, float randomValue)
     {
         float parameterRange = Mathf.Abs(mod._Max - mod._Min);
-        float modulation = Mathf.Pow(mod._Input / 1, mod._Exponent) * mod._Modulation * parameterRange;
-        // TODO: Separate the modulation and randomise sections, as this entire function is called for every grain when only the random value is updated.
-        // Instead, the the modulation and random values could be processed and returned independantly, storing modulation values for the entire emitter.
+        //float modulation = Mathf.Pow(mod._Input / 1, mod._Exponent) * mod._Modulation * parameterRange;
+        
+        // OPTIMISATION OPPORTUNITY: Separate the modulation and randomise sections.
+        // This entire function is called for every grain, when only the randomisation value will ever change between grains.
+        // Instead, the the modulation and random values could be processed and returned independantly,
+        // storing the unchanging modulation values for the entire emitter.
+
         float random;
         if (mod._PerlinNoise)
             random = mod._PerlinValue * mod._Noise * parameterRange;
         else
             random = randomValue * mod._Noise * parameterRange;
 
-        return Mathf.Clamp(mod._StartValue + modulation + random, mod._Min, mod._Max);
+        //return Mathf.Clamp(mod._StartValue + modulation + random, mod._Min, mod._Max);
+        return Mathf.Clamp(mod._StartValue + random, mod._Min, mod._Max);
     }
 
     public static float ComputeBurstParameter(ModulationComponent mod, float currentGrain, float totalGrains, float randomValue)
     {
         float parameterRange = Mathf.Abs(mod._Max - mod._Min);
         float timeShaped = Mathf.Pow(currentGrain / totalGrains, mod._Exponent);
-        float modulationOverTime = timeShaped * (mod._EndValue - mod._StartValue);
+        float burstPath = timeShaped * (mod._EndValue - mod._StartValue);
         float modulation = mod._Modulation * mod._Input * parameterRange;
 
         if (mod._LockStartValue)
@@ -442,7 +447,7 @@ public partial class GrainSynthSystem : SystemBase
             modulation *= 1 - timeShaped;
 
         float random = randomValue * mod._Noise * parameterRange;
-        return Mathf.Clamp(mod._StartValue + modulationOverTime + modulation + random, mod._Min, mod._Max);
+        return Mathf.Clamp(mod._StartValue + burstPath + modulation + random, mod._Min, mod._Max);
     }
 
     public static float FadeFactor(int currentIndex, int fadeStart, int fadeEnd)

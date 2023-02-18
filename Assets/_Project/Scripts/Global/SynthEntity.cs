@@ -8,8 +8,9 @@ using NaughtyAttributes;
 namespace PlaneWaver
 {
     /// <summary>
-    //  Abstract class for managing synth entities
-    /// <summary>
+    /// Abstract class for managing synth entities
+    /// </summary>
+
     public abstract class SynthEntity : MonoBehaviour
     {
         #region FIELDS & PROPERTIES

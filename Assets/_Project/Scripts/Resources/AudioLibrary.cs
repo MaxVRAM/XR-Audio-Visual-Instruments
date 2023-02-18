@@ -25,9 +25,9 @@ namespace PlaneWaver
         [SerializeField] private string _AudioAssetPath = "Assets/_Project/Audio/Assets/";
         [SerializeField] private string _AssetFilter = "t:AudioClip";
         [SerializeField] private string _Extension = ".wav";
-        [SerializeField] private List<AudioAsset> _AudioAssets = new List<AudioAsset>();
-        public List<AudioAsset> AudioAssets { get { return _AudioAssets; } }
-        public int LibrarySize { get { return _AudioAssets.Count; } }
+        [SerializeField] private List<AudioAssetScriptable> _AudioAssets = new();
+        public List<AudioAssetScriptable> AudioAssets => _AudioAssets;
+        public int LibrarySize => _AudioAssets.Count;
 
         #endregion
 
@@ -42,18 +42,19 @@ namespace PlaneWaver
 
         public bool InitialiseLibrary()
         {
-            //Resources.LoadAll("", typeof(AudioAssetObject));
 
             if (_Initialised)
                 return true;
 
             for (int i = _AudioAssets.Count - 1; i >= 0; i--)
+            {
                 if (!_AudioAssets[i].ValidClip)
                     _AudioAssets.RemoveAt(i);
+            }
 
             if (_AudioAssets.Count == 0)
             {
-                Debug.LogError("No AudioAsset objects found in the Audio Library.");
+                Debug.LogError("No AudioAssetScriptable objects found in the Audio Library.");
                 _Initialised = false;
                 return false;
             }
@@ -73,7 +74,7 @@ namespace PlaneWaver
 
             EntityManager entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
 
-            foreach (AudioAsset audioAsset in _AudioAssets)
+            foreach (AudioAssetScriptable audioAsset in _AudioAssets)
             {
                 Entity audioClipSamplesEntity = entityManager.CreateEntity();
 
@@ -115,6 +116,13 @@ namespace PlaneWaver
 
         #region ASSET MANAGEMENT
 
+        public void ReloadAudioAssets()
+        {
+            _AudioAssets = new();
+            IEnumerable<AudioAssetScriptable> loadedAssets = Resources.LoadAll(_AudioAssetPath, typeof(AudioAssetScriptable)).Cast<AudioAssetScriptable>();
+            _AudioAssets.AddRange(loadedAssets);
+        }
+
         public void BuildAudioAssets()
         {
             if (!AssetDatabase.IsValidFolder(_AudioAssetPath))
@@ -122,29 +130,30 @@ namespace PlaneWaver
 
             string[] assetGUIDs = AssetDatabase.FindAssets(_AssetFilter, new[] { _AudioFilePath });
             string[] assetFiles = new string[assetGUIDs.Length];
-            _AudioAssets = new List<AudioAsset>();
+            _AudioAssets = new();
 
             for (int i = 0; i < assetFiles.Length; i++)
             {
                 assetFiles[i] = AssetDatabase.GUIDToAssetPath(assetGUIDs[i]);
                 string fileName = assetFiles[i];
                 fileName = fileName.Remove(0, assetFiles[i].LastIndexOf('/') + 1);
-                string[] typeName = fileName.Split('_');
-                string clipTypeString = fileName.Substring(0, fileName.IndexOf("_"));
+                string clipTypeString = fileName[..fileName.IndexOf("_")];
                 clipTypeString = Regex.Replace(clipTypeString, @"[^\w]*", string.Empty);
-                string clipName = fileName.Substring(fileName.IndexOf("_") + 1);
+                string clipName = fileName[(fileName.IndexOf("_") + 1)..];
                 clipName = clipName.Remove(clipName.IndexOf(_Extension)).ToLower();
 
-                AudioAsset newAudioAsset = (AudioAsset)ScriptableObject.CreateInstance(typeof(AudioAsset));
+                AudioAssetScriptable newAudioAsset = (AudioAssetScriptable)ScriptableObject.CreateInstance(typeof(AudioAssetScriptable));
                 AudioClip clip = (AudioClip)AssetDatabase.LoadAssetAtPath(assetFiles[i], typeof(AudioClip));
 
                 string clipTypeFolder = _AudioAssetPath;
                 AudioClipType clipType = GetAudioClipTypeAndPath(clipTypeString, ref clipTypeFolder);
 
                 _AudioAssets.Add(newAudioAsset.AssociateAudioClip(clip, clipType, _AudioAssets.Count()));
-                AssetDatabase.CreateAsset(newAudioAsset, clipTypeFolder + clipName + ".asset");
+                AssetDatabase.CreateAsset(newAudioAsset, clipTypeFolder + "Audio_" +
+                    Enum.GetName(typeof(AudioClipType), clipType) + "_" + clipName + ".asset");
                 EditorUtility.SetDirty(newAudioAsset);
             }
+
             AssetDatabase.Refresh();
             Debug.Log($"Audio Library has been rebuilt with '{_AudioAssets.Count()}' Audio Assets.");
         }
@@ -159,7 +168,6 @@ namespace PlaneWaver
             if (!AssetDatabase.IsValidFolder(clipTypeFolder))
                 Directory.CreateDirectory(clipTypeFolder);
 
-            //Enum.GetName(typeof(AudioClipType), clipType));
             return clipType;
         }
 

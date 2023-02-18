@@ -9,12 +9,11 @@ using GD.MinMaxSlider;
 using MaxVRAM;
 using MaxVRAM.Ticker;
 
-
 namespace PlaneWaver
 {
     /// <summary>
-    //  Manager for spawning child game objects with a variety of existance and controller behaviours.
-    /// <summary>
+    /// Manager for spawning child game objects with a variety of existance and controller behaviours.
+    /// </summary>
     public class ObjectSpawner : MonoBehaviour
     {
         #region FIELDS & PROPERTIES
@@ -189,7 +188,6 @@ namespace PlaneWaver
 
             InstantiatePrefab(out GameObject newObject);
             SpawnableManager spawnableManager = AttachSpawnableManager(newObject);
-            //ConfigureSpawnableBehaviour(newObject);
             ConfigureEmitterHost(newObject, _ControllerObject, spawnableManager);
             newObject.SetActive(true);
             _ActiveObjects.Add(newObject);
@@ -238,17 +236,7 @@ namespace PlaneWaver
             return spawnableManager;
         }
 
-        //public void ConfigureSpawnableBehaviour(GameObject go)
-        //{
-        //    foreach (var behaviour in go.GetComponents<BehaviourClass>())
-        //    {
-        //        behaviour._SpawnedObject = go;
-        //        behaviour._ControllerObject = _ControllerObject;
-        //        behaviour._ObjectSpawner = this;
-        //    }
-        //}
-
-        // !TODO: Decouple Synthesis authoring from this
+        // TODO: Decouple Synthesis authoring from this
         public void ConfigureEmitterHost(GameObject actorA, GameObject actorB, SpawnableManager spawnable)
         {
             if (!actorA.TryGetComponent(out HostAuthoring newHost))

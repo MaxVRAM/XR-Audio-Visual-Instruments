@@ -25,6 +25,10 @@ namespace MaxVRAM
                 return targetValue;
         }
 
+        public static float InverseLerp(Vector2 range, float value)
+        {
+            return Mathf.InverseLerp(range.x, range.y, value);
+        }
 
         public static float ScaleToNormNoClamp(float value, Vector2 range)
         {

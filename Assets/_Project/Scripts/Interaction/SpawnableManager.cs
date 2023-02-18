@@ -3,6 +3,10 @@ using UnityEngine;
 
 namespace PlaneWaver
 {
+    /// <summary>
+    /// MonoBehaviour component that controls the spawned GameObject's lifespan and interactions with
+    /// boundaries.<para />The script is dynamically attached on instantiation by the ObjectSpawner class.
+    /// </summary>
     public class SpawnableManager : BehaviourClass
     {
         private int _SampleRate;
@@ -18,8 +22,8 @@ namespace PlaneWaver
         readonly int _TicksAllowedOutside = 2;
 
         public float _BoundingRadius = 10;
-        public float CurrentAge { get => _Age; }
-        public float CurrentAgeNorm { get => Mathf.Clamp(_Age / _Lifespan, 0, 1); }
+        public float CurrentAge => _Age;
+        public float CurrentAgeNorm => Mathf.Clamp(_Age / _Lifespan, 0, 1);
 
         void Start()
         {

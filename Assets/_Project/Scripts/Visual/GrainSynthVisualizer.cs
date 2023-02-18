@@ -211,7 +211,7 @@ public class GrainSynthVisualizer : MonoBehaviour
             {
                 if (_TimelineBlocks[i].gameObject.activeSelf)
                 {
-                    int sampleDiff = _TimelineBlocks[i]._StartIndex - GrainSynth.Instance._CurrentSampleIndex;
+                    int sampleDiff = _TimelineBlocks[i]._StartIndex - GrainSynth.Instance.CurrentSampleIndex;
                     Vector3 pos = transform.position + transform.right * (sampleDiff / _SampleRate) * (_TimelineDistance / _TimelineDuration);
                     pos.y = _TimelineBlocks[i].transform.position.y;
 
@@ -246,7 +246,7 @@ public class GrainSynthVisualizer : MonoBehaviour
 
     Vector3 PosFromStartSampleIndex(int startSampleIndex)
     {
-        int sampleDiff = startSampleIndex - GrainSynth.Instance._CurrentSampleIndex;
+        int sampleDiff = startSampleIndex - GrainSynth.Instance.CurrentSampleIndex;
         Vector3 pos = transform.position + transform.right * (sampleDiff / _SampleRate) * (_TimelineDistance / _TimelineDuration);
 
         pos.y += (_IncrementY % _TimelineHeightCount) * _TimelineScale;

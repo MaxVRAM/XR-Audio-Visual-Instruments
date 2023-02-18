@@ -9,7 +9,7 @@ namespace PlaneWaver
     [Serializable]
     public struct Actor
     {
-        [SerializeField] private readonly Transform _Transform;
+        private readonly Transform _Transform;
         private readonly Rigidbody _Rigidbody;
         private readonly Collider _Collider;
 

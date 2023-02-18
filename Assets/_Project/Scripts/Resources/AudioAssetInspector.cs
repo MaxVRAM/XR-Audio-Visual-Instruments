@@ -18,7 +18,7 @@ namespace PlaneWaver
             {
                 if (audioLibrary._PreviewAudioSource != null && audioLibrary.AudioAssets != null)
                 {
-                    AudioAsset audioAsset = audioLibrary.AudioAssets[0];
+                    AudioAssetScriptable audioAsset = audioLibrary.AudioAssets[0];
                     if (audioAsset != null)
                     {
                         Debug.Log($"Playing audio asset preview: {audioAsset.Clip.name}.");
@@ -35,7 +35,7 @@ namespace PlaneWaver
             if (GUILayout.Button("Reload Audio Assets"))
             {
                 Debug.Log("Todo: create reload function.");
-                //audioLibrary.BuildAudioAssets();
+                audioLibrary.ReloadAudioAssets();
             }
 
             if (GUILayout.Button("Rebuild Audio Assets"))
