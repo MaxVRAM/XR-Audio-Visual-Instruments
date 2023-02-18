@@ -16,13 +16,13 @@ namespace PlaneWaver
         [Serializable]
         public class NoiseModule
         {
-            public float Influence => _Influence * _Multiplier;
+            public float Amount => _Influence * _Multiplier;
             [Range(-1f, 1f)] public float _Influence = 0f;
             public float _Multiplier = 0.1f;
             public bool _HoldForBurstDuration = false;
         }
 
-        //[HorizontalLine(color: EColor.Gray)]
+        [HorizontalLine(color: EColor.Gray)]
         private readonly Vector2 _VolumePath = new(0f, 0f);
         private readonly Vector2 _VolumeRange = new(0f, 2f);
         private readonly bool _VolumeFixedStart = false;
@@ -30,7 +30,7 @@ namespace PlaneWaver
         public ModulationStruct _VolumeModulation;
         public NoiseModule _VolumeNoise;
 
-        //[HorizontalLine(color: EColor.Gray)]
+        [HorizontalLine(color: EColor.Gray)]
         [Range(10f, 1000f)] public float _LengthDefault = 200f;
         private readonly Vector2 _LengthRange = new(10f, 1000f);
         private readonly bool _LengthFixedStart = false;
@@ -40,7 +40,7 @@ namespace PlaneWaver
         public float LengthDefault => _LengthDefault * _SamplesPerMS;
         public Vector2 LengthRange => new(_LengthRange.x * _SamplesPerMS, _LengthRange.y * _SamplesPerMS);
 
-        //[HorizontalLine(color: EColor.Gray)]
+        [HorizontalLine(color: EColor.Gray)]
         [MinMaxSlider(0f, 1f)] public Vector2 _PlayheadPath = new (0f, 0.5f);
         private readonly Vector2 _PlayheadRange = new(0f, 1f);
         public bool _PlayheadFixedStart = true;
@@ -48,7 +48,7 @@ namespace PlaneWaver
         public ModulationStruct _PlayheadModulation;
         public NoiseModule _PlayheadNoise;
 
-        //[HorizontalLine(color: EColor.Gray)]
+        [HorizontalLine(color: EColor.Gray)]
         [MinMaxSlider(10f, 500f)] public Vector2 _DurationPath = new (80f, 120f);
         private readonly Vector2 _DurationRange = new(10f, 500f);
         public bool _DurationFixedStart = false;
@@ -58,7 +58,7 @@ namespace PlaneWaver
         public Vector2 DurationPath => new(_DurationPath.x * _SamplesPerMS, _DurationPath.y * _SamplesPerMS);
         public Vector2 DurationRange => new(_DurationRange.x * _SamplesPerMS, _DurationRange.y * _SamplesPerMS);
 
-        //[HorizontalLine(color: EColor.Gray)]
+        [HorizontalLine(color: EColor.Gray)]
         [MinMaxSlider(1f, 10f)] public Vector2 _DensityPath = new (2f, 3f);
         private readonly Vector2 _DensityRange = new(1f, 10f);
         public bool _DensityFixedStart = false;
@@ -66,7 +66,7 @@ namespace PlaneWaver
         public ModulationStruct _DensityModulation;
         public NoiseModule _DensityNoise;
 
-        //[HorizontalLine(color: EColor.Gray)]
+        [HorizontalLine(color: EColor.Gray)]
         [MinMaxSlider(-3f, 3f)] public Vector2 _TransposePath = new(0f, 0f);
         private readonly Vector2 _TransposeRange = new(-3f, 3f);
         public bool _TransposeFixedStart = false;
@@ -110,7 +110,6 @@ namespace PlaneWaver
                 _VolumeAdjust = _VolumeAdjust,
                 _DistanceAmplitude = 1,
                 _PingPong = _PingPongGrainPlayheads,
-                _OutputSampleRate = _SampleRate,
 
                 _Volume = new ModulationComponent
                 {
@@ -118,7 +117,7 @@ namespace PlaneWaver
                     _EndValue = _VolumePath.y,
                     _Modulation = _VolumeModulation.Amount,
                     _Exponent = _VolumeModulation.Exponent,
-                    _Noise = _VolumeNoise.Influence,
+                    _Noise = _VolumeNoise.Amount,
                     _LockNoise = _VolumeNoise._HoldForBurstDuration,
                     _Min = _VolumeRange.x,
                     _Max = _VolumeRange.y,
@@ -130,7 +129,7 @@ namespace PlaneWaver
                     _StartValue = LengthDefault,
                     _Modulation = _LengthModulation.Amount,
                     _Exponent = _LengthModulation.Exponent,
-                    _Noise = _LengthNoise.Influence,
+                    _Noise = _LengthNoise.Amount,
                     _LockNoise = true,
                     _Min = LengthRange.x,
                     _Max = LengthRange.y,
@@ -143,7 +142,7 @@ namespace PlaneWaver
                     _EndValue = _PlayheadPath.y,
                     _Modulation = _PlayheadModulation.Amount,
                     _Exponent = _PlayheadModulation.Exponent,
-                    _Noise = _PlayheadNoise.Influence,
+                    _Noise = _PlayheadNoise.Amount,
                     _LockNoise = _PlayheadNoise._HoldForBurstDuration,
                     _Min = _PlayheadRange.x,
                     _Max = _PlayheadRange.y,
@@ -156,7 +155,7 @@ namespace PlaneWaver
                     _EndValue = DurationPath.y,
                     _Modulation = _DurationModulation.Amount,
                     _Exponent = _DurationModulation.Exponent,
-                    _Noise = _DurationNoise.Influence,
+                    _Noise = _DurationNoise.Amount,
                     _LockNoise = _DurationNoise._HoldForBurstDuration,
                     _Min = DurationRange.x,
                     _Max = DurationRange.y,
@@ -169,7 +168,7 @@ namespace PlaneWaver
                     _EndValue = _DensityPath.y,
                     _Modulation = _DensityModulation.Amount,
                     _Exponent = _DensityModulation.Exponent,
-                    _Noise = _DensityNoise.Influence,
+                    _Noise = _DensityNoise.Amount,
                     _Min = _DensityRange.x,
                     _Max = _DensityRange.y,
                     _LockStartValue = _DensityFixedStart,
@@ -181,7 +180,7 @@ namespace PlaneWaver
                     _EndValue = _TransposePath.y,
                     _Modulation = _TransposeModulation.Amount,
                     _Exponent = _TransposeModulation.Exponent,
-                    _Noise = _TransposeNoise.Influence,
+                    _Noise = _TransposeNoise.Amount,
                     _Min = _TransposeRange.x,
                     _Max = _TransposeRange.y,
                     _LockStartValue = _TransposeFixedStart,
@@ -217,7 +216,6 @@ namespace PlaneWaver
                 entity._PingPong = _PingPongGrainPlayheads;
                 entity._VolumeAdjust = _VolumeAdjust;
                 entity._DistanceAmplitude = DistanceAmplitude;
-                entity._OutputSampleRate = _SampleRate;
 
                 entity._Volume = new ModulationComponent
                 {
@@ -225,7 +223,7 @@ namespace PlaneWaver
                     _EndValue = _VolumePath.y * _ColliderRigidityVolume,
                     _Modulation = _VolumeModulation.Amount,
                     _Exponent = _VolumeModulation.Exponent,
-                    _Noise = _VolumeNoise.Influence,
+                    _Noise = _VolumeNoise.Amount,
                     _LockNoise = _VolumeNoise._HoldForBurstDuration,
                     _Min = _VolumeRange.x,
                     _Max = _VolumeRange.y,
@@ -238,7 +236,7 @@ namespace PlaneWaver
                     _StartValue = LengthDefault,
                     _Modulation = _LengthModulation.Amount,
                     _Exponent = _LengthModulation.Exponent,
-                    _Noise = _LengthNoise.Influence,
+                    _Noise = _LengthNoise.Amount,
                     _LockNoise = true,
                     _Min = LengthRange.x,
                     _Max = LengthRange.y,
@@ -252,7 +250,7 @@ namespace PlaneWaver
                     _EndValue = _PlayheadPath.y,
                     _Modulation = _PlayheadModulation.Amount,
                     _Exponent = _PlayheadModulation.Exponent,
-                    _Noise = _PlayheadNoise.Influence,
+                    _Noise = _PlayheadNoise.Amount,
                     _LockNoise = _PlayheadNoise._HoldForBurstDuration,
                     _Min = _PlayheadRange.x,
                     _Max = _PlayheadRange.y,
@@ -266,7 +264,7 @@ namespace PlaneWaver
                     _EndValue = DurationPath.y,
                     _Modulation = _DurationModulation.Amount,
                     _Exponent = _DurationModulation.Exponent,
-                    _Noise = _DurationNoise.Influence,
+                    _Noise = _DurationNoise.Amount,
                     _LockNoise = _DurationNoise._HoldForBurstDuration,
                     _Min = DurationRange.x,
                     _Max = DurationRange.y,
@@ -280,7 +278,7 @@ namespace PlaneWaver
                     _EndValue = _DensityPath.y,
                     _Modulation = _DensityModulation.Amount,
                     _Exponent = _DensityModulation.Exponent,
-                    _Noise = _DensityNoise.Influence,
+                    _Noise = _DensityNoise.Amount,
                     _LockNoise = _DensityNoise._HoldForBurstDuration,
                     _Min = _DensityRange.x,
                     _Max = _DensityRange.y,
@@ -294,7 +292,7 @@ namespace PlaneWaver
                     _EndValue = _TransposePath.y,
                     _Modulation = _TransposeModulation.Amount,
                     _Exponent = _TransposeModulation.Exponent,
-                    _Noise = _TransposeNoise.Influence,
+                    _Noise = _TransposeNoise.Amount,
                     _LockNoise = _TransposeNoise._HoldForBurstDuration,
                     _Min = _TransposeRange.x,
                     _Max = _TransposeRange.y,

@@ -235,10 +235,10 @@ namespace PlaneWaver
             return otherSurface != null && otherSurface.IsEmitter && otherSurface._Rigidity >= rigidity;
         }
 
-        public float GeneratePerlinForParameter(int parameterIndex, float speed = 1f)
+        public float GetPerlinValue(int parameterIndex, float speed = 1f)
         {
             float time = Time.time * speed;
-            return Mathf.PerlinNoise(time + _PerlinSeedArray[parameterIndex],(time + _PerlinSeedArray[parameterIndex]) * 0.5f);
+            return Mathf.PerlinNoise(time + _PerlinSeedArray[parameterIndex], (time + _PerlinSeedArray[parameterIndex]) * 0.5f);
         }
 
         #endregion

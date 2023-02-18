@@ -36,6 +36,27 @@ namespace MaxVRAM.Extensions
             return diff > 0 ? mid - diff: mid + mid;
         }
 
+        /// <summary>
+        /// Replicates the functionality of Mathf.PingPong() more efficently. Limited to normalised output range.
+        /// </summary>
+        public static float PingPongNorm(this float value)
+        {
+            value = value > 0 ? value : -value;
+            value %= 2;
+            if (value < 1)
+                return value;
+            else
+                return 2 * 1 - value;
+        }
+
+        /// <summary>
+        /// Replicates the functionality of Mathf.Repeat() more efficently. Limited to normalised output range.
+        /// </summary>
+        public static float RepeatNorm(this float value)
+        {
+            return value - Mathf.FloorToInt(value);
+        }
+
         public static Vector2 MakeMirroredVector(this float value, float mid)
         {
             float diff = Mathf.Abs(value - mid);

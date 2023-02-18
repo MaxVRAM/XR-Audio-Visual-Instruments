@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 
 using MaxVRAM;
+using MaxVRAM.Extensions;
 using NaughtyAttributes;
 
 namespace PlaneWaver
@@ -27,6 +28,8 @@ namespace PlaneWaver
 
         public void SetActors(Actor localActor, Actor remoteActor)
         {
+            // Not sure why, perhaps passing structs around, but if I debug print _Initialised here it's true.
+            // Then debugging in VS shows it as false when stepping through a call to GetProcessed Value.. hmmm
             if (localActor.Exists())
                 _Initialised = true;
             _LocalActor = localActor;
@@ -51,14 +54,14 @@ namespace PlaneWaver
             _PreSmoothValue = 0;
             _Smoothing = 0.2f;
             _LimiterMode = InputLimitMode.Clip;
-            _FlipOutput = false;
+            _InvertModulation = false;
             _ModulationExponent = 1f;
             _ModulationAmount = 0;
             _Result = 0;
             _PreviousVector = Vector3.zero;
         }
 
-        [HorizontalLine(color: EColor.Blue)]
+        [HorizontalLine(color: EColor.Gray)]
         public InputSourceGroups _ValueSource;
 
         [ShowIf("ScenePropertySelected")]
@@ -90,11 +93,11 @@ namespace PlaneWaver
         [SerializeField][Range(0f, 1f)] private float _Smoothing;
         [SerializeField] private InputLimitMode _LimiterMode;
 
-        [SerializeField] private bool _FlipOutput;
+        [SerializeField] private bool _InvertModulation;
         [SerializeField][Range(0.5f, 5.0f)] private float _ModulationExponent;
         [SerializeField][Range(-1f, 1f)] private float _ModulationAmount;
 
-        [HorizontalLine(color: EColor.Blue)]
+        [HorizontalLine(color: EColor.Gray)]
         [SerializeField][Range(0f, 1f)] private float _Result;
 
         public float Smoothing => _ValueSource != InputSourceGroups.ActorCollisions ? _Smoothing : 0;
@@ -110,64 +113,60 @@ namespace PlaneWaver
 
         public float GetProcessedValue()
         {
-            if (!_Initialised)
-                return 0;
+            //if (!_Initialised)
+            //    return 0;
 
             GenerateRawValue();
-            ProcessValue();
+            _Result = ProcessValue(_InputValue);
             return _Result;
         }
 
-        public float GetProcessedValue(float offsetInputValue)
+        public float GetProcessedValue(float offset)
         {
-            if (!_Initialised)
-                return offsetInputValue;
+            //if (!_Initialised)
+            //    return offset;
 
             GenerateRawValue();
-            ProcessValue(offsetInputValue);
+            _Result = ApplyModulationToOffset(offset, ProcessValue(_InputValue));
             return _Result;
         }
 
         //float parameterRange = Mathf.Abs(mod._Max - mod._Min);
         //float modulation = Mathf.Pow(mod._Input / 1, mod._Exponent) * mod._Modulation * parameterRange;
 
-        private void ProcessValue(float offsetInputValue = float.MaxValue)
+        private float ProcessValue(float inputValue)
         {
-            float newValue = MaxMath.ScaleToNormNoClamp(_InputValue, _InputRange) * _AdjustMultiplier;
+            float newValue = MaxMath.ScaleToNormNoClamp(inputValue, _InputRange) * _AdjustMultiplier;
             _PreSmoothValue = _OnNewValue == InputOnNewValue.Accumulate ? _PreSmoothValue + newValue : newValue;
             newValue = MaxMath.Smooth(_PreviousSmoothedValue, _PreSmoothValue, Smoothing, Time.deltaTime);
             _PreviousSmoothedValue = newValue;
 
             if (_LimiterMode == InputLimitMode.Repeat)
-                newValue = Mathf.Repeat(newValue, 1);
+                newValue = newValue.RepeatNorm();
             else if (_LimiterMode == InputLimitMode.PingPong)
-                newValue = Mathf.PingPong(newValue, 1);
+                newValue = newValue.PingPongNorm();
 
-            // TODO: There's very likely a better way to do this. Logic behind this double up is that
-            // the modulation value needs to be scaled with the exponent prior to being applied to the
-            // input value. But it needs to be within 0..1 for correct scaling. So applying the limiter
-            // first resolves its range, and limiting function is reapplied once combined with input.
-            if (offsetInputValue != float.MaxValue)
+            newValue = _InvertModulation ? 1 - newValue : newValue;
+            return newValue;
+        }
+
+        private float ApplyModulationToOffset(float offset, float modulation)
+        {
+            modulation = Mathf.Pow(modulation, Exponent) * Amount;
+            float result = offset + modulation;
+
+            if (_LimiterMode == InputLimitMode.Repeat)
             {
-                newValue = Mathf.Pow(newValue / 1, Exponent) * Amount;
-                newValue += offsetInputValue;
-
-                if (_LimiterMode == InputLimitMode.Repeat)
-                {
-                    if (newValue < 0)       newValue = 1;
-                    else if (newValue > 1)  newValue -= 1;
-                }
-                else if (_LimiterMode == InputLimitMode.PingPong)
-                {
-                    if (newValue < 0)       newValue = -newValue;
-                    else if (newValue > 1)  newValue = 1 - newValue;
-                }
+                if (result < 0)         result += 1;
+                else if (result > 1)    result -= 1;
+            }
+            else if (_LimiterMode == InputLimitMode.PingPong)
+            {
+                if (result < 0)         result = -result;
+                else if (result > 1)    result = -result + 1;
             }
 
-            newValue = Mathf.Clamp01(newValue);
-            newValue = _FlipOutput ? 1 - newValue : newValue;
-
-            _Result = newValue;
+            return result;
         }
 
         private void GenerateRawValue()

@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 2138677392}
-  m_IndirectSpecularColor: {r: 474.00317, g: 448.15112, b: 460.06836, a: 1}
+  m_IndirectSpecularColor: {r: 474.4679, g: 447.656, b: 454.7661, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -463,7 +463,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &22275141
 Transform:
   m_ObjectHideFlags: 0
@@ -7243,7 +7243,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -7267,7 +7267,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -7290,7 +7290,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -7313,7 +7313,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -7336,7 +7336,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -11959,7 +11959,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1975585486
 Transform:
   m_ObjectHideFlags: 0
@@ -12055,7 +12055,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -12079,7 +12079,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -12102,7 +12102,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -12125,7 +12125,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -12148,7 +12148,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -12987,7 +12987,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0.3
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -12996,7 +12996,7 @@ MonoBehaviour:
     _Multiplier: 0.1
     _Speed: 1
     _Perlin: 0
-  _PlayheadStartPosition: {x: 0.39360937, y: 0.7739394}
+  _PlayheadStartPosition: {x: 0.36206365, y: 0.7423936}
   _PlayheadIdle: 0.5
   _PlayheadModulation:
     _ValueSource: 1
@@ -13011,7 +13011,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0.2
     _LimiterMode: 1
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 1
     _ModulationAmount: 1
     _Result: 0
@@ -13034,7 +13034,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -13057,7 +13057,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -13080,7 +13080,7 @@ MonoBehaviour:
     _PreSmoothValue: 0
     _Smoothing: 0
     _LimiterMode: 0
-    _FlipOutput: 0
+    _InvertModulation: 0
     _ModulationExponent: 0
     _ModulationAmount: 0
     _Result: 0
@@ -13848,7 +13848,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7410472104914952606}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
   m_ConstrainProportionsScale: 1
   m_Children:

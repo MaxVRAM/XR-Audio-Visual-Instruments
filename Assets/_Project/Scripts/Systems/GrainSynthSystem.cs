@@ -55,6 +55,7 @@ public partial class GrainSynthSystem : SystemBase
 
         WindowingDataComponent windowingData = GetSingleton<WindowingDataComponent>();
         AudioTimerComponent dspTimer = GetSingleton<AudioTimerComponent>();
+        int samplesPerMS = (int)(sampleRate * .001f);
         var randomArray = World.GetExistingSystem<RandomSystem>().RandomArray;
 
         #region EMIT GRAINS
@@ -79,7 +80,7 @@ public partial class GrainSynthSystem : SystemBase
 
                 // Compute first grain value
                 float density = ComputeEmitterParameter(emitter._Density, randomDensity);
-                int duration = (int)ComputeEmitterParameter(emitter._Duration, randomDuration);
+                int duration = (int)ComputeEmitterParameter(emitter._Duration, randomDuration) * samplesPerMS;
                 int offset = 0;
                 int sampleIndexNextGrainStart = dspTimer._NextFrameIndexEstimate;
                 if (emitter._LastSampleIndex > 0 && emitter._PreviousGrainDuration > 0)
@@ -107,7 +108,7 @@ public partial class GrainSynthSystem : SystemBase
                                 if (dspChain[j]._SampleTail > dspTailLength)
                                     dspTailLength = dspChain[j]._SampleTail;
 
-                        dspTailLength = Mathf.Clamp(dspTailLength, 0, emitter._OutputSampleRate - duration);
+                        dspTailLength = Mathf.Clamp(dspTailLength, 0, sampleRate - duration);
                         Entity grainProcessorEntity = ecb.CreateEntity(entityInQueryIndex);
                         // Add ping-pong tag if needed
                         int clipLength = audioClipData[emitter._AudioClipIndex]._ClipDataBlobAsset.Value.array.Length;
@@ -148,7 +149,7 @@ public partial class GrainSynthSystem : SystemBase
                     randomDensity = randomGen.NextFloat(-1, 1);
                     randomArray[nativeThreadIndex] = randomGen;
                     // Compute grain values for next iteration
-                    duration = (int)ComputeEmitterParameter(emitter._Duration, randomDuration);
+                    duration = (int)ComputeEmitterParameter(emitter._Duration, randomDuration) * samplesPerMS;
                     density = ComputeEmitterParameter(emitter._Density, randomDensity);
                     offset = (int)(duration / density);
                     sampleIndexNextGrainStart += offset;
@@ -216,7 +217,7 @@ public partial class GrainSynthSystem : SystemBase
                                 if (dspChain[j]._SampleTail > dspTailLength)
                                     dspTailLength = dspChain[j]._SampleTail;
 
-                        dspTailLength = Mathf.Clamp(dspTailLength, 0, burst._OutputSampleRate - duration);
+                        dspTailLength = Mathf.Clamp(dspTailLength, 0, sampleRate - duration);
                         Entity grainProcessorEntity = ecb.CreateEntity(entityInQueryIndex);
 
                         //Add ping-pong tag if needed
@@ -418,20 +419,9 @@ public partial class GrainSynthSystem : SystemBase
     {
         float parameterRange = Mathf.Abs(mod._Max - mod._Min);
         //float modulation = Mathf.Pow(mod._Input / 1, mod._Exponent) * mod._Modulation * parameterRange;
-        
-        // OPTIMISATION OPPORTUNITY: Separate the modulation and randomise sections.
-        // This entire function is called for every grain, when only the randomisation value will ever change between grains.
-        // Instead, the the modulation and random values could be processed and returned independantly,
-        // storing the unchanging modulation values for the entire emitter.
-
-        float random;
-        if (mod._PerlinNoise)
-            random = mod._PerlinValue * mod._Noise * parameterRange;
-        else
-            random = randomValue * mod._Noise * parameterRange;
-
+        float random = mod._PerlinNoise ? mod._PerlinValue * mod._Noise : randomValue * mod._Noise;
         //return Mathf.Clamp(mod._StartValue + modulation + random, mod._Min, mod._Max);
-        return Mathf.Clamp(mod._StartValue + random, mod._Min, mod._Max);
+        return Mathf.Clamp(mod._Min + (mod._StartValue + random) * parameterRange, mod._Min, mod._Max);
     }
 
     public static float ComputeBurstParameter(ModulationComponent mod, float currentGrain, float totalGrains, float randomValue)

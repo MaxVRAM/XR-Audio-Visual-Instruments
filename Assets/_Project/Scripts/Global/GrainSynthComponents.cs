@@ -142,7 +142,6 @@ public struct ContinuousComponent : IComponentData
     public int _AudioClipIndex;
     public bool _PingPong;
     public bool _IsPlaying;
-    public int _OutputSampleRate;
     public float _VolumeAdjust;
     public float _DistanceAmplitude;
     public int _LastSampleIndex;
@@ -164,7 +163,6 @@ public struct BurstComponent : IComponentData
     public int _AudioClipIndex;
     public bool _PingPong;
     public bool _IsPlaying;
-    public int _OutputSampleRate;
     public float _VolumeAdjust;
     public float _DistanceAmplitude;
     public ModulationComponent _Length;
