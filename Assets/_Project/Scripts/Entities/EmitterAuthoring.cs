@@ -21,7 +21,7 @@ namespace PlaneWaver
         public enum EmitterType { Continuous, Burst }
 
         public AudioAssetScriptable _AudioAsset;
-        
+
         [AllowNesting]
         [BoxGroup("Emitter Setup")]
         [SerializeField] protected HostAuthoring _Host;
@@ -32,9 +32,7 @@ namespace PlaneWaver
         [BoxGroup("Emitter Setup")]
         [SerializeField] protected Condition _PlaybackCondition = Condition.Always;
 
-        public HostAuthoring Host => _Host;
-
-        private ModulationStruct[] _ModulationInputs;
+        public HostAuthoring Host { get => _Host; set => _Host = value; }
 
         [AllowNesting]
         [BoxGroup("Playback Setup")]
@@ -54,7 +52,7 @@ namespace PlaneWaver
         [AllowNesting]
         [BoxGroup("Playback Setup")]
         [Tooltip("Multiplies the emitter's output by the rigidity value of the colliding surface.")]
-        public bool _ColliderRigidityVolumeScale = false;
+        public bool _CollisionRigidityScaleVolume = false;
 
         public DSP_Class[] _DSPChainParams;
 
@@ -87,28 +85,31 @@ namespace PlaneWaver
 
         #region ENTITY-SPECIFIC START CALL
 
-        void Start()
-        {
-            if (_Host == null && !gameObject.TryGetComponent(out _Host) 
-                && transform.parent == null && !transform.parent.TryGetComponent(out _Host))
-            {
-                Debug.Log($"Emitter {name} cannot find host to attach to. Destroying.");
-                Destroy(this);
-            }
 
+        public void InitialiseByHost(HostAuthoring host)
+        {
+            if (_AudioAsset == null)
+            {
+                Debug.Log($"No audio asset attached to {name}. Killing object.");
+                Destroy(gameObject);
+            }
+            _Host = host;
             _SampleRate = AudioSettings.outputSampleRate;
             _SamplesPerMS = _SampleRate * 0.001f;
-
-            _PerlinSeedArray = new float[10];
-            for (int i = 0; i < _PerlinSeedArray.Length; i++)
-            {
-                float offset = Random.Range(0, 1000);
-                _PerlinSeedArray[i] = Mathf.PerlinNoise(offset, offset * 0.5f);
-            }
+            UpdateContactStatus(null);
+            InitialisePerlinNoise();
+            InitialiseModulationInputs();
 
             _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
             SetIndex(GrainSynth.Instance.RegisterEmitter(this));
-            UpdateContactStatus(null);
+        }
+
+        public virtual ModulationStruct[] GatherModulationInputs() { return new ModulationStruct[0]; }
+
+        public void InitialiseModulationInputs()
+        { 
+            foreach (var input in GatherModulationInputs())
+                input.SetActors(Host._LocalActor, Host._RemoteActor);
         }
 
         #endregion
@@ -139,19 +140,6 @@ namespace PlaneWaver
                     _EntityManager.AddComponent<PlayingTag>(_Entity);
                 else
                     _EntityManager.RemoveComponent<PlayingTag>(_Entity);
-            }
-        }
-
-        public virtual ModulationStruct[] GatherModulationInputs() { return new ModulationStruct[0]; }
-
-        public void InitialiseHostParameters(HostAuthoring host, Actor actorA, Actor actorB)
-        {
-            _Host = host;
-            _ModulationInputs = GatherModulationInputs();
-
-            for (int i = 0; i < _ModulationInputs.Length; i++)
-            {
-                _ModulationInputs[i].SetActors(actorA, actorB);
             }
         }
 
@@ -186,10 +174,11 @@ namespace PlaneWaver
             {
                 if (Time.fixedTime < _LastTriggeredAt + GrainSynth.Instance._BurstDebounceDurationMS * 0.001f)
                     return;
+
                 if (ColliderMoreRigid(collision.collider, _Host.SurfaceRigidity, out float otherRigidity) && OnlyTriggerMostRigid)
                     return;
 
-                _ColliderRigidityVolume = _ColliderRigidityVolumeScale ? (_Host.SurfaceRigidity + otherRigidity) / 2 : 1;
+                _ColliderRigidityVolume = (_Host.SurfaceRigidity + otherRigidity) / 2;
                 _LastTriggeredAt = Time.fixedTime;
                 _IsPlaying = true;
             }
@@ -212,27 +201,37 @@ namespace PlaneWaver
             if (collision == null)
             {
                 _ColliderRigidityVolume = 1;
-                _IsPlaying = false;
+                _IsPlaying = _PlaybackCondition == Condition.Always;
                 return;
             }
 
-            if (ColliderMoreRigid(collision.collider, _Host.CollidingRigidity, out float otherRigidity) && OnlyTriggerMostRigid)
+            if (ColliderMoreRigid(collision.collider, _Host.SurfaceRigidity, out float otherRigidity) && OnlyTriggerMostRigid)
             {
                 _IsPlaying = false;
             }
             else
             {
-                _ColliderRigidityVolume = _ColliderRigidityVolumeScale ? (_Host.CollidingRigidity + otherRigidity) / 2 : 0;
+                _ColliderRigidityVolume = (_Host.CollidingRigidity + otherRigidity) / 2;
                 _IsPlaying = true;
             }
         }
 
-        protected bool OnlyTriggerMostRigid { get { return GrainSynth.Instance._OnlyTriggerMostRigidSurface; } }
+        protected bool OnlyTriggerMostRigid => GrainSynth.Instance._OnlyTriggerMostRigidSurface;
 
         public static bool ColliderMoreRigid(Collider collider, float rigidity, out float otherRigidity)
         {
             otherRigidity = collider.TryGetComponent(out SurfaceProperties otherSurface) ? otherSurface._Rigidity : 0.5f;
             return otherSurface != null && otherSurface.IsEmitter && otherSurface._Rigidity >= rigidity;
+        }
+
+        public void InitialisePerlinNoise()
+        {
+            _PerlinSeedArray = new float[10];
+            for (int i = 0; i < _PerlinSeedArray.Length; i++)
+            {
+                float offset = Random.Range(0, 1000);
+                _PerlinSeedArray[i] = Mathf.PerlinNoise(offset, offset * 0.5f);
+            }
         }
 
         public float GetPerlinValue(int parameterIndex, float speed = 1f)

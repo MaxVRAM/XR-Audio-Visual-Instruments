@@ -90,7 +90,7 @@ namespace PlaneWaver
 
         private Vector3 _PreviousVector = Vector3.zero;
 
-        public bool ScenePropertySelected() { return _ValueSource == InputSourceGroups.SceneProperties; }
+        public bool ScenePropertySelected() { return _ValueSource == InputSourceGroups.General; }
         public bool PrimaryActorSelected() { return _ValueSource == InputSourceGroups.PrimaryActor; }
         public bool LinkedActorsSelected() { return _ValueSource == InputSourceGroups.LinkedActors; }
         public bool CollisionInputSelected() { return _ValueSource == InputSourceGroups.ActorCollisions; }
@@ -124,7 +124,7 @@ namespace PlaneWaver
         {
             switch (_ValueSource)
             {
-                case InputSourceGroups.SceneProperties:
+                case InputSourceGroups.General:
                     GenerateScenePropertyValue();
                     break;
                 case InputSourceGroups.PrimaryActor:
@@ -177,7 +177,7 @@ namespace PlaneWaver
 
     public enum InputOnNewValue { Replace, Accumulate }
 
-    public enum InputSourceGroups { SceneProperties, PrimaryActor, LinkedActors, ActorCollisions }
+    public enum InputSourceGroups { General, PrimaryActor, LinkedActors, ActorCollisions }
 
     public enum GeneralSources { StaticValue, TimeSinceStart, DeltaTime, SpawnAge, SpawnAgeNorm }
 

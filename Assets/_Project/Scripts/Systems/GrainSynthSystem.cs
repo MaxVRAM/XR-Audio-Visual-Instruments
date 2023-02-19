@@ -27,7 +27,6 @@ class RandomSystem : ComponentSystem
     protected override void OnUpdate() { }
 }
 
-
 [UpdateAfter(typeof(AttachmentSystem))]
 public partial class GrainSynthSystem : SystemBase
 {
@@ -42,6 +41,7 @@ public partial class GrainSynthSystem : SystemBase
     protected override void OnUpdate()
     {
         int sampleRate = AudioSettings.outputSampleRate;
+        int samplesPerMS = (int)(sampleRate * .001f);
 
         // Acquire an ECB and convert it to a concurrent one to be able to use it from a parallel job.
         EntityCommandBuffer.ParallelWriter ecb = _CommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
@@ -55,7 +55,6 @@ public partial class GrainSynthSystem : SystemBase
 
         WindowingDataComponent windowingData = GetSingleton<WindowingDataComponent>();
         AudioTimerComponent dspTimer = GetSingleton<AudioTimerComponent>();
-        int samplesPerMS = (int)(sampleRate * .001f);
         var randomArray = World.GetExistingSystem<RandomSystem>().RandomArray;
 
         #region EMIT GRAINS
@@ -186,8 +185,8 @@ public partial class GrainSynthSystem : SystemBase
 
                 int lengthRandom = (int)(randomGen.NextFloat(-1, 1) * burst._Length._Noise * lengthRange);
 
-                int totalGrainCount = (int)Mathf.Clamp(burst._Length._StartValue + lengthModulation + lengthRandom,
-                    burst._Length._Min, burst._Length._Max);
+                int totalBurstLength = (int)Mathf.Clamp(burst._Length._StartValue + lengthModulation + lengthRandom,
+                    burst._Length._Min, burst._Length._Max) * samplesPerMS;
 
                 float randomDensity = randomGen.NextFloat(-1, 1);
                 float randomDuration = randomGen.NextFloat(-1, 1);
@@ -197,16 +196,16 @@ public partial class GrainSynthSystem : SystemBase
 
                 // Compute first grain value
                 int offset = 0;
-                float density = ComputeBurstParameter(burst._Density, offset, totalGrainCount, randomDensity);
-                int duration = (int)ComputeBurstParameter(burst._Duration, offset, totalGrainCount, randomDuration);
+                float density = ComputeBurstParameter(burst._Density, offset, totalBurstLength, randomDensity);
+                int duration = (int)ComputeBurstParameter(burst._Duration, offset, totalBurstLength, randomDuration) * samplesPerMS;
 
-                float playhead = ComputeBurstParameter(burst._Playhead, offset, totalGrainCount, randomPlayhead);
-                float transpose = ComputeBurstParameter(burst._Transpose, offset, totalGrainCount, randomTranspose);
+                float playhead = ComputeBurstParameter(burst._Playhead, offset, totalBurstLength, randomPlayhead);
+                float transpose = ComputeBurstParameter(burst._Transpose, offset, totalBurstLength, randomTranspose);
                 float pitch = Mathf.Pow(2, Mathf.Clamp(transpose, -4f, 4f));
 
-                float volume = ComputeBurstParameter(burst._Volume, offset, totalGrainCount, randomVolume) * burst._VolumeAdjust * burst._DistanceAmplitude;
+                float volume = ComputeBurstParameter(burst._Volume, offset, totalBurstLength, randomVolume) * burst._VolumeAdjust * burst._DistanceAmplitude;
 
-                while (offset < totalGrainCount)
+                while (offset < totalBurstLength)
                 {
                     if (volume > 0.005f)
                     {
@@ -262,12 +261,12 @@ public partial class GrainSynthSystem : SystemBase
                     randomArray[nativeThreadIndex] = randomGen;
                     // Compute grain values for next iteration
                     offset += (int)(duration / density);
-                    density = ComputeBurstParameter(burst._Density, offset, totalGrainCount, randomDensity);
-                    duration = (int)ComputeBurstParameter(burst._Duration, offset, totalGrainCount, randomDuration);
-                    playhead = ComputeBurstParameter(burst._Playhead, offset, totalGrainCount, randomPlayhead);
-                    transpose = ComputeBurstParameter(burst._Transpose, offset, totalGrainCount, randomTranspose);
+                    density = ComputeBurstParameter(burst._Density, offset, totalBurstLength, randomDensity);
+                    duration = (int)ComputeBurstParameter(burst._Duration, offset, totalBurstLength, randomDuration) * samplesPerMS;
+                    playhead = ComputeBurstParameter(burst._Playhead, offset, totalBurstLength, randomPlayhead);
+                    transpose = ComputeBurstParameter(burst._Transpose, offset, totalBurstLength, randomTranspose);
                     pitch = Mathf.Pow(2, Mathf.Clamp(transpose, -4f, 4f));
-                    volume = ComputeBurstParameter(burst._Volume, offset, totalGrainCount, randomVolume) * burst._VolumeAdjust * burst._DistanceAmplitude;
+                    volume = ComputeBurstParameter(burst._Volume, offset, totalBurstLength, randomVolume) * burst._VolumeAdjust * burst._DistanceAmplitude;
                 }
                 burst._IsPlaying = false;
             }
@@ -418,23 +417,19 @@ public partial class GrainSynthSystem : SystemBase
     public static float ComputeEmitterParameter(ModulationComponent mod, float randomValue)
     {
         float parameterRange = Mathf.Abs(mod._Max - mod._Min);
-        //float modulation = Mathf.Pow(mod._Input / 1, mod._Exponent) * mod._Modulation * parameterRange;
         float random = mod._PerlinNoise ? mod._PerlinValue * mod._Noise : randomValue * mod._Noise;
-        //return Mathf.Clamp(mod._StartValue + modulation + random, mod._Min, mod._Max);
         return Mathf.Clamp(mod._Min + (mod._StartValue + random) * parameterRange, mod._Min, mod._Max);
     }
 
-    public static float ComputeBurstParameter(ModulationComponent mod, float currentGrain, float totalGrains, float randomValue)
+    public static float ComputeBurstParameter(ModulationComponent mod, float currentSample, float totalSamples, float randomValue)
     {
         float parameterRange = Mathf.Abs(mod._Max - mod._Min);
-        float timeShaped = Mathf.Pow(currentGrain / totalGrains, mod._Exponent);
+        float timeShaped = Mathf.Pow(currentSample / totalSamples, mod._Exponent);
         float burstPath = timeShaped * (mod._EndValue - mod._StartValue);
         float modulation = mod._Modulation * mod._Input * parameterRange;
 
-        if (mod._LockStartValue)
-            modulation *= timeShaped;
-        else if (mod._LockEndValue)
-            modulation *= 1 - timeShaped;
+        if (mod._FixedStart) modulation *= timeShaped;
+        else if (mod._FixedEnd) modulation *= 1 - timeShaped;
 
         float random = randomValue * mod._Noise * parameterRange;
         return Mathf.Clamp(mod._StartValue + burstPath + modulation + random, mod._Min, mod._Max);

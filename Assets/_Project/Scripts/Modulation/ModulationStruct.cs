@@ -8,16 +8,13 @@ using NaughtyAttributes;
 namespace PlaneWaver
 {
     [Serializable]
-    public struct ModulationStruct
+    public class ModulationStruct
     {
-        private bool _Initialised;
         private Actor _LocalActor;
         private Actor _RemoteActor;
 
         public void SetLocalActor(Actor localActor)
         {
-            if (localActor.Exists())
-                _Initialised = true;
             _LocalActor = localActor;
         }
 
@@ -28,24 +25,17 @@ namespace PlaneWaver
 
         public void SetActors(Actor localActor, Actor remoteActor)
         {
-            // Not sure why, perhaps passing structs around, but if I debug print _Initialised here it's true.
-            // Then debugging in VS shows it as false when stepping through a call to GetProcessed Value.. hmmm
-            if (localActor.Exists())
-                _Initialised = true;
             _LocalActor = localActor;
             _RemoteActor = remoteActor;
         }
 
-        public ModulationStruct(bool initialised = false)
+        public void ResetModulation()
         {
-            _Initialised = initialised;
-            _LocalActor = new();
-            _RemoteActor = new();
-            _ValueSource = InputSourceGroups.PrimaryActor;
+            _ValueSource = InputSourceGroups.General;
             _SceneProperties = GeneralSources.StaticValue;
             _PrimaryActor = PrimaryActorSources.Speed;
             _LinkedActors = LinkedActorSources.Radius;
-            _ActorCollisions = ActorCollisionSources.CollisionForce;
+            _ActorCollisions = ActorCollisionSources.CollisionSpeed;
             _InputValue = 0;
             _PreviousSmoothedValue = 0;
             _InputRange = new(0, 1);
@@ -54,7 +44,6 @@ namespace PlaneWaver
             _PreSmoothValue = 0;
             _Smoothing = 0.2f;
             _LimiterMode = InputLimitMode.Clip;
-            _InvertModulation = false;
             _ModulationExponent = 1f;
             _ModulationAmount = 0;
             _Result = 0;
@@ -62,81 +51,84 @@ namespace PlaneWaver
         }
 
         [HorizontalLine(color: EColor.Gray)]
-        public InputSourceGroups _ValueSource;
+        public InputSourceGroups _ValueSource = InputSourceGroups.General;
 
         [ShowIf("ScenePropertySelected")]
         [AllowNesting]
-        public GeneralSources _SceneProperties;
+        public GeneralSources _SceneProperties = GeneralSources.StaticValue;
 
         [ShowIf("PrimaryActorSelected")]
         [AllowNesting]
-        public PrimaryActorSources _PrimaryActor;
+        public PrimaryActorSources _PrimaryActor = PrimaryActorSources.Speed;
 
         [ShowIf("LinkedActorsSelected")]
         [AllowNesting]
-        public LinkedActorSources _LinkedActors;
+        public LinkedActorSources _LinkedActors = LinkedActorSources.Radius;
 
         [ShowIf("CollisionInputSelected")]
         [AllowNesting]
-        public ActorCollisionSources _ActorCollisions;
+        public ActorCollisionSources _ActorCollisions = ActorCollisionSources.CollisionSpeed;
 
-        [SerializeField] private float _InputValue;
-        private float _PreviousSmoothedValue;
-
-        [HorizontalLine(color: EColor.Clear)]
-        [SerializeField] private Vector2 _InputRange;
-        [SerializeField] private float _AdjustMultiplier;
-        [SerializeField] private InputOnNewValue _OnNewValue;
-        [SerializeField] private float _PreSmoothValue;
+        [SerializeField] private float _InputValue = 0;
+        private float _PreviousSmoothedValue = 0;
 
         [HorizontalLine(color: EColor.Clear)]
-        [SerializeField][Range(0f, 1f)] private float _Smoothing;
-        [SerializeField] private InputLimitMode _LimiterMode;
+        [SerializeField] private Vector2 _InputRange = new (0, 1);
+        [SerializeField] private float _AdjustMultiplier = 1;
+        [SerializeField] private InputOnNewValue _OnNewValue = InputOnNewValue.Replace;
+        [SerializeField] private float _PreSmoothValue = 0;
 
-        [SerializeField] private bool _InvertModulation;
-        [SerializeField][Range(0.5f, 5.0f)] private float _ModulationExponent;
-        [SerializeField][Range(-1f, 1f)] private float _ModulationAmount;
+        [HorizontalLine(color: EColor.Clear)]
+        [SerializeField][Range(0f, 1f)] private float _Smoothing = 0.2f;
+        [SerializeField] private InputLimitMode _LimiterMode = InputLimitMode.Clip;
+        [ShowIf("ClipLimitingApplied")]
+        [AllowNesting]
+        [SerializeField][Range(0.5f, 5.0f)] private float _ModulationExponent = 1f;
 
         [HorizontalLine(color: EColor.Gray)]
-        [SerializeField][Range(0f, 1f)] private float _Result;
+        [SerializeField][Range(-1f, 1f)] private float _ModulationAmount = 0;
+        [SerializeField][Range(0f, 1f)] private float _Result = 0;
+
+        private Vector3 _PreviousVector = Vector3.zero;
 
         public float Smoothing => _ValueSource != InputSourceGroups.ActorCollisions ? _Smoothing : 0;
         public float Exponent => _ModulationExponent;
         public float Amount => _ModulationAmount;
 
-        private Vector3 _PreviousVector;
 
-        public bool ScenePropertySelected() { return _ValueSource == InputSourceGroups.SceneProperties; }
+        public bool ScenePropertySelected() { return _ValueSource == InputSourceGroups.General; }
         public bool PrimaryActorSelected() { return _ValueSource == InputSourceGroups.PrimaryActor; }
         public bool LinkedActorsSelected() { return _ValueSource == InputSourceGroups.LinkedActors; }
         public bool CollisionInputSelected() { return _ValueSource == InputSourceGroups.ActorCollisions; }
+        public bool ClipLimitingApplied => _LimiterMode == InputLimitMode.Clip;
 
         public float GetProcessedValue()
         {
-            //if (!_Initialised)
-            //    return 0;
-
-            GenerateRawValue();
-            _Result = ProcessValue(_InputValue);
+            if (_LocalActor == null || _ModulationAmount == 0)
+                _Result = 0;
+            else
+            {
+                GenerateRawValue();
+                _Result = ProcessValue(_InputValue);
+            }
             return _Result;
         }
 
         public float GetProcessedValue(float offset)
         {
-            //if (!_Initialised)
-            //    return offset;
-
-            GenerateRawValue();
-            _Result = ApplyModulationToOffset(offset, ProcessValue(_InputValue));
+            if (_LocalActor == null || _ModulationAmount == 0)
+                _Result = offset;
+            else
+            {
+                GenerateRawValue();
+                _Result = ProcessValue(_InputValue, offset);
+            }
             return _Result;
         }
 
-        //float parameterRange = Mathf.Abs(mod._Max - mod._Min);
-        //float modulation = Mathf.Pow(mod._Input / 1, mod._Exponent) * mod._Modulation * parameterRange;
-
         private float ProcessValue(float inputValue)
         {
-            float newValue = MaxMath.ScaleToNormNoClamp(inputValue, _InputRange) * _AdjustMultiplier;
+            float newValue = MaxMath.Map(inputValue, _InputRange, 0, 1) * _AdjustMultiplier;
             _PreSmoothValue = _OnNewValue == InputOnNewValue.Accumulate ? _PreSmoothValue + newValue : newValue;
             newValue = MaxMath.Smooth(_PreviousSmoothedValue, _PreSmoothValue, Smoothing, Time.deltaTime);
             _PreviousSmoothedValue = newValue;
@@ -146,34 +138,31 @@ namespace PlaneWaver
             else if (_LimiterMode == InputLimitMode.PingPong)
                 newValue = newValue.PingPongNorm();
 
-            newValue = _InvertModulation ? 1 - newValue : newValue;
-            return newValue;
+            return Mathf.Clamp01(newValue);
         }
 
-        private float ApplyModulationToOffset(float offset, float modulation)
+        private float ProcessValue(float inputValue, float offset)
         {
-            modulation = Mathf.Pow(modulation, Exponent) * Amount;
-            float result = offset + modulation;
+            float newValue = MaxMath.Map(inputValue, _InputRange, 0, 1) * _AdjustMultiplier;
+            _PreSmoothValue = _OnNewValue == InputOnNewValue.Accumulate ? _PreSmoothValue + newValue : newValue;
+            newValue = MaxMath.Smooth(_PreviousSmoothedValue, _PreSmoothValue, Smoothing, Time.deltaTime);
+            _PreviousSmoothedValue = newValue;
 
-            if (_LimiterMode == InputLimitMode.Repeat)
-            {
-                if (result < 0)         result += 1;
-                else if (result > 1)    result -= 1;
-            }
+            if (_LimiterMode == InputLimitMode.Clip)
+                newValue = offset + Mathf.Pow(newValue, Exponent) * Amount;
+            else if (_LimiterMode == InputLimitMode.Repeat)
+                newValue = newValue.RepeatNorm(Amount, offset);
             else if (_LimiterMode == InputLimitMode.PingPong)
-            {
-                if (result < 0)         result = -result;
-                else if (result > 1)    result = -result + 1;
-            }
+                newValue = newValue.PingPongNorm(Amount, offset);
 
-            return result;
+            return Mathf.Clamp01(newValue);
         }
 
         private void GenerateRawValue()
         {
             switch (_ValueSource)
             {
-                case InputSourceGroups.SceneProperties:
+                case InputSourceGroups.General:
                     GenerateScenePropertyValue();
                     break;
                 case InputSourceGroups.PrimaryActor:

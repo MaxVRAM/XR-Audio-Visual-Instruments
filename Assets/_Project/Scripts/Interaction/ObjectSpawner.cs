@@ -8,6 +8,7 @@ using GD.MinMaxSlider;
 
 using MaxVRAM;
 using MaxVRAM.Ticker;
+using UnityEditor.Rendering;
 
 namespace PlaneWaver
 {
@@ -37,7 +38,7 @@ namespace PlaneWaver
         [SerializeField] private bool _RandomiseSpawnPrefab = false;
         [Tooltip("A list of prebs to spawn can also be supplied, allowing runtime selection of object spawn selection.")]
         [SerializeField] private List<GameObject> _SpawnablePrefabs;
-        public List<GameObject> _ActiveObjects = new List<GameObject>();
+        public List<GameObject> _ActiveObjects = new();
 
         [Header("Spawning Rules")]
         [Tooltip("Number of seconds after this ObjectSpawner is created before it starts spawning loop.")]
@@ -66,10 +67,10 @@ namespace PlaneWaver
         [Header("Visual Feedback")]
         [SerializeField] private ControllerEvent _EmissiveFlashEvent = ControllerEvent.OnSpawn;
         [Tooltip("Emissive brightness range to modulate associated renderers. X = base emissive brightness, Y = brightness on event trigger.")]
-        [MinMaxSlider(-10f, 10f)] public Vector2 _EmissiveBrightness = new Vector2(0, 10);
+        [MinMaxSlider(-10f, 10f)] public Vector2 _EmissiveBrightness = new (0, 10);
         [Tooltip("Supply list of renderers to modulate/flash emissive brightness on selected triggers.")]
-        [SerializeField] private List<Renderer> _ControllerRenderers = new List<Renderer>();
-        private List<Color> _EmissiveColours = new List<Color>();
+        [SerializeField] private List<Renderer> _ControllerRenderers = new ();
+        private List<Color> _EmissiveColours = new ();
         private float _EmissiveIntensity = 0;
 
         [Header("Ejection Physics")]
@@ -78,9 +79,9 @@ namespace PlaneWaver
         [Tooltip("Amount of random spread applied to each spawn direction.")]
         [Range(0f, 1f)] public float _EjectionDirectionVariance = 0;
         [Tooltip("Distance from the anchor that objects will be spawned.")]
-        [MinMaxSlider(0f, 10f)] public Vector2 _EjectionRadiusRange = new Vector2(1, 2);
+        [MinMaxSlider(0f, 10f)] public Vector2 _EjectionRadiusRange = new (1, 2);
         [Tooltip("Speed that spawned objects leave the anchor.")]
-        [MinMaxSlider(0f, 100f)] public Vector2 _EjectionSpeedRange = new Vector2(5, 10);
+        [MinMaxSlider(0f, 100f)] public Vector2 _EjectionSpeedRange = new(5, 10);
 
         [Header("Emitter Behaviour")]
         public bool _AllowSiblingSurfaceContact = true;
@@ -187,8 +188,7 @@ namespace PlaneWaver
                 return;
 
             InstantiatePrefab(out GameObject newObject);
-            SpawnableManager spawnableManager = AttachSpawnableManager(newObject);
-            ConfigureEmitterHost(newObject, _ControllerObject, spawnableManager);
+            ConfigureSpawnedObject(newObject, _ControllerObject);
             newObject.SetActive(true);
             _ActiveObjects.Add(newObject);
 
@@ -237,18 +237,15 @@ namespace PlaneWaver
         }
 
         // TODO: Decouple Synthesis authoring from this
-        public void ConfigureEmitterHost(GameObject actorA, GameObject actorB, SpawnableManager spawnable)
+        public void ConfigureSpawnedObject(GameObject spawned, GameObject controller)
         {
-            if (!actorA.TryGetComponent(out HostAuthoring newHost))
-                newHost = actorA.GetComponentInChildren(typeof(HostAuthoring), true) as HostAuthoring;
+            if (!spawned.TryGetComponent(out HostAuthoring newHost))
+                newHost = spawned.GetComponentInChildren(typeof(HostAuthoring), true) as HostAuthoring;
 
             if (newHost == null)
                 return;
 
-            newHost._Spawner = this;
-            newHost._SpawnLife = spawnable;
-            newHost._LocalActor = new Actor(actorA.transform);
-            newHost._RemoteActor = new Actor(actorB.transform);
+            newHost.AssignControllers(this, AttachSpawnableManager(spawned), spawned.transform, controller.transform);
         }
 
         #endregion

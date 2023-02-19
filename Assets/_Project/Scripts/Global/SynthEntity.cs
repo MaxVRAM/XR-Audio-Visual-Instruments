@@ -21,14 +21,22 @@ namespace PlaneWaver
 
         [AllowNesting]
         [Foldout("Entity Status")]
-        [SerializeField] protected SynthEntityType _EntityType = SynthEntityType.Blank;
+        [ShowNonSerializedField] protected SynthEntityType _EntityType = SynthEntityType.Blank;
         [Foldout("Entity Status")]
-        [SerializeField] protected int _EntityIndex = int.MaxValue;
+        [ShowNonSerializedField] protected int _EntityIndex = int.MaxValue;
         [Foldout("Entity Status")]
-        [SerializeField] protected bool _EntityInitialised = false;
+        [ShowNonSerializedField] protected bool _EntityInitialised = false;
         [Foldout("Entity Status")]
-        [SerializeField] protected bool _ManagerInitialised = false;
+        [ShowNonSerializedField] protected bool _ManagerInitialised = false;
         public int EntityIndex => _EntityIndex;
+
+        public void Awake()
+        {
+            _EntityType = SynthEntityType.Blank;
+            _EntityIndex = int.MaxValue;
+            _EntityInitialised = false;
+            _ManagerInitialised = false;
+        }
 
         #endregion
 

@@ -37,9 +37,11 @@ namespace PlaneWaver
         public SpawnableManager _SpawnLife;
         [AllowNesting]
         [BoxGroup("Interaction")]
+        public Transform _LocalTransform;
         public Actor _LocalActor;
         [AllowNesting]
         [BoxGroup("Interaction")]
+        public Transform _RemoteTransform;
         public Actor _RemoteActor;
         [AllowNesting]
         [BoxGroup("Interaction")]
@@ -82,6 +84,8 @@ namespace PlaneWaver
         [Foldout("Runtime Dynamics")]
         public bool _IsColliding = false;
 
+        private bool _RemotelyAssigned = false;
+
         public bool IsConnected => _Connected;
         public int AttachedSpeakerIndex => _AttachedSpeakerIndex;
         public bool InListenerRadius => _InListenerRadius;
@@ -90,64 +94,71 @@ namespace PlaneWaver
 
         #region ENTITY-SPECIFIC START CALL
 
-        void Awake()
-        {
-        }
-
         void Start()
         {
             InitialiseModules();
-            InitialiseEmitters();
-
-            _HeadTransform = FindObjectOfType<Camera>().transform;
-            _SpeakerTarget = _SpeakerTarget != null ? _SpeakerTarget : transform;
-            _SpeakerTransform = _SpeakerTarget;
-
-            if (_AttachmentLine = TryGetComponent(out _AttachmentLine) ? _AttachmentLine : gameObject.AddComponent<AttachmentLine>())
-            _AttachmentLine._TransformA = _SpeakerTarget;
 
             _EntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-            _Archetype = _EntityManager.CreateArchetype(
-                typeof(Translation),
-                typeof(HostComponent));
-
+            _Archetype = _EntityManager.CreateArchetype(typeof(Translation), typeof(HostComponent));
             SetIndex(GrainSynth.Instance.RegisterHost(this));
         }
 
         public void InitialiseModules()
         {
-            _LocalActor = _LocalActor.Exists() ? _LocalActor : new Actor(transform);
-            _RemoteActor = _RemoteActor.Exists() ? _RemoteActor : new Actor(false);
+            if (!_RemotelyAssigned)
+            {
+                _LocalTransform = transform.parent != null ? transform.parent : transform;
+                if (!_LocalTransform.TryGetComponent(out _SpawnLife))
+                    _SpawnLife = _LocalTransform.gameObject.AddComponent<SpawnableManager>();
+            }
 
-            _SpawnLife = _SpawnLife != null ? _SpawnLife : gameObject.AddComponent<SpawnableManager>();
+            _LocalActor = new(_LocalTransform);
+            _RemoteActor = _RemoteTransform != null ? new(_RemoteTransform) : null;
 
-            if (TryGetComponent(out _SurfaceProperties) || _LocalActor.ActorGameObject.TryGetComponent(out _SurfaceProperties))
+            if (_AttachmentLine = TryGetComponent(out _AttachmentLine) ? _AttachmentLine : gameObject.AddComponent<AttachmentLine>())
+                _AttachmentLine._TransformA = _SpeakerTarget;
+
+            if (TryGetComponent(out _SurfaceProperties) || _LocalTransform.gameObject.TryGetComponent(out _SurfaceProperties))
                 _SelfRigidity = _SurfaceProperties._Rigidity;
+            else
+            {
+                _SurfaceProperties = _LocalTransform.gameObject.AddComponent<SurfaceProperties>();
+                _SurfaceProperties._Rigidity = _SelfRigidity;
+            }
+
+            if (_LocalTransform.TryGetComponent(out Collider _))
+            {
+                // Set up a collision pipe to send collisions from the targeted object here. TODO: Move to event system via Actor struct
+                _CollisionPipeComponent = _LocalTransform.TryGetComponent(out _CollisionPipeComponent) ?
+                    _CollisionPipeComponent : _LocalTransform.gameObject.AddComponent<CollisionPipe>();
+                _CollisionPipeComponent.AddHost(this);
+            }
+
+            _SpeakerTarget = _SpeakerTarget != null ? _SpeakerTarget : transform;
+            _SpeakerTransform = _SpeakerTarget;
+            _HeadTransform = FindObjectOfType<Camera>().transform;
+
+            _HostedEmitters.AddRange(_LocalTransform.GetComponentsInChildren<EmitterAuthoring>());
+
+            foreach (EmitterAuthoring emitter in _HostedEmitters)
+                emitter.InitialiseByHost(this);
+        }
+
+        public void AssignControllers(ObjectSpawner objectSpawner, SpawnableManager spawnableManager, Transform local, Transform remote)
+        {
+            _Spawner = objectSpawner;
+            _SpawnLife = spawnableManager;
+            _LocalTransform = local;
+            _RemoteTransform = remote;
 
             foreach (BehaviourClass behaviour in GetComponents<BehaviourClass>())
             {
-                behaviour._SpawnedObject = _LocalActor.ActorGameObject;
-                behaviour._ControllerObject = _RemoteActor.ActorGameObject;
+                behaviour._SpawnedObject = _LocalTransform.gameObject;
+                behaviour._ControllerObject = _RemoteTransform.gameObject;
                 behaviour._ObjectSpawner = _Spawner;
             }
 
-            if (!_LocalActor.ActorGameObject.TryGetComponent(out Collider _))
-                return;
-            // Set up a collision pipe to send collisions from the targeted object here. TODO: Move to event system via Actor struct
-            _CollisionPipeComponent = _LocalActor.ActorGameObject.TryGetComponent(out _CollisionPipeComponent) ?
-                _CollisionPipeComponent : _LocalActor.ActorGameObject.AddComponent<CollisionPipe>();
-            _CollisionPipeComponent.AddHost(this);
-        }
-
-        public void InitialiseEmitters()
-        {
-            if (transform.parent != null)
-                _HostedEmitters.AddRange(transform.parent.GetComponentsInChildren<EmitterAuthoring>());
-            else
-                _HostedEmitters.AddRange(gameObject.GetComponentsInChildren<EmitterAuthoring>());
-
-            foreach (EmitterAuthoring emitter in _HostedEmitters)
-                emitter.InitialiseHostParameters(this, _LocalActor, _RemoteActor);
+            _RemotelyAssigned = true;
         }
 
         #endregion
@@ -220,10 +231,12 @@ namespace PlaneWaver
             _TargetCollidingRigidity = 0;
 
             foreach (GameObject go in _CollidingObjects)
+            {
                 if (go.TryGetComponent(out SurfaceProperties props))
                 {
                     _TargetCollidingRigidity = _TargetCollidingRigidity > props._Rigidity ? _TargetCollidingRigidity : props._Rigidity;
                 }
+            }
             // Smooth transition to upward rigidity values to avoid randomly triggering surface contact emitters from short collisions
             if (_TargetCollidingRigidity < CollidingRigidity + 0.001f || _EaseCollidingRigidity <= 0)
                 _CollidingRigidity = _TargetCollidingRigidity;
@@ -232,10 +245,10 @@ namespace PlaneWaver
             if (CollidingRigidity < 0.001f) _CollidingRigidity = 0;
         }
 
-
         public void UpdateSpeakerAttachmentLine()
         {
             if (_AttachmentLine != null)
+            {
                 if (_Connected && _SpeakerTransform != _SpeakerTarget && GrainSynth.Instance._DrawAttachmentLines)
                 {
                     _AttachmentLine._Active = true;
@@ -243,6 +256,7 @@ namespace PlaneWaver
                 }
                 else
                     _AttachmentLine._Active = false;
+            }
         }
 
         #endregion
@@ -256,7 +270,7 @@ namespace PlaneWaver
 
             if (ContactAllowed(other)) _LocalActor.LatestCollision = collision;
 
-            if (_Spawner == null || _Spawner.UniqueCollision(_LocalActor.ActorGameObject, other))
+            if (_Spawner == null || _Spawner.UniqueCollision(_LocalTransform.gameObject, other))
                 foreach (EmitterAuthoring emitter in _HostedEmitters)
                     emitter.NewCollision(collision);
         }

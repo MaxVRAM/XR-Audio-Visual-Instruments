@@ -129,8 +129,8 @@ public struct ModulationComponent : IComponentData
     public float _Modulation;
     public float _Min;
     public float _Max;
-    public bool _LockStartValue;
-    public bool _LockEndValue;
+    public bool _FixedStart;
+    public bool _FixedEnd;
     public float _Input;
 }
 

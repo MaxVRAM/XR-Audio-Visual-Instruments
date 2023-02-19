@@ -4,6 +4,8 @@ using Unity.Entities;
 using NaughtyAttributes;
 using UnityEngine;
 
+using Ranges = PlaneWaver.EmitterParameterRanges;
+
 namespace PlaneWaver
 {
     /// <summary>
@@ -24,7 +26,6 @@ namespace PlaneWaver
 
         [HorizontalLine(color: EColor.Gray)]
         private readonly Vector2 _VolumePath = new(0f, 0f);
-        private readonly Vector2 _VolumeRange = new(0f, 2f);
         private readonly bool _VolumeFixedStart = false;
         private readonly bool _VolumeFixedEnd = true;
         public ModulationStruct _VolumeModulation;
@@ -32,17 +33,13 @@ namespace PlaneWaver
 
         [HorizontalLine(color: EColor.Gray)]
         [Range(10f, 1000f)] public float _LengthDefault = 200f;
-        private readonly Vector2 _LengthRange = new(10f, 1000f);
         private readonly bool _LengthFixedStart = false;
         private readonly bool _LengthFixedEnd = false;
         public ModulationStruct _LengthModulation;
         public NoiseModule _LengthNoise;
-        public float LengthDefault => _LengthDefault * _SamplesPerMS;
-        public Vector2 LengthRange => new(_LengthRange.x * _SamplesPerMS, _LengthRange.y * _SamplesPerMS);
 
         [HorizontalLine(color: EColor.Gray)]
         [MinMaxSlider(0f, 1f)] public Vector2 _PlayheadPath = new (0f, 0.5f);
-        private readonly Vector2 _PlayheadRange = new(0f, 1f);
         public bool _PlayheadFixedStart = true;
         public bool _PlayheadFixedEnd = false;
         public ModulationStruct _PlayheadModulation;
@@ -50,17 +47,13 @@ namespace PlaneWaver
 
         [HorizontalLine(color: EColor.Gray)]
         [MinMaxSlider(10f, 500f)] public Vector2 _DurationPath = new (80f, 120f);
-        private readonly Vector2 _DurationRange = new(10f, 500f);
         public bool _DurationFixedStart = false;
         public bool _DurationFixedEnd = true;
         public ModulationStruct _DurationModulation;
         public NoiseModule _DurationNoise;
-        public Vector2 DurationPath => new(_DurationPath.x * _SamplesPerMS, _DurationPath.y * _SamplesPerMS);
-        public Vector2 DurationRange => new(_DurationRange.x * _SamplesPerMS, _DurationRange.y * _SamplesPerMS);
 
         [HorizontalLine(color: EColor.Gray)]
         [MinMaxSlider(1f, 10f)] public Vector2 _DensityPath = new (2f, 3f);
-        private readonly Vector2 _DensityRange = new(1f, 10f);
         public bool _DensityFixedStart = false;
         public bool _DensityFixedEnd = false;
         public ModulationStruct _DensityModulation;
@@ -68,7 +61,6 @@ namespace PlaneWaver
 
         [HorizontalLine(color: EColor.Gray)]
         [MinMaxSlider(-3f, 3f)] public Vector2 _TransposePath = new(0f, 0f);
-        private readonly Vector2 _TransposeRange = new(-3f, 3f);
         public bool _TransposeFixedStart = false;
         public bool _TransposeFixedEnd = false;
         public ModulationStruct _TransposeModulation;
@@ -119,22 +111,22 @@ namespace PlaneWaver
                     _Exponent = _VolumeModulation.Exponent,
                     _Noise = _VolumeNoise.Amount,
                     _LockNoise = _VolumeNoise._HoldForBurstDuration,
-                    _Min = _VolumeRange.x,
-                    _Max = _VolumeRange.y,
-                    _LockStartValue = _VolumeFixedStart,
-                    _LockEndValue = _VolumeFixedEnd
+                    _Min = Ranges._Volume.x,
+                    _Max = Ranges._Volume.y,
+                    _FixedStart = _VolumeFixedStart,
+                    _FixedEnd = _VolumeFixedEnd
                 },
                 _Length = new ModulationComponent
                 {
-                    _StartValue = LengthDefault,
+                    _StartValue = _LengthDefault,
                     _Modulation = _LengthModulation.Amount,
                     _Exponent = _LengthModulation.Exponent,
                     _Noise = _LengthNoise.Amount,
                     _LockNoise = true,
-                    _Min = LengthRange.x,
-                    _Max = LengthRange.y,
-                    _LockStartValue = _LengthFixedStart,
-                    _LockEndValue = _LengthFixedStart
+                    _Min = Ranges._Length.x,
+                    _Max = Ranges._Length.y,
+                    _FixedStart = _LengthFixedStart,
+                    _FixedEnd = _LengthFixedStart
                 },
                 _Playhead = new ModulationComponent
                 {
@@ -144,23 +136,23 @@ namespace PlaneWaver
                     _Exponent = _PlayheadModulation.Exponent,
                     _Noise = _PlayheadNoise.Amount,
                     _LockNoise = _PlayheadNoise._HoldForBurstDuration,
-                    _Min = _PlayheadRange.x,
-                    _Max = _PlayheadRange.y,
-                    _LockStartValue = _PlayheadFixedStart,
-                    _LockEndValue = _PlayheadFixedEnd
+                    _Min = Ranges._Playhead.x,
+                    _Max = Ranges._Playhead.y,
+                    _FixedStart = _PlayheadFixedStart,
+                    _FixedEnd = _PlayheadFixedEnd
                 },
                 _Duration = new ModulationComponent
                 {
-                    _StartValue = DurationPath.x,
-                    _EndValue = DurationPath.y,
+                    _StartValue = _DurationPath.x,
+                    _EndValue = _DurationPath.y,
                     _Modulation = _DurationModulation.Amount,
                     _Exponent = _DurationModulation.Exponent,
                     _Noise = _DurationNoise.Amount,
                     _LockNoise = _DurationNoise._HoldForBurstDuration,
-                    _Min = DurationRange.x,
-                    _Max = DurationRange.y,
-                    _LockStartValue = _DurationFixedStart,
-                    _LockEndValue = _DurationFixedEnd
+                    _Min = Ranges._Duration.x,
+                    _Max = Ranges._Duration.y,
+                    _FixedStart = _DurationFixedStart,
+                    _FixedEnd = _DurationFixedEnd
                 },
                 _Density = new ModulationComponent
                 {
@@ -169,10 +161,10 @@ namespace PlaneWaver
                     _Modulation = _DensityModulation.Amount,
                     _Exponent = _DensityModulation.Exponent,
                     _Noise = _DensityNoise.Amount,
-                    _Min = _DensityRange.x,
-                    _Max = _DensityRange.y,
-                    _LockStartValue = _DensityFixedStart,
-                    _LockEndValue = _DensityFixedEnd
+                    _Min = Ranges._Density.x,
+                    _Max = Ranges._Density.y,
+                    _FixedStart = _DensityFixedStart,
+                    _FixedEnd = _DensityFixedEnd
                 },
                 _Transpose = new ModulationComponent
                 {
@@ -181,10 +173,10 @@ namespace PlaneWaver
                     _Modulation = _TransposeModulation.Amount,
                     _Exponent = _TransposeModulation.Exponent,
                     _Noise = _TransposeNoise.Amount,
-                    _Min = _TransposeRange.x,
-                    _Max = _TransposeRange.y,
-                    _LockStartValue = _TransposeFixedStart,
-                    _LockEndValue = _TransposeFixedEnd
+                    _Min = Ranges._Transpose.x,
+                    _Max = Ranges._Transpose.y,
+                    _FixedStart = _TransposeFixedStart,
+                    _FixedEnd = _TransposeFixedEnd
                 }
             });
 
@@ -219,29 +211,29 @@ namespace PlaneWaver
 
                 entity._Volume = new ModulationComponent
                 {
-                    _StartValue = _VolumePath.x * _ColliderRigidityVolume,
-                    _EndValue = _VolumePath.y * _ColliderRigidityVolume,
+                    _StartValue = _VolumePath.x * (_CollisionRigidityScaleVolume ? _ColliderRigidityVolume : 1),
+                    _EndValue = _VolumePath.y * (_CollisionRigidityScaleVolume ? _ColliderRigidityVolume : 1),
                     _Modulation = _VolumeModulation.Amount,
                     _Exponent = _VolumeModulation.Exponent,
                     _Noise = _VolumeNoise.Amount,
                     _LockNoise = _VolumeNoise._HoldForBurstDuration,
-                    _Min = _VolumeRange.x,
-                    _Max = _VolumeRange.y,
-                    _LockStartValue = _VolumeFixedStart,
-                    _LockEndValue = _VolumeFixedEnd,
+                    _Min = Ranges._Volume.x,
+                    _Max = Ranges._Volume.y,
+                    _FixedStart = _VolumeFixedStart,
+                    _FixedEnd = _VolumeFixedEnd,
                     _Input = _VolumeModulation.GetProcessedValue()
                 };
                 entity._Length = new ModulationComponent
                 {
-                    _StartValue = LengthDefault,
+                    _StartValue = _LengthDefault,
                     _Modulation = _LengthModulation.Amount,
                     _Exponent = _LengthModulation.Exponent,
                     _Noise = _LengthNoise.Amount,
                     _LockNoise = true,
-                    _Min = LengthRange.x,
-                    _Max = LengthRange.y,
-                    _LockStartValue = _LengthFixedStart,
-                    _LockEndValue = _LengthFixedEnd,
+                    _Min = Ranges._Length.x,
+                    _Max = Ranges._Length.y,
+                    _FixedStart = _LengthFixedStart,
+                    _FixedEnd = _LengthFixedEnd,
                     _Input = _LengthModulation.GetProcessedValue()
                 };
                 entity._Playhead = new ModulationComponent
@@ -252,24 +244,24 @@ namespace PlaneWaver
                     _Exponent = _PlayheadModulation.Exponent,
                     _Noise = _PlayheadNoise.Amount,
                     _LockNoise = _PlayheadNoise._HoldForBurstDuration,
-                    _Min = _PlayheadRange.x,
-                    _Max = _PlayheadRange.y,
-                    _LockStartValue = _PlayheadFixedStart,
-                    _LockEndValue = _PlayheadFixedEnd,
+                    _Min = Ranges._Playhead.x,
+                    _Max = Ranges._Playhead.y,
+                    _FixedStart = _PlayheadFixedStart,
+                    _FixedEnd = _PlayheadFixedEnd,
                     _Input = _PlayheadModulation.GetProcessedValue()
                 };
                 entity._Duration = new ModulationComponent
                 {
-                    _StartValue = DurationPath.x,
-                    _EndValue = DurationPath.y,
+                    _StartValue = _DurationPath.x,
+                    _EndValue = _DurationPath.y,
                     _Modulation = _DurationModulation.Amount,
                     _Exponent = _DurationModulation.Exponent,
                     _Noise = _DurationNoise.Amount,
                     _LockNoise = _DurationNoise._HoldForBurstDuration,
-                    _Min = DurationRange.x,
-                    _Max = DurationRange.y,
-                    _LockStartValue = _DurationFixedStart,
-                    _LockEndValue = _DurationFixedEnd,
+                    _Min = Ranges._Duration.x,
+                    _Max = Ranges._Duration.y,
+                    _FixedStart = _DurationFixedStart,
+                    _FixedEnd = _DurationFixedEnd,
                     _Input = _DurationModulation.GetProcessedValue()
                 };
                 entity._Density = new ModulationComponent
@@ -280,10 +272,10 @@ namespace PlaneWaver
                     _Exponent = _DensityModulation.Exponent,
                     _Noise = _DensityNoise.Amount,
                     _LockNoise = _DensityNoise._HoldForBurstDuration,
-                    _Min = _DensityRange.x,
-                    _Max = _DensityRange.y,
-                    _LockStartValue = _DensityFixedStart,
-                    _LockEndValue = _DensityFixedEnd,
+                    _Min = Ranges._Density.x,
+                    _Max = Ranges._Density.y,
+                    _FixedStart = _DensityFixedStart,
+                    _FixedEnd = _DensityFixedEnd,
                     _Input = _DensityModulation.GetProcessedValue()
                 };
                 entity._Transpose = new ModulationComponent
@@ -294,10 +286,10 @@ namespace PlaneWaver
                     _Exponent = _TransposeModulation.Exponent,
                     _Noise = _TransposeNoise.Amount,
                     _LockNoise = _TransposeNoise._HoldForBurstDuration,
-                    _Min = _TransposeRange.x,
-                    _Max = _TransposeRange.y,
-                    _LockStartValue = _TransposeFixedStart,
-                    _LockEndValue = _TransposeFixedEnd,
+                    _Min = Ranges._Transpose.x,
+                    _Max = Ranges._Transpose.y,
+                    _FixedStart = _TransposeFixedStart,
+                    _FixedEnd = _TransposeFixedEnd,
                     _Input = _TransposeModulation.GetProcessedValue()
                 };
                 _EntityManager.SetComponentData(_Entity, entity);

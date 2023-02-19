@@ -7,7 +7,7 @@ using static MaxVRAM.MaxMath;
 namespace PlaneWaver
 {
     [Serializable]
-    public struct Actor
+    public class Actor
     {
         private readonly Transform _Transform;
         private readonly Rigidbody _Rigidbody;

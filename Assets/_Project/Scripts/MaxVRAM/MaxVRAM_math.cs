@@ -9,6 +9,10 @@ namespace MaxVRAM
         {
             return (val - inMin) / (inMax - inMin) * (outMax - outMin) + outMin;
         }
+        public static float Map(float val, Vector2 inRange, float outMin, float outMax)
+        {
+            return (val - inRange.x) / (inRange.y - inRange.x) * (outMax - outMin) + outMin;
+        }
 
         public static float Map(float val, float inMin, float inMax, float outMin, float outMax, float exp)
         {
