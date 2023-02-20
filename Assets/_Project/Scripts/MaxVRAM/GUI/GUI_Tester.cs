@@ -1,8 +1,23 @@
 using UnityEngine;
-using MaxVRAM.GUI;
+using MaxVRAM;
 
 public class GUI_Tester : MonoBehaviour
 {
-    [MinMidMaxSlider(-20, -10, 20)] public Vector2 _CoolRange = new Vector2(-11, 0);
-    [BidirectionalSliderLocked(-10, 10, true)] public Vector2 _AwesomeLinkedRange = new Vector2(-2, 2);
+    [Range(0, 1)] float _TestSlider = 0;
+    [RangeSlider(0, 10, 0f, 1f)] public Vector2 _DifferentNumbers = new(1, 7);
+    public float _DifferentX = 0;
+    public float _DifferentY = 0;
+    [ValueSlider (0, 10, 0f, 1f)] public float _DifferentNumber = 0;
+    public float _JustDifferent = 0;    
+
+    public void Start()
+    {
+    }
+
+    public void Update()
+    {
+        _DifferentX = _DifferentNumbers.x;
+        _DifferentY = _DifferentNumbers.y;
+        _JustDifferent = _DifferentNumber;
+    }
 }
