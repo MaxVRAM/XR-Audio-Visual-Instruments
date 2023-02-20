@@ -28,47 +28,47 @@ namespace PlaneWaver
         private readonly Vector2 _VolumePath = new(0f, 0f);
         private readonly bool _VolumeFixedStart = false;
         private readonly bool _VolumeFixedEnd = true;
-        public ModulationStruct _VolumeModulation;
+        public ModulationInput _VolumeModulation;
         public NoiseModule _VolumeNoise;
 
         [HorizontalLine(color: EColor.Gray)]
         [Range(10f, 1000f)] public float _LengthDefault = 200f;
         private readonly bool _LengthFixedStart = false;
         private readonly bool _LengthFixedEnd = false;
-        public ModulationStruct _LengthModulation;
+        public ModulationInput _LengthModulation;
         public NoiseModule _LengthNoise;
 
         [HorizontalLine(color: EColor.Gray)]
         [MinMaxSlider(0f, 1f)] public Vector2 _PlayheadPath = new (0f, 0.5f);
         public bool _PlayheadFixedStart = true;
         public bool _PlayheadFixedEnd = false;
-        public ModulationStruct _PlayheadModulation;
+        public ModulationInput _PlayheadModulation;
         public NoiseModule _PlayheadNoise;
 
         [HorizontalLine(color: EColor.Gray)]
         [MinMaxSlider(10f, 500f)] public Vector2 _DurationPath = new (80f, 120f);
         public bool _DurationFixedStart = false;
         public bool _DurationFixedEnd = true;
-        public ModulationStruct _DurationModulation;
+        public ModulationInput _DurationModulation;
         public NoiseModule _DurationNoise;
 
         [HorizontalLine(color: EColor.Gray)]
         [MinMaxSlider(1f, 10f)] public Vector2 _DensityPath = new (2f, 3f);
         public bool _DensityFixedStart = false;
         public bool _DensityFixedEnd = false;
-        public ModulationStruct _DensityModulation;
+        public ModulationInput _DensityModulation;
         public NoiseModule _DensityNoise;
 
         [HorizontalLine(color: EColor.Gray)]
         [MinMaxSlider(-3f, 3f)] public Vector2 _TransposePath = new(0f, 0f);
         public bool _TransposeFixedStart = false;
         public bool _TransposeFixedEnd = false;
-        public ModulationStruct _TransposeModulation;
+        public ModulationInput _TransposeModulation;
         public NoiseModule _TransposeNoise;
 
-        public override ModulationStruct[] GatherModulationInputs()
+        public override ModulationInput[] GatherModulationInputs()
         {
-            ModulationStruct[] modulationInputs = new ModulationStruct[6];
+            ModulationInput[] modulationInputs = new ModulationInput[6];
             modulationInputs[0] = _LengthModulation;
             modulationInputs[1] = _VolumeModulation;
             modulationInputs[2] = _PlayheadModulation;

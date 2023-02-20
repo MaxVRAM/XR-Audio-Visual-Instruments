@@ -9,7 +9,6 @@ using System.IO;
 using Unity.Collections;
 using Unity.Entities;
 
-
 namespace PlaneWaver
 {
     [RequireComponent(typeof(AudioSource))]

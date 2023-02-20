@@ -104,7 +104,7 @@ namespace PlaneWaver
             SetIndex(GrainSynth.Instance.RegisterEmitter(this));
         }
 
-        public virtual ModulationStruct[] GatherModulationInputs() { return new ModulationStruct[0]; }
+        public virtual ModulationInput[] GatherModulationInputs() { return new ModulationInput[0]; }
 
         public void InitialiseModulationInputs()
         { 

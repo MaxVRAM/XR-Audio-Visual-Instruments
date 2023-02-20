@@ -31,7 +31,7 @@ namespace PlaneWaver
         [HorizontalLine(color: EColor.Blue)]
         [Range(0f, 2f)] public float _VolumeIdle = 0f;
         public float VolumeIdleNorm => Mathf.InverseLerp(Ranges._Volume.x, Ranges._Volume.y, _VolumeIdle);
-        public ModulationStruct _VolumeModulation;
+        public ModulationInput _VolumeModulation;
         public NoiseModule _VolumeNoise;
         public float VolumeModulated => _VolumeModulation.GetProcessedValue(VolumeIdleNorm);
 
@@ -39,34 +39,34 @@ namespace PlaneWaver
         [MinMaxSlider(0f, 1f)] public Vector2 _PlayheadStartPosition = new(0.25f,0.75f);
         [SerializeField] private float _PlayheadIdle = 0.5f;
         public float PlayheadIdleNorm => Mathf.InverseLerp(Ranges._Playhead.x, Ranges._Playhead.y, _PlayheadIdle);
-        public ModulationStruct _PlayheadModulation;
+        public ModulationInput _PlayheadModulation;
         public NoiseModule _PlayheadNoise;
         public float PlayheadModulated => _PlayheadModulation.GetProcessedValue(PlayheadIdleNorm);
 
         [HorizontalLine(color: EColor.Blue)]
         [Range(10f, 500f)] public float _DurationIdle = 80f;
         public float DurationIdleNorm => Mathf.InverseLerp(Ranges._Duration.x, Ranges._Duration.y, _DurationIdle);
-        public ModulationStruct _DurationModulation;
+        public ModulationInput _DurationModulation;
         public NoiseModule _DurationNoise;
         public float DurationModulated => _DurationModulation.GetProcessedValue(DurationIdleNorm);
 
         [HorizontalLine(color: EColor.Blue)]
         [Range(1f, 10f)] public float _DensityIdle = 3f;
         public float DensityIdleNorm => Mathf.InverseLerp(Ranges._Density.x, Ranges._Density.y, _DensityIdle);
-        public ModulationStruct _DensityModulation;
+        public ModulationInput _DensityModulation;
         public NoiseModule _DensityNoise;
         public float DensityModulated => _DensityModulation.GetProcessedValue(DensityIdleNorm);
 
         [HorizontalLine(color: EColor.Blue)]
         [Range(-3f, 3f)] public float _TransposeIdle = 0f;
         public float TransposeIdleNorm => Mathf.InverseLerp(Ranges._Transpose.x, Ranges._Transpose.y, _TransposeIdle);
-        public ModulationStruct _TransposeModulation;
+        public ModulationInput _TransposeModulation;
         public NoiseModule _TransposeNoise;
         public float TransposeModulated => _TransposeModulation.GetProcessedValue(TransposeIdleNorm);
 
-        public override ModulationStruct[] GatherModulationInputs()
+        public override ModulationInput[] GatherModulationInputs()
         {
-            ModulationStruct[] modulationInputs = new ModulationStruct[5];
+            ModulationInput[] modulationInputs = new ModulationInput[5];
             modulationInputs[0] = _VolumeModulation;
             modulationInputs[1] = _PlayheadModulation;
             modulationInputs[2] = _DurationModulation;
