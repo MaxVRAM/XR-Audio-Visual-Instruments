@@ -114,8 +114,8 @@ public partial class AttachmentSystem : SystemBase
         //(
         //    (int entityInQueryIndex, Entity entity, ref HostComponent host, in Translation translation) =>
         //    {
-        //        int closestSpeakerIndex = int.MaxValue;
-        //        float closestDist = float.MaxValue;
+        //        int closestSpeakerIndex = int.Max;
+        //        float closestDist = float.Max;
 
         //        for (int i = 0; i < inRangeSpeaker.Length; i++)
         //        {
@@ -131,7 +131,7 @@ public partial class AttachmentSystem : SystemBase
         //            }
         //        }
 
-        //        if (closestSpeakerIndex != int.MaxValue)
+        //        if (closestSpeakerIndex != int.Max)
         //        {
         //            host._Connected = true;
         //            host._SpeakerIndex = closestSpeakerIndex;
