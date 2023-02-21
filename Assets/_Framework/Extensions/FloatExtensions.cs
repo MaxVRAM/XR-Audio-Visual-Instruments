@@ -30,7 +30,7 @@ public static class FloatExtensions
     }
 
     // alternative to Mathf.Lerp() - if value lies within epsilon of targ, then targ is returned
-    public static float Lerp(this float src, float targ, float t, float epsilon)
+    public static float Lerp(this float src, float targ, float t, float epsilon = 0.001f)
     {
         if (t <= 0.0f)
             return src;
@@ -48,40 +48,23 @@ public static class FloatExtensions
 
 
 
-    public static float Scale(this float val, float fromMin, float fromMax, float toMin, float toMax)
+    public static float Scale(this float val, float inLower, float inUpper, float outLower, float outUpper)
     {
-        float fromRange = fromMax - fromMin;
-        float toRange = toMax - toMin;
+        float fromRange = inUpper - inLower;
+        float toRange = outUpper - outLower;
 
         if (fromRange == 0)
             return 0;
 
-        float fromNormalizedValue = Mathf.Clamp01((val - fromMin) / fromRange);
-        float scaledVal = toMin + ((toRange) * fromNormalizedValue);
-        return Mathf.Clamp(scaledVal, toMin, toMax);    // Clamp value to toRange
+        float fromNormalizedValue = Mathf.Clamp01((val - inLower) / fromRange);
+        float scaledVal = outLower + ((toRange) * fromNormalizedValue);
+        return Mathf.Clamp(scaledVal, outLower, outUpper);    // Clamp value to toRange
     }
 
-    public static float Scale(this float val, Vector2 fromRangeVals, Vector2 toRangeVals)
+    public static float Scale(this float val, Vector2 inRange, Vector2 outRange)
     {
-        float norm = Mathf.InverseLerp(fromRangeVals.x, fromRangeVals.y, val);
-        return Mathf.Lerp(toRangeVals.x, toRangeVals.y, norm);
-
-        //float fromRange = fromRangeVals.y - fromRangeVals.x;
-        //float toRange = toRangeVals.y - toRangeVals.x;
-
-        //if (fromRange == 0)
-        //    return 0;
-
-        //float fromNormalizedValue = Mathf.Clamp01((val - fromRangeVals.x) / fromRange);
-
-        //float scaledVal;
-
-        //if (toRangeVals.y < toRangeVals.x)
-        //    scaledVal = toRangeVals.y + ((toRange) * (1 - fromNormalizedValue));
-        //else
-        //    scaledVal = toRangeVals.x + ((toRange) * fromNormalizedValue);
-
-        //return Mathf.Clamp(scaledVal, toRangeVals.x, toRangeVals.y);    // Clamp value to toRange
+        float norm = Mathf.InverseLerp(inRange.x, inRange.y, val);
+        return Mathf.Lerp(outRange.x, outRange.y, norm);
     }
 
     public static float ScaleTo01(this float val, float min, float max)
@@ -133,23 +116,14 @@ public static class FloatExtensions
             normaliedVal = 1 - normaliedVal;
         }
 
-
         val = min + ((max - min) * normaliedVal);
         val = Mathf.Clamp(val, min, max);
         return val;
     }
 
-    public static float MirrorNormalized(this float normaliedVal)
+    public static float MirrorNorm(this float value)
     {
-        if (normaliedVal > .5f)
-        {
-            normaliedVal = 1 - normaliedVal;
-        }
-        else
-            normaliedVal *= 2;
-
-
-        return normaliedVal;
+        return value > 0.5f ? 1 - value : value * 2;
     }
 
 

@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Emitter
   - Speaker
+  - Input Values
+  - Audio System
   layers:
   - Default
   - TransparentFX
@@ -13,20 +15,20 @@ TagManager:
   - 
   - Water
   - UI
+  - SceneFX
   - 
-  - 
-  - Interactables
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - SonicObject
+  - SonicSurface
+  - SonicParticle
+  - SonicController
+  - SonicVFX
+  - SonicContainer
+  - SceneSurfaces
   - 
   - 
   - 
+  - Speakers
+  - ManagersAndSystems
   - 
   - 
   - 

@@ -48,11 +48,21 @@ public class Input_MouseLookAndKBMove : MonoBehaviour
 		{
             if (_RequreRightClick && !Input.GetMouseButton(1)) return;
 
-				// Ensure the cursor is always locked when set
-				Screen.lockCursor = lockCursor;
-		
-				// Allow the script to clamp based on a desired target value.
-				var targetOrientation = Quaternion.Euler (targetDirection);
+			// Ensure the cursor is always locked when set
+			// Replacement for obsolete `Screen.lockCursor = lockCursor;`
+			if (lockCursor)
+				{
+					Cursor.visible = false;
+					Cursor.lockState = CursorLockMode.Locked;
+				}
+				else
+				{
+					Cursor.lockState = CursorLockMode.None;
+					Cursor.visible = true;
+				}
+
+        // Allow the script to clamp based on a desired target value.
+        var targetOrientation = Quaternion.Euler (targetDirection);
 				var targetCharacterOrientation = Quaternion.Euler (targetCharacterDirection);
 		
 				// Get raw mouse input for a cleaner reading on more sensitive mice.

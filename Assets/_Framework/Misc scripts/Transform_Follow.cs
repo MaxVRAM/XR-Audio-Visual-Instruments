@@ -9,7 +9,7 @@ namespace EXP
     {
         #region VARIABLES
 
-        [Header("Transform Follow Base")]
+        [Header("ActorTransform Follow Base")]
         public Transform _TransformToFollow;
         public float _FollowSmoothing = 8;
         public bool _ParentAtStart = false;

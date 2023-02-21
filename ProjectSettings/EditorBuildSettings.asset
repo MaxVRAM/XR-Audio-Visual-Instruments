@@ -6,27 +6,39 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
-    path: Assets/_Sandbox/Wobble string/Wobble string.unity
-    guid: d1c3109bdb54ad54c8a2b2838528e640
+    path: 
+    guid: 00000000000000000000000000000000
   - enabled: 0
-    path: Assets/_Project/Packages/Granulator/Scenes/Granulator example scene.unity
-    guid: 06500776a180d394595db2c1c5b8c61c
+    path: 
+    guid: 00000000000000000000000000000000
   - enabled: 0
-    path: Assets/_Project/Scenes/XR Granulator.unity
-    guid: 13db310e8fcf0e24cb534d2aa117dccf
+    path: 
+    guid: 00000000000000000000000000000000
   - enabled: 0
-    path: Assets/_Project/Scenes/XR Granulator - Brad Sandbox.unity
-    guid: b0ad09aa0c1f1c64f88e03e8e5ee442b
+    path: 
+    guid: 00000000000000000000000000000000
   - enabled: 0
-    path: Assets/_Project/Packages/Grain Synth/Scenes/Grain Synth Example.unity
-    guid: b12ce358169f7f04dab3fd870cfc50a1
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: Assets/_Project/Scenes/XR Interactions - Instruments Demo.unity
+    guid: 7ced78fbbd96d914f819dd18630888d3
   - enabled: 1
-    path: Assets/_Project/Packages/Grain Synth/Scenes/Grain Synth - Bolt example.unity
-    guid: b02fd4c5dbeaa184f97133ce829161f8
+    path: Assets/_Project/Scenes/XR Interactions - Masters - Tether.unity
+    guid: 4b1d12fd04e7988479486ee2360e6908
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: d706ac39f2e2cdf458fe53385d06423c,
       type: 2}
     Unity.XR.WindowsMR.Settings: {fileID: 11400000, guid: 3f4378a47e00a494399501f8045bf914,
       type: 2}
+    com.unity.input.settings: {fileID: 11400000, guid: 78b55d4c4b109c743a394c6158dc37a8,
+      type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: d3bc0007cb80a654dbd778251c149bd8,
+      type: 2}
+    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 01d86973339617c4a99af911b8da16c0,
+      type: 2}
+    xr.sdk.mock-hmd.settings: {fileID: 11400000, guid: 11229c313fd10484d9a9eed68e90b978,
       type: 2}
