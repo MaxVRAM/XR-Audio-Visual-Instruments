@@ -24,7 +24,8 @@ public class ApplyForceButtons : MonoBehaviour
 
     private void Update()
     {
-        if (_ForceActive && _ForceX == 0 && )
+        if (_ForceActive && Mathf.Approximately(_ForceX, 0) && Mathf.Approximately(_ForceY, 0) && Mathf.Approximately(_ForceZ, 0))
+            _ForceActive = false;
     }
 
     void FixedUpdate()
@@ -32,7 +33,6 @@ public class ApplyForceButtons : MonoBehaviour
         if (_Rigidbody != null && gameObject.activeSelf && _ForceActive)
         {
             _Rigidbody.AddForce(new Vector3(_ForceX, _ForceY, _ForceZ) * _ForceAmount, ForceMode.VelocityChange);
-            _ForceX.Lerp
             _ForceX = _ForceX.Lerp(0, Time.smoothDeltaTime * _ForceDecay);
             _ForceY = _ForceY.Lerp(0, Time.smoothDeltaTime * _ForceDecay);
             _ForceZ = _ForceZ.Lerp(0, Time.smoothDeltaTime * _ForceDecay);
